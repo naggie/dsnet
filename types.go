@@ -13,16 +13,16 @@ const DefaultListenPort = 51820;
 // see https://github.com/WireGuard/wgctrl-go/blob/master/wgtypes/types.go for definitions
 type PeerConfig struct {
 	// username of person running this host/router
-	Owner string
+	Owner string              `validate:"required,gte=1,lte=255"`
 	// Used to update DNS
-	Hostname string
+	Hostname string           `validate:"required,gte=1,lte=255"`
 	// Description of what the host is and/or does
-	Description string
+	Description string        `validate:"required,gte=1,lte=255"`
 
-	PublicKey wgtypes.Key
-	PresharedKey wgtypes.Key
-	Endpoint *net.UDPAddr
-	AllowedIPs []net.IPNet
+	PublicKey wgtypes.Key     `validate:"required,len=44"`
+	PresharedKey wgtypes.Key  `validate:"required,len=44"`
+	Endpoint *net.UDPAddr     `validate:"required,udp4_addr"`
+	AllowedIPs []net.IPNet    `validate:"dive,required,cidr"`
 }
 
 type Peer struct {
@@ -47,8 +47,8 @@ type Peer struct {
 }
 
 type DsnetConfig struct {
-	PrivateKey *wgtypes.Key
-	ListenPort *int
+	PrivateKey *wgtypes.Key   `validate:"required,len=44"`
+	ListenPort *int           `validate:"gte=1024,lte=65535"`
 	FirewallMark *int
 	Peers []PeerConfig
 }
