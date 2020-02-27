@@ -5,11 +5,6 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-// keepalive for everything
-const KeepaliveSeconds = 21;
-const ExpiryDays = 28;
-const DefaultListenPort = 51820;
-
 // see https://github.com/WireGuard/wgctrl-go/blob/master/wgtypes/types.go for definitions
 type PeerConfig struct {
 	// username of person running this host/router
