@@ -50,8 +50,14 @@ type DsnetConfig struct {
 	PrivateKey *wgtypes.Key   `validate:"required,len=44"`
 	ListenPort *int           `validate:"gte=1024,lte=65535"`
 	FirewallMark *int
-	Network net.IPNet
 	Peers []PeerConfig
+	// IP network from which to allocate automatic sequential addresses
+	//Network net.IPNet
+	// TODO: use ParseCIDR to parse config
+	Network string            `validate:"required,cidr"`
+	// domain to append to hostnames. Relies on separate DNS server for
+	// resolution. Informational only.
+	Domain string             `validate:"required,gte=1,lte=255"`
 }
 
 type Dsnet struct {
