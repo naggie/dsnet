@@ -2,16 +2,22 @@ package main
 
 import (
 	"os"
-	"flag"
+	//"flag"
 	"fmt"
 	"github.com/naggie/dsnet"
 )
 
 func main() {
-	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
+	//addCmd := flag.NewFlagSet("add", flag.ExitOnError)
+	var cmd string
 
+	if len(os.Args) == 1 {
+		cmd = "help"
+	} else {
+		cmd = os.Args[1]
+	}
 
-	switch os.Args[1] {
+	switch cmd {
 		case "init":
 			dsnet.Init()
 
@@ -36,12 +42,12 @@ Usage: dsnet <cmd>
 Available commands:
 
 	init   : Create %s containing default configuration + new keys without loading. Edit to taste.
-	add    : Generate configuration for a new peer. (Send with passworded ffsend)
-	sync   : Synchronise wireguard configuration with %s, creating and activating interface if necessary
-	report : Generate a JSON status report to the location configured in %s
+	add    : Generate configuration for a new peer, adding to %s. Send with passworded ffsend.
+	sync   : Synchronise wireguard configuration with %s, creating and activating interface if necessary.
+	report : Generate a JSON status report to the location configured in %s.
 
 To remove an interface or bring it down, use standard tools such as iproute2.
 To modify or remove peers, edit %s and then run sync.
 
-`, dstask.CONFIG_FILE, dstask.CONFIG_FILE, dstask.CONFIG_FILE, dstask.CONFIG_FILE)
+`, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE)
 }

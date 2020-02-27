@@ -2,6 +2,7 @@ package dsnet
 
 import (
 	"net"
+	"time"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -58,9 +59,8 @@ type DsnetConfig struct {
 
 type Dsnet struct {
 	Name string
-	Type DeviceType
-	PrivateKey Key
-	PublicKey Key
+	PrivateKey wgtypes.Key
+	PublicKey wgtypes.Key
 	ListenPort int
 	Peers []Peer
 }
