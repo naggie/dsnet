@@ -50,6 +50,7 @@ type DsnetConfig struct {
 	PrivateKey *wgtypes.Key   `validate:"required,len=44"`
 	ListenPort *int           `validate:"gte=1024,lte=65535"`
 	FirewallMark *int
+	Network net.IPNet
 	Peers []PeerConfig
 }
 
