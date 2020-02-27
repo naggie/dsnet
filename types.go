@@ -54,6 +54,7 @@ type DsnetConfig struct {
 	// IP network from which to allocate automatic sequential addresses
 	//Network net.IPNet
 	// TODO: use ParseCIDR to parse config
+	// Network is chosen randomly when not specified
 	Network string            `validate:"required,cidr"`
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.

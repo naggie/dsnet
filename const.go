@@ -1,11 +1,10 @@
 package dsnet
 
-// TODO allow env override (vars) as soon as someone needs it. Probably won't
-// for ages, default interface name + locations are generally fine unless
-// multiple VPNs are needed
-
 const (
-	INTERFACE_NAME = "dsnet"
+	// these end up in the config file
+	DEFAULT_INTERFACE_NAME = "dsnet"
+	DEFAULT_REPORT_FILE = "/var/lib/dsnet-report.json"
+
+	// could be overridden in future via env
 	CONFIG_FILE = "/etc/dsnet-config.json"
-	REPORT_FILE = "/var/lib/dsnet-report.json"
 )
