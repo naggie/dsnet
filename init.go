@@ -7,14 +7,12 @@ import (
 	"time"
 	"encoding/json"
 
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	//"github.com/mikioh/ipaddr"
 )
 
 func Init() {
-	// TODO check errors
-	privateKey, _ := wgtypes.GeneratePrivateKey()
-	presharedKey, _ := wgtypes.GenerateKey()
+	privateKey := GenerateJSONPrivateKey()
+	presharedKey := GenerateJSONKey()
 
 	conf := DsnetConfig{
 		PrivateKey: privateKey,

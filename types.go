@@ -15,8 +15,8 @@ type PeerConfig struct {
 	// Description of what the host is and/or does
 	Description string        `validate:"required,gte=1,lte=255"`
 
-	PublicKey wgtypes.Key     `validate:"required,len=44"`
-	PresharedKey wgtypes.Key  `validate:"required,len=44"`
+	PublicKey JSONKey         `validate:"required,len=44"`
+	PresharedKey JSONKey      `validate:"required,len=44"`
 	Endpoint  net.UDPAddr     `validate:"required,udp4_addr"`
 	AllowedIPs []net.IPNet    `validate:"dive,required,cidr"`
 }
@@ -43,13 +43,13 @@ type Peer struct {
 }
 
 type DsnetConfig struct {
-	PrivateKey  wgtypes.Key   `validate:"required,len=44"`
-	PresharedKey wgtypes.Key  `validate:"required,len=44"`
+	PrivateKey  JSONKey       `validate:"required,len=44"`
+	PresharedKey JSONKey      `validate:"required,len=44"`
 	ListenPort int            `validate:"gte=1024,lte=65535"`
 	Peers []PeerConfig
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
-	Network IPNet             `validate:"required"`
+	Network JSONIPNet          `validate:"required"`
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
 	Domain string             `validate:"required,gte=1,lte=255"`
@@ -65,13 +65,45 @@ type Dsnet struct {
 }
 
 type JSONIPNet struct {
-	ipNet net.IPNet
+	IPNet net.IPNet
 }
 
 func (n JSONIPNet) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + n.ipNet.String() + "\""), nil
+	return []byte("\"" + n.IPNet.String() + "\""), nil
 }
 
 func (n *JSONIPNet) String() string {
-	return n.ipNet.String()
+	return n.IPNet.String()
+}
+
+type JSONKey struct {
+	Key wgtypes.Key
+}
+
+func (k JSONKey) MarshalJSON() ([]byte, error) {
+	return []byte("\"" + k.Key.String() + "\""), nil
+}
+
+func GenerateJSONPrivateKey() JSONKey {
+	privateKey, err := wgtypes.GeneratePrivateKey()
+
+	if (err != nil) {
+		panic(err)
+	}
+
+	return JSONKey{
+		Key: privateKey,
+	}
+}
+
+func GenerateJSONKey() JSONKey {
+	privateKey, err := wgtypes.GenerateKey()
+
+	if (err != nil) {
+		panic(err)
+	}
+
+	return JSONKey{
+		Key: privateKey,
+	}
 }
