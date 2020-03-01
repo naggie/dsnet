@@ -21,6 +21,7 @@ func Init() {
 		PresharedKey: presharedKey,
 		ListenPort: DEFAULT_LISTEN_PORT,
 		Network: getRandomNetwork(),
+		Peers: make([]PeerConfig,0),
 		Domain: "dsnet",
 	}
 
