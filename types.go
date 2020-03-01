@@ -64,14 +64,14 @@ type Dsnet struct {
 	Peers []Peer
 }
 
-type IPNet struct {
+type JSONIPNet struct {
 	ipNet net.IPNet
 }
 
-func (n IPNet) MarshalJSON() ([]byte, error) {
+func (n JSONIPNet) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + n.ipNet.String() + "\""), nil
 }
 
-func (n *IPNet) String() string {
+func (n *JSONIPNet) String() string {
 	return n.ipNet.String()
 }

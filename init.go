@@ -35,12 +35,12 @@ func Init() {
 
 // get a random /22 subnet on 10.0.0.0 (1023 hosts) (or /24?)
 // TODO also the 20 bit block and 16 bit block?
-func getRandomNetwork() IPNet {
+func getRandomNetwork() JSONIPNet {
 	rbs := make([]byte, 2)
 	rand.Seed(time.Now().UTC().UnixNano())
 	rand.Read(rbs)
 
-	return IPNet{
+	return JSONIPNet{
 		net.IPNet {
 			net.IP{10,rbs[0],rbs[1]<<2,0},
 			net.IPMask{255,255,252,0},
