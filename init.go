@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"fmt"
 	"time"
+	"encoding/json"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	//"github.com/mikioh/ipaddr"
@@ -25,6 +26,10 @@ func Init() {
 
 	fmt.Println(conf.Network.String())
 	fmt.Printf("%-+v/n",conf)
+
+	_json, _ := json.MarshalIndent(conf, "", "    ")
+
+	fmt.Println(string(_json))
 }
 
 // get a random /22 subnet on 10.0.0.0 (1023 hosts) (or /24?)
