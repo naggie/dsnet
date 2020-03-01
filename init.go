@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net"
 	"time"
+	"io/ioutil"
 	//"github.com/mikioh/ipaddr"
 )
 
@@ -23,12 +24,11 @@ func Init() {
 		ReportFile:   DEFAULT_REPORT_FILE,
 	}
 
-	//fmt.Println(conf.Network.String())
-	//fmt.Printf("%-+v/n",conf)
-
 	_json, _ := json.MarshalIndent(conf, "", "    ")
+	err := ioutil.WriteFile(CONFIG_FILE, _json, 0600)
+    check(err)
 
-	fmt.Println(string(_json))
+	fmt.Printf("Config written to %s. Please edit.", CONFIG_FILE)
 }
 
 // get a random /22 subnet on 10.0.0.0 (1023 hosts) (or /24?)
