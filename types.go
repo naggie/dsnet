@@ -88,9 +88,7 @@ func (k JSONKey) MarshalJSON() ([]byte, error) {
 func GenerateJSONPrivateKey() JSONKey {
 	privateKey, err := wgtypes.GeneratePrivateKey()
 
-	if err != nil {
-		panic(err)
-	}
+	check(err)
 
 	return JSONKey{
 		Key: privateKey,
@@ -100,9 +98,7 @@ func GenerateJSONPrivateKey() JSONKey {
 func GenerateJSONKey() JSONKey {
 	privateKey, err := wgtypes.GenerateKey()
 
-	if err != nil {
-		panic(err)
-	}
+	check(err)
 
 	return JSONKey{
 		Key: privateKey,

@@ -11,7 +11,7 @@ helper.
 Creates the config file /etc/dsnet.json defining subnet, creating private key,
 etc.
 
-`dsnet up`
+`dsnet sync`
 Loads peers from JSON file /etc/dsnet.json and brings the interface online. If
 interface is already online, synchronises peers by adding/removing. Interface
 name in file, dsnet. Runs commands to add routes/forwarding/whatever.
@@ -20,9 +20,9 @@ name in file, dsnet. Runs commands to add routes/forwarding/whatever.
 Brings the interface down after disassociating all peers.
 
 `dsnet add`
-Add a peer by name. Returns a config file as QR code or file. If public key is
-specified, private key won't be generated. Editing/removing a peer can be done
-by editing the JSON file.
+Add a peer by name. Returns a config file as QR code or file as specified. If
+public key is specified, private key won't be generated. Editing/removing a
+peer can be done by editing the JSON file.
 
 QR code + confirmation prompt on stderr, peer info on stdout.
 
@@ -36,4 +36,4 @@ etc. The JSON is intended to be consumed by a hugo template as a data source.
 Could also be updated via XHR/websockets.
 
 Report is intended to be generated every minute by cron running as root. The
-webserver can then read the file. Location /var/lib/dsnet-info.json
+webserver can then read the file. Location /var/lib/dsnet-report.json
