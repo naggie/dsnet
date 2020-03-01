@@ -49,10 +49,11 @@ type DsnetConfig struct {
 	Peers []PeerConfig
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
-	Network net.IPNet         `validate:"required"`
+	Network IPNet             `validate:"required"`
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
 	Domain string             `validate:"required,gte=1,lte=255"`
+	// TODO Default subnets to route via VPN
 }
 
 type Dsnet struct {
@@ -61,4 +62,16 @@ type Dsnet struct {
 	PublicKey wgtypes.Key
 	ListenPort int
 	Peers []Peer
+}
+
+type IPNet struct {
+	ipNet net.IPNet
+}
+
+func (n IPNet) MarshalJSON() ([]byte, error) {
+	return []byte("\"" + n.ipNet.String() + "\""), nil
+}
+
+func (n *IPNet) String() string {
+	return n.ipNet.String()
 }
