@@ -17,7 +17,7 @@ type PeerConfig struct {
 
 	PublicKey wgtypes.Key     `validate:"required,len=44"`
 	PresharedKey wgtypes.Key  `validate:"required,len=44"`
-	Endpoint *net.UDPAddr     `validate:"required,udp4_addr"`
+	Endpoint  net.UDPAddr     `validate:"required,udp4_addr"`
 	AllowedIPs []net.IPNet    `validate:"dive,required,cidr"`
 }
 
@@ -43,9 +43,9 @@ type Peer struct {
 }
 
 type DsnetConfig struct {
-	PrivateKey *wgtypes.Key   `validate:"required,len=44"`
+	PrivateKey  wgtypes.Key   `validate:"required,len=44"`
 	PresharedKey wgtypes.Key  `validate:"required,len=44"`
-	ListenPort *int           `validate:"gte=1024,lte=65535"`
+	ListenPort int            `validate:"gte=1024,lte=65535"`
 	Peers []PeerConfig
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
