@@ -18,19 +18,19 @@ func main() {
 	}
 
 	switch cmd {
-		case "init":
-			dsnet.Init()
+	case "init":
+		dsnet.Init()
 
-		case "up":
+	case "up":
 
-		case "add":
+	case "add":
 
-		case "report":
+	case "report":
 
-		case "down":
+	case "down":
 
-		default:
-			help();
+	default:
+		help()
 	}
 }
 

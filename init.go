@@ -1,12 +1,11 @@
 package dsnet
 
 import (
-	"net"
-	"math/rand"
-	"fmt"
-	"time"
 	"encoding/json"
-
+	"fmt"
+	"math/rand"
+	"net"
+	"time"
 	//"github.com/mikioh/ipaddr"
 )
 
@@ -15,12 +14,12 @@ func Init() {
 	presharedKey := GenerateJSONKey()
 
 	conf := DsnetConfig{
-		PrivateKey: privateKey,
+		PrivateKey:   privateKey,
 		PresharedKey: presharedKey,
-		ListenPort: DEFAULT_LISTEN_PORT,
-		Network: getRandomNetwork(),
-		Peers: make([]PeerConfig,0),
-		Domain: "dsnet",
+		ListenPort:   DEFAULT_LISTEN_PORT,
+		Network:      getRandomNetwork(),
+		Peers:        make([]PeerConfig, 0),
+		Domain:       "dsnet",
 	}
 
 	//fmt.Println(conf.Network.String())
@@ -32,16 +31,15 @@ func Init() {
 }
 
 // get a random /22 subnet on 10.0.0.0 (1023 hosts) (or /24?)
-// TODO also the 20 bit block and 16 bit block?
 func getRandomNetwork() JSONIPNet {
 	rbs := make([]byte, 2)
 	rand.Seed(time.Now().UTC().UnixNano())
 	rand.Read(rbs)
 
 	return JSONIPNet{
-		net.IPNet {
-			net.IP{10,rbs[0],rbs[1]<<2,0},
-			net.IPMask{255,255,252,0},
+		net.IPNet{
+			net.IP{10, rbs[0], rbs[1] << 2, 0},
+			net.IPMask{255, 255, 252, 0},
 		},
 	}
 }
