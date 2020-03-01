@@ -54,6 +54,7 @@ type DsnetConfig struct {
 	// resolution. Informational only.
 	Domain string `validate:"required,gte=1,lte=255"`
 	// TODO Default subnets to route via VPN
+	ReportFile string `validate:"required"`
 }
 
 type Dsnet struct {

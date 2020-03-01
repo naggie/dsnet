@@ -20,6 +20,7 @@ func Init() {
 		Network:      getRandomNetwork(),
 		Peers:        make([]PeerConfig, 0),
 		Domain:       "dsnet",
+		ReportFile:   DEFAULT_REPORT_FILE,
 	}
 
 	//fmt.Println(conf.Network.String())
@@ -37,7 +38,7 @@ func getRandomNetwork() JSONIPNet {
 	rand.Read(rbs)
 
 	return JSONIPNet{
-		net.IPNet{
+		IPNet: net.IPNet{
 			net.IP{10, rbs[0], rbs[1] << 2, 0},
 			net.IPMask{255, 255, 252, 0},
 		},
