@@ -126,7 +126,7 @@ func (conf DsnetConfig) ChooseIP() (net.IP, error) {
 			IP[j] = IP[j] | byte(i>>shift)
 		}
 
-		if conf.IPAllocated(IP) {
+		if ! conf.IPAllocated(IP) {
 			return IP, nil
 		}
 	}
