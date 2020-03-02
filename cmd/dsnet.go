@@ -24,10 +24,12 @@ func main() {
 	case "init":
 		dsnet.Init()
 
-	case "up":
-
 	case "add":
 		dsnet.Add()
+
+	case "up":
+
+	case "update":
 
 	case "report":
 
@@ -47,8 +49,10 @@ Available commands:
 
 	init   : Create %s containing default configuration + new keys without loading. Edit to taste.
 	add    : Generate configuration for a new peer, adding to %s. Send with passworded ffsend.
-	sync   : Synchronise wireguard configuration with %s, creating and activating interface if necessary.
+	up     : Create the interface, run pre/post up, update
+	update : Update wireguard configuration with %s, adding/removing peers after validating matching config
 	report : Generate a JSON status report to the location configured in %s.
+	down   : Destroy the interface, run pre/post down
 
 To remove an interface or bring it down, use standard tools such as iproute2.
 To modify or remove peers, edit %s and then run sync.

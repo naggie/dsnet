@@ -1,6 +1,13 @@
 Purpose: to allow an overview of Darksky peers and provide a mechanism to allow
 easy joining
 
+
+
+OUT OF DATE. See help cmd.
+
+
+
+
 Could use https://github.com/WireGuard/wgctrl-go + json database.
 Root separation by file deposit.
 
