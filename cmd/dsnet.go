@@ -21,7 +21,7 @@ func main() {
 
 	case "add":
 		// TODO maybe accept flags to avoid prompt and allow programmatic use
-		hostname := dsnet.MustPromptString("Hostname", true)
+		hostname := dsnet.MustPromptString("Hostname (unique)", true)
 		owner := dsnet.MustPromptString("owner", true)
 		description := dsnet.MustPromptString("Description", true)
 		publicKey := dsnet.MustPromptString("PublicKey (optional)", false)
