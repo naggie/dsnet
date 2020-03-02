@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 	"time"
+	"fmt"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -79,6 +80,30 @@ func (conf *DsnetConfig) MustSave() {
 func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
 	// TODO validate PeerConfig!!!
 	conf.Peers = append(conf.Peers, peer)
+}
+
+// choose a free IP for a new Peer
+func (conf DsnetConfig) ChooseIP() net.IP {
+	network := conf.Network.IPNet
+	ones, bits := network.Mask.Size()
+	zeros := bits - ones
+	min := 1
+	max := (1 << zeros) -1
+
+	for i := min; i <= max; i++ {
+		IP := make(net.IP, len(network.IP))
+		copy(IP, network.IP)
+
+		// OR the host part with the network part
+		for j := 0; j < len(IP); j++ {
+			shift := (len(IP) - j - 1) * 8
+			IP[j] = IP[j] | byte(i>>shift)
+		}
+
+		fmt.Println(IP)
+	}
+
+	return net.IP{}
 }
 
 type Dsnet struct {
