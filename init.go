@@ -21,7 +21,7 @@ func Init() {
 		ReportFile:   DEFAULT_REPORT_FILE,
 	}
 
-	IP := conf.MustChooseIP()
+	IP := conf.MustAllocateIP()
 	conf.IP = IP
 	conf.DNS = IP
 

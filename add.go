@@ -11,7 +11,7 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 	presharedKey := GenerateJSONKey()
 	publicKey := privateKey.PublicKey()
 
-	IP := conf.MustChooseIP()
+	IP := conf.MustAllocateIP()
 
 	peer := PeerConfig{
 		Owner:        owner,

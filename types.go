@@ -115,7 +115,7 @@ func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
 }
 
 // choose a free IP for a new Peer
-func (conf DsnetConfig) MustChooseIP() net.IP {
+func (conf DsnetConfig) MustAllocateIP() net.IP {
 	network := conf.Network.IPNet
 	ones, bits := network.Mask.Size()
 	zeros := bits - ones
