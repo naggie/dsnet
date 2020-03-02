@@ -51,12 +51,12 @@ type Peer struct {
 type DsnetConfig struct {
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
+	ExternalIP   net.IP    `validate:"required,cidr"`
+	ListenPort   int       `validate:"gte=1024,lte=65535"`
 	Domain string `validate:"required,gte=1,lte=255"`
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
 	Network      JSONIPNet `validate:"required"`
-	ExternalIP   net.IP    `validate:"required,cidr"`
-	ListenPort   int       `validate:"gte=1024,lte=65535"`
 	InternalIP   net.IP    `validate:"required,cidr"`
 	InternalDNS  net.IP    `validate:"required,cidr"`
 	// TODO Default subnets to route via VPN
