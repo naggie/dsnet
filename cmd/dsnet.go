@@ -2,21 +2,12 @@ package main
 
 import (
 	"os"
-	"flag"
 	"fmt"
 	"github.com/naggie/dsnet"
 )
 
 func main() {
 	var cmd string
-
-	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
-	hostname := addCmd.String("hostname", "", "Hostname of device")
-	owner := addCmd.String("owner", "", "Username of owner of device")
-	description := addCmd.String("description", "", "Information about device")
-	publicKey := addCmd.String("publicKey", "", "Optional existing public key of device")
-
-
 
 	if len(os.Args) == 1 {
 		cmd = "help"
@@ -29,9 +20,15 @@ func main() {
 		dsnet.Init()
 
 	case "add":
-		addCmd.PrintDefaults()
-		addCmd.Parse(os.Args[2:])
-		dsnet.Add(*hostname, *owner, *description, *publicKey)
+		// TODO maybe accept flags to avoid prompt and allow programmatic use
+		hostname := dsnet.MustPromptString("Hostname", true)
+		owner := dsnet.MustPromptString("owner", true)
+		description := dsnet.MustPromptString("Description", true)
+		publicKey := dsnet.MustPromptString("PublicKey (optional)", false)
+
+		dsnet.ConfirmOrAbort("\nDo you want to add the above configuration?")
+
+		dsnet.Add(hostname, owner, description, publicKey)
 
 	case "up":
 
