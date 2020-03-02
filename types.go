@@ -3,7 +3,6 @@ package dsnet
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"strings"
@@ -24,7 +23,7 @@ type PeerConfig struct {
 	PublicKey    JSONKey     `validate:"required,len=44"`
 	PresharedKey JSONKey     `validate:"required,len=44"`
 	Endpoint     net.UDPAddr `validate:"required,udp4_addr"`
-	AllowedIPs   []net.IPNet `validate:"dive,required,cidr"`
+	AllowedIPs   []JSONIPNet `validate:"dive,required,cidr"`
 }
 
 type Peer struct {
@@ -86,7 +85,7 @@ func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
 func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
 	for _, peer := range conf.Peers {
 		for _, peerIPNet := range peer.AllowedIPs {
-			if IP.Equal(peerIPNet.IP) {
+			if IP.Equal(peerIPNet.IPNet.IP) {
 				return false
 			}
 		}
@@ -111,10 +110,10 @@ func (conf DsnetConfig) ChooseIP() (net.IP, error) {
 		for j := 0; j < len(IP); j++ {
 			shift := (len(IP) - j - 1) * 8
 			IP[j] = IP[j] | byte(i>>shift)
+		}
 
-			if conf.IPAllocated(IP) {
-				return IP, nil
-			}
+		if conf.IPAllocated(IP) {
+			return IP, nil
 		}
 	}
 
