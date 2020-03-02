@@ -74,7 +74,7 @@ func (n JSONIPNet) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + n.IPNet.String() + "\""), nil
 }
 
-func (n JSONIPNet) UnmarshalJSON(b []byte) error {
+func (n *JSONIPNet) UnmarshalJSON(b []byte) error {
 	cidr := strings.Trim(string(b), "\"")
 	_, IPNet, err := net.ParseCIDR(cidr)
 	n.IPNet = *IPNet
@@ -93,7 +93,7 @@ func (k JSONKey) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + k.Key.String() + "\""), nil
 }
 
-func (k JSONKey) UnmarshalJSON(b []byte) error {
+func (k *JSONKey) UnmarshalJSON(b []byte) error {
 	b64Key := strings.Trim(string(b), "\"")
 	key, err := wgtypes.ParseKey(b64Key)
 	k.Key = key
