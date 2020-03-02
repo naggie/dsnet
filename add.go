@@ -1,5 +1,9 @@
 package dsnet
 
+import (
+	"net"
+)
+
 func Add(hostname string, owner string, description string) { //, publicKey string) {
 	conf := MustLoadDsnetConfig()
 
@@ -8,7 +12,6 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 	publicKey := privateKey.PublicKey()
 
 	IP, err := conf.ChooseIP()
-
 	check(err)
 
 	peer := PeerConfig{
@@ -18,7 +21,14 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 		PublicKey:    publicKey,
 		PresharedKey: presharedKey,
 		// TODO Endpoint:
-		// TODO pick an available IP AllowedIPs
+		AllowedIPs:   []JSONIPNet{
+			JSONIPNet {
+				IPNet: net.IPNet{
+					IP: IP,
+					Mask: conf.Network.IPNet.Mask,
+				},
+			},
+		},
 	}
 
 	conf.MustAddPeer(peer)
