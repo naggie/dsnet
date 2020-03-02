@@ -2,8 +2,10 @@ package dsnet
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"net"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -53,11 +55,27 @@ func getExternalIP() net.IP {
 
 	localAddr := conn.LocalAddr().String()
 	IP := net.ParseIP(strings.Split(localAddr, ":")[0])
+	IP = IP.To4()
 
 	if !(IP[0] == 10 || (IP[0] == 172 && IP[1] >= 16 && IP[1] <= 31) || (IP[0] == 192 && IP[1] == 168)) {
 		// not private, so public
 		return IP
 	}
-	// TODO detect private IP and use icanhazip.com instead
+
+	// detect private IP and use icanhazip.com instead
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Get("https://ipv4.icanhazip.com/")
+	check(err)
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		body, err := ioutil.ReadAll(resp.Body)
+		check(err)
+		IP = net.ParseIP(strings.TrimSpace(string(body)))
+		return IP.To4()
+	}
+
 	return net.IP{}
 }

@@ -17,7 +17,7 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 		Hostname:     hostname,
 		Description:  description,
 		PublicKey:    publicKey,
-		PrivateKey:   privateKey,  // omitted from server config JSON!
+		PrivateKey:   privateKey, // omitted from server config JSON!
 		PresharedKey: GenerateJSONKey(),
 		AllowedIPs: []JSONIPNet{
 			JSONIPNet{
