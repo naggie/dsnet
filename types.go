@@ -19,11 +19,11 @@ type PeerConfig struct {
 	// Description of what the host is and/or does
 	Description string `validate:"required,gte=1,lte=255"`
 
-	PublicKey    JSONKey     `validate:"required,len=44"`
-	PresharedKey JSONKey     `validate:"required,len=44"`
+	PublicKey    JSONKey `validate:"required,len=44"`
+	PresharedKey JSONKey `validate:"required,len=44"`
 	// TODO endpoint support
 	//Endpoint     net.UDPAddr `validate:"required,udp4_addr"`
-	AllowedIPs   []JSONIPNet `validate:"dive,required,cidr"`
+	AllowedIPs []JSONIPNet `validate:"dive,required,cidr"`
 }
 
 type Peer struct {
@@ -38,8 +38,8 @@ type Peer struct {
 	// if no data for x days, consider revoking access
 	Expired bool
 
-	PublicKey         wgtypes.Key
-	PresharedKey      wgtypes.Key
+	PublicKey    wgtypes.Key
+	PresharedKey wgtypes.Key
 	// TODO peer endpoint support
 	//Endpoint          *net.UDPAddr
 	LastHandshakeTime time.Time
@@ -54,12 +54,13 @@ type DsnetConfig struct {
 	Domain string `validate:"required,gte=1,lte=255"`
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
-	Network JSONIPNet `validate:"required"`
-	IP           net.IP `validate:"required,cidr"`
-	Port   int     `validate:"gte=1024,lte=65535"`
-	DNS          net.IP `validate:"required,cidr"`
+	Network      JSONIPNet `validate:"required"`
+	ExternalIP   net.IP    `validate:"required,cidr"`
+	ExternalPort int       `validate:"gte=1024,lte=65535"`
+	InternalIP   net.IP    `validate:"required,cidr"`
+	InternalDNS  net.IP    `validate:"required,cidr"`
 	// TODO Default subnets to route via VPN
-	ReportFile string `validate:"required"`
+	ReportFile   string  `validate:"required"`
 	PrivateKey   JSONKey `validate:"required,len=44"`
 	PresharedKey JSONKey `validate:"required,len=44"`
 	Peers        []PeerConfig
@@ -99,7 +100,7 @@ func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
 }
 
 func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
-	if IP.Equal(conf.IP) {
+	if IP.Equal(conf.InternalIP) {
 		return true
 	}
 
@@ -132,7 +133,7 @@ func (conf DsnetConfig) MustAllocateIP() net.IP {
 			IP[j] = IP[j] | byte(i>>shift)
 		}
 
-		if ! conf.IPAllocated(IP) {
+		if !conf.IPAllocated(IP) {
 			return IP
 		}
 	}

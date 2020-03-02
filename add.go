@@ -33,7 +33,6 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 	conf.MustSave()
 }
 
-
 func GetPeerWgQuickConf(peer PeerConfig, privKey JSONKey) string {
 	return `[Interface]
 Address = 10.50.60.2/24
