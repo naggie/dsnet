@@ -2,7 +2,6 @@ package dsnet
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"net"
 	"strings"
@@ -88,7 +87,7 @@ func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
 
 	for _, peerIPNet := range peer.AllowedIPs {
 		if conf.IPAllocated(peerIPNet.IPNet.IP) {
-			ExitFail("%s is not unique", peerIPNet)
+			ExitFail("%s is already allocated", peerIPNet)
 		}
 	}
 
@@ -99,12 +98,12 @@ func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
 	for _, peer := range conf.Peers {
 		for _, peerIPNet := range peer.AllowedIPs {
 			if IP.Equal(peerIPNet.IPNet.IP) {
-				return false
+				return true
 			}
 		}
 	}
 
-	return true
+	return false
 }
 
 // choose a free IP for a new Peer

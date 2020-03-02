@@ -12,7 +12,6 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 	publicKey := privateKey.PublicKey()
 
 	IP := conf.MustChooseIP()
-	check(err)
 
 	peer := PeerConfig{
 		Owner:        owner,
