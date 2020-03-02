@@ -47,18 +47,18 @@ type Peer struct {
 }
 
 type DsnetConfig struct {
+	// domain to append to hostnames. Relies on separate DNS server for
+	// resolution. Informational only.
+	Domain string `validate:"required,gte=1,lte=255"`
+	// IP network from which to allocate automatic sequential addresses
+	// Network is chosen randomly when not specified
+	Network JSONIPNet `validate:"required"`
+	// TODO Default subnets to route via VPN
+	ReportFile string `validate:"required"`
 	PrivateKey   JSONKey `validate:"required,len=44"`
 	PresharedKey JSONKey `validate:"required,len=44"`
 	ListenPort   int     `validate:"gte=1024,lte=65535"`
 	Peers        []PeerConfig
-	// IP network from which to allocate automatic sequential addresses
-	// Network is chosen randomly when not specified
-	Network JSONIPNet `validate:"required"`
-	// domain to append to hostnames. Relies on separate DNS server for
-	// resolution. Informational only.
-	Domain string `validate:"required,gte=1,lte=255"`
-	// TODO Default subnets to route via VPN
-	ReportFile string `validate:"required"`
 }
 
 func MustLoadDsnetConfig() *DsnetConfig {
