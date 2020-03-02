@@ -2,14 +2,17 @@ package main
 
 import (
 	"os"
-	//"flag"
+	"flag"
 	"fmt"
 	"github.com/naggie/dsnet"
 )
 
 func main() {
-	//addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	var cmd string
+
+	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
+
+
 
 	if len(os.Args) == 1 {
 		cmd = "help"
@@ -24,6 +27,7 @@ func main() {
 	case "up":
 
 	case "add":
+		dsnet.Add()
 
 	case "report":
 
