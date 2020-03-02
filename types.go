@@ -20,6 +20,7 @@ type PeerConfig struct {
 	Description string `validate:"required,gte=1,lte=255"`
 
 	PublicKey    JSONKey `validate:"required,len=44"`
+	PrivateKey   JSONKey `json:"-"`  // omitted from config!
 	PresharedKey JSONKey `validate:"required,len=44"`
 	// TODO endpoint support
 	//Endpoint     net.UDPAddr `validate:"required,udp4_addr"`

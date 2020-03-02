@@ -8,7 +8,6 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 	conf := MustLoadDsnetConfig()
 
 	privateKey := GenerateJSONPrivateKey()
-	presharedKey := GenerateJSONKey()
 	publicKey := privateKey.PublicKey()
 
 	IP := conf.MustAllocateIP()
@@ -18,7 +17,8 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 		Hostname:     hostname,
 		Description:  description,
 		PublicKey:    publicKey,
-		PresharedKey: presharedKey,
+		PrivateKey:   privateKey,  // omitted from server config JSON!
+		PresharedKey: GenerateJSONKey(),
 		AllowedIPs: []JSONIPNet{
 			JSONIPNet{
 				IPNet: net.IPNet{
@@ -33,10 +33,10 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 	conf.MustSave()
 }
 
-func GetPeerWgQuickConf(peer PeerConfig, privKey JSONKey) string {
+func GetPeerWgQuickConf(peer PeerConfig) string {
 	return `[Interface]
 Address = 10.50.60.2/24
-PrivateKey=REDACTED
+PrivateKey={{
 DNS = 8.8.8.8
 
 [Peer]

@@ -19,7 +19,7 @@ func MustPromptString(prompt string, required bool) string {
 	var err error
 
 	for text == "" {
-		fmt.Printf("%s: ", prompt)
+		fmt.Fprintf(os.Stderr, "%s: ", prompt)
 		text, err = reader.ReadString('\n')
 		check(err)
 		text = strings.TrimSpace(text)

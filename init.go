@@ -46,6 +46,7 @@ func getRandomNetwork() JSONIPNet {
 	}
 }
 
+// TODO support IPv6
 func getExternalIP() net.IP {
 	conn, _ := net.Dial("udp", "8.8.8.8:80")
 	defer conn.Close()
@@ -53,6 +54,10 @@ func getExternalIP() net.IP {
 	localAddr := conn.LocalAddr().String()
 	IP := net.ParseIP(strings.Split(localAddr, ":")[0])
 
+	if !(IP[0] == 10 || (IP[0] == 172 && IP[1] >= 16 && IP[1] <= 31) || (IP[0] == 192 && IP[1] == 168)) {
+		// not private, so public
+		return IP
+	}
 	// TODO detect private IP and use icanhazip.com instead
-	return IP
+	return net.IP{}
 }
