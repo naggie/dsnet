@@ -56,7 +56,7 @@ type DsnetConfig struct {
 	// Network is chosen randomly when not specified
 	Network      JSONIPNet `validate:"required"`
 	ExternalIP   net.IP    `validate:"required,cidr"`
-	ExternalPort int       `validate:"gte=1024,lte=65535"`
+	ListenPort   int       `validate:"gte=1024,lte=65535"`
 	InternalIP   net.IP    `validate:"required,cidr"`
 	InternalDNS  net.IP    `validate:"required,cidr"`
 	// TODO Default subnets to route via VPN
