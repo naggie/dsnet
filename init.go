@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"net"
 	"time"
-	//"github.com/mikioh/ipaddr"
 )
 
 func Init() {
@@ -15,12 +14,16 @@ func Init() {
 	conf := DsnetConfig{
 		PrivateKey:   privateKey,
 		PresharedKey: presharedKey,
-		ListenPort:   DEFAULT_LISTEN_PORT,
+		Port:         DEFAULT_LISTEN_PORT,
 		Network:      getRandomNetwork(),
 		Peers:        make([]PeerConfig, 0),
 		Domain:       "dsnet",
 		ReportFile:   DEFAULT_REPORT_FILE,
 	}
+
+	IP := conf.MustChooseIP()
+	conf.IP = IP
+	conf.DNS = IP
 
 	conf.MustSave()
 

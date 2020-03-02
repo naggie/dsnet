@@ -21,7 +21,8 @@ type PeerConfig struct {
 
 	PublicKey    JSONKey     `validate:"required,len=44"`
 	PresharedKey JSONKey     `validate:"required,len=44"`
-	Endpoint     net.UDPAddr `validate:"required,udp4_addr"`
+	// TODO endpoint support
+	//Endpoint     net.UDPAddr `validate:"required,udp4_addr"`
 	AllowedIPs   []JSONIPNet `validate:"dive,required,cidr"`
 }
 
@@ -54,11 +55,13 @@ type DsnetConfig struct {
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
 	Network JSONIPNet `validate:"required"`
+	IP           net.IP `validate:"required,cidr"`
+	Port   int     `validate:"gte=1024,lte=65535"`
+	DNS          net.IP `validate:"required,cidr"`
 	// TODO Default subnets to route via VPN
 	ReportFile string `validate:"required"`
 	PrivateKey   JSONKey `validate:"required,len=44"`
 	PresharedKey JSONKey `validate:"required,len=44"`
-	ListenPort   int     `validate:"gte=1024,lte=65535"`
 	Peers        []PeerConfig
 }
 
@@ -96,6 +99,10 @@ func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
 }
 
 func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
+	if IP.Equal(conf.IP) {
+		return true
+	}
+
 	for _, peer := range conf.Peers {
 		for _, peerIPNet := range peer.AllowedIPs {
 			if IP.Equal(peerIPNet.IPNet.IP) {
