@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 	"fmt"
+	"errors"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -82,8 +83,20 @@ func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
 	conf.Peers = append(conf.Peers, peer)
 }
 
+func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
+	for _, peer := range conf.Peers {
+		for _, peerIPNet := range peer.AllowedIPs {
+			if IP.Equal(peerIPNet.IP) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 // choose a free IP for a new Peer
-func (conf DsnetConfig) ChooseIP() net.IP {
+func (conf DsnetConfig) ChooseIP() (net.IP, error) {
 	network := conf.Network.IPNet
 	ones, bits := network.Mask.Size()
 	zeros := bits - ones
@@ -98,12 +111,14 @@ func (conf DsnetConfig) ChooseIP() net.IP {
 		for j := 0; j < len(IP); j++ {
 			shift := (len(IP) - j - 1) * 8
 			IP[j] = IP[j] | byte(i>>shift)
-		}
 
-		fmt.Println(IP)
+			if conf.IPAllocated(IP) {
+				return IP, nil
+			}
+		}
 	}
 
-	return net.IP{}
+	return net.IP{}, errors.New("IP range exhausted")
 }
 
 type Dsnet struct {
