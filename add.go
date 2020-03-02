@@ -1,6 +1,6 @@
 package dsnet
 
-func Add(hostname string, owner string, description string) {//, publicKey string) {
+func Add(hostname string, owner string, description string) { //, publicKey string) {
 	conf := MustLoadDsnetConfig()
 
 	privateKey := GenerateJSONPrivateKey()
@@ -12,10 +12,10 @@ func Add(hostname string, owner string, description string) {//, publicKey strin
 	check(err)
 
 	peer := PeerConfig{
-		Owner: owner,
-		Hostname: hostname,
-		Description: description,
-		PublicKey: publicKey,
+		Owner:        owner,
+		Hostname:     hostname,
+		Description:  description,
+		PublicKey:    publicKey,
 		PresharedKey: presharedKey,
 		// TODO Endpoint:
 		// TODO pick an available IP AllowedIPs

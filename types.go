@@ -2,12 +2,12 @@ package dsnet
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"strings"
 	"time"
-	"fmt"
-	"errors"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -100,8 +100,8 @@ func (conf DsnetConfig) ChooseIP() (net.IP, error) {
 	network := conf.Network.IPNet
 	ones, bits := network.Mask.Size()
 	zeros := bits - ones
-	min := 1  // avoids network addr
-	max := (1 << zeros) -2  // avoids broadcast addr + overflow
+	min := 1                // avoids network addr
+	max := (1 << zeros) - 2 // avoids broadcast addr + overflow
 
 	for i := min; i <= max; i++ {
 		IP := make(net.IP, len(network.IP))
