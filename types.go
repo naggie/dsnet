@@ -4,6 +4,7 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"net"
 	"time"
+	"strings"
 )
 
 // see https://github.com/WireGuard/wgctrl-go/blob/master/wgtypes/types.go for definitions
@@ -73,6 +74,13 @@ func (n JSONIPNet) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + n.IPNet.String() + "\""), nil
 }
 
+func (n JSONIPNet) UnmarshalJSON(b []byte) error {
+	cidr := strings.Trim(string(b), "\"")
+	_, IPNet, err := net.ParseCIDR(cidr)
+	n.IPNet = *IPNet
+	return err
+}
+
 func (n *JSONIPNet) String() string {
 	return n.IPNet.String()
 }
@@ -83,6 +91,13 @@ type JSONKey struct {
 
 func (k JSONKey) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + k.Key.String() + "\""), nil
+}
+
+func (k JSONKey) UnmarshalJSON(b []byte) error {
+	b64Key := strings.Trim(string(b), "\"")
+	key, err := wgtypes.ParseKey(b64Key)
+	k.Key = key
+	return err
 }
 
 func GenerateJSONPrivateKey() JSONKey {
