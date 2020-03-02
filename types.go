@@ -39,7 +39,8 @@ type Peer struct {
 
 	PublicKey         wgtypes.Key
 	PresharedKey      wgtypes.Key
-	Endpoint          *net.UDPAddr
+	// TODO peer endpoint support
+	//Endpoint          *net.UDPAddr
 	LastHandshakeTime time.Time
 	ReceiveBytes      int64
 	TransmitBytes     int64

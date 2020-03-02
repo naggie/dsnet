@@ -1,8 +1,4 @@
-Purpose: to allow an overview of Darksky peers and provide a mechanism to allow
-easy joining
-
-
-dsnet is a simple tool to manage a wireguard VPN.
+dsnet is a simple tool to manage a wireguard VPN. Think wg-quick but quicker.
 
     Usage: dsnet <cmd>
 
@@ -19,3 +15,10 @@ dsnet is a simple tool to manage a wireguard VPN.
 
 
 To send configurations, ffsend (with separately transferred password) or a local QR code generator may be used.
+
+TODO after first release:
+
+  * Hooks for adding routes/ IPtables forwarding rules
+  * Forward option
+  * Support for additional subnets in peer config
+  * Peer endpoint support

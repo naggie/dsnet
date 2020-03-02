@@ -19,7 +19,6 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 		Description:  description,
 		PublicKey:    publicKey,
 		PresharedKey: presharedKey,
-		// TODO Endpoint:
 		AllowedIPs: []JSONIPNet{
 			JSONIPNet{
 				IPNet: net.IPNet{
@@ -32,4 +31,19 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 
 	conf.MustAddPeer(peer)
 	conf.MustSave()
+}
+
+
+func GetPeerWgQuickConf(peer PeerConfig, privKey JSONKey) string {
+	return `[Interface]
+Address = 10.50.60.2/24
+PrivateKey=REDACTED
+DNS = 8.8.8.8
+
+[Peer]
+PublicKey=cAR+SMd+yvGw2TVzVSRoLtxF5TLA2Y/ceebO8ZAyITw=
+Endpoint=3.9.82.135:51820
+AllowedIPs=0.0.0.0/0
+PersistentKeepalive=21
+`
 }
