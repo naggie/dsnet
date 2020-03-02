@@ -21,10 +21,10 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 		PublicKey:    publicKey,
 		PresharedKey: presharedKey,
 		// TODO Endpoint:
-		AllowedIPs:   []JSONIPNet{
-			JSONIPNet {
+		AllowedIPs: []JSONIPNet{
+			JSONIPNet{
 				IPNet: net.IPNet{
-					IP: IP,
+					IP:   IP,
 					Mask: conf.Network.IPNet.Mask,
 				},
 			},

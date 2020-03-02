@@ -78,7 +78,20 @@ func (conf *DsnetConfig) MustSave() {
 }
 
 func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
-	// TODO validate PeerConfig!!!
+	// TODO validate all PeerConfig (keys etc)
+
+	for _, p := range conf.Peers {
+		if peer.Hostname == p.Hostname {
+			ExitFail("%s is not an unique hostname", peer.Hostname)
+		}
+	}
+
+	for _, peerIPNet := range peer.AllowedIPs {
+		if conf.IPAllocated(peerIPNet.IPNet.IP) {
+			ExitFail("%s is not unique", peerIPNet)
+		}
+	}
+
 	conf.Peers = append(conf.Peers, peer)
 }
 
@@ -95,6 +108,7 @@ func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
 }
 
 // choose a free IP for a new Peer
+// TODO MustChooseIP? -- failure means we give up anyway
 func (conf DsnetConfig) ChooseIP() (net.IP, error) {
 	network := conf.Network.IPNet
 	ones, bits := network.Mask.Size()
