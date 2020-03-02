@@ -11,6 +11,10 @@ func main() {
 	var cmd string
 
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
+	hostname := addCmd.String("hostname", "", "Hostname of device")
+	owner := addCmd.String("owner", "", "Username of owner of device")
+	description := addCmd.String("description", "", "Information about device")
+	publicKey := addCmd.String("publicKey", "", "Optional existing public key of device")
 
 
 
@@ -25,7 +29,9 @@ func main() {
 		dsnet.Init()
 
 	case "add":
-		dsnet.Add()
+		addCmd.PrintDefaults()
+		addCmd.Parse(os.Args[2:])
+		dsnet.Add(*hostname, *owner, *description, *publicKey)
 
 	case "up":
 

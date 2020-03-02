@@ -1,5 +1,5 @@
 package dsnet
 
-func Add(owner string, name string, description string, publicKey string) {
+func Add(hostname string, owner string, description string, publicKey string) {
 
 }
