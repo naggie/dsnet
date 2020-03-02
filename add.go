@@ -23,7 +23,7 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 			JSONIPNet{
 				IPNet: net.IPNet{
 					IP:   IP,
-					Mask: conf.Network.IPNet.Mask,
+					Mask: net.CIDRMask(32, 32),
 				},
 			},
 		},
