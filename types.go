@@ -108,8 +108,7 @@ func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
 }
 
 // choose a free IP for a new Peer
-// TODO MustChooseIP? -- failure means we give up anyway
-func (conf DsnetConfig) ChooseIP() (net.IP, error) {
+func (conf DsnetConfig) MustChooseIP() net.IP {
 	network := conf.Network.IPNet
 	ones, bits := network.Mask.Size()
 	zeros := bits - ones
@@ -127,11 +126,13 @@ func (conf DsnetConfig) ChooseIP() (net.IP, error) {
 		}
 
 		if ! conf.IPAllocated(IP) {
-			return IP, nil
+			return IP
 		}
 	}
 
-	return net.IP{}, errors.New("IP range exhausted")
+	ExitFail("IP range exhausted")
+
+	return net.IP{}
 }
 
 type Dsnet struct {
