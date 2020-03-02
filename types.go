@@ -1,10 +1,13 @@
 package dsnet
 
 import (
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+	"encoding/json"
+	"io/ioutil"
 	"net"
-	"time"
 	"strings"
+	"time"
+
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 // see https://github.com/WireGuard/wgctrl-go/blob/master/wgtypes/types.go for definitions
@@ -56,6 +59,21 @@ type DsnetConfig struct {
 	Domain string `validate:"required,gte=1,lte=255"`
 	// TODO Default subnets to route via VPN
 	ReportFile string `validate:"required"`
+}
+
+func MustLoadDsnetConfig() *DsnetConfig {
+	raw, err := ioutil.ReadFile(CONFIG_FILE)
+	check(err)
+	conf := DsnetConfig{}
+	err = json.Unmarshal(raw, &conf)
+	check(err)
+	return &conf
+}
+
+func (conf *DsnetConfig) MustSave() {
+	_json, _ := json.MarshalIndent(conf, "", "    ")
+	err := ioutil.WriteFile(CONFIG_FILE, _json, 0600)
+	check(err)
 }
 
 type Dsnet struct {

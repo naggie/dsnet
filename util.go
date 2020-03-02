@@ -1,16 +1,16 @@
 package dsnet
 
 import (
-	"os"
 	"bufio"
-	"strings"
 	"fmt"
+	"os"
+	"strings"
 )
 
 func check(e error) {
-    if e != nil {
-        panic(e)
-    }
+	if e != nil {
+		panic(e)
+	}
 }
 
 func MustPromptString(prompt string, required bool) string {

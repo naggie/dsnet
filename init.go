@@ -1,12 +1,10 @@
 package dsnet
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net"
 	"time"
-	"io/ioutil"
 	//"github.com/mikioh/ipaddr"
 )
 
@@ -24,9 +22,7 @@ func Init() {
 		ReportFile:   DEFAULT_REPORT_FILE,
 	}
 
-	_json, _ := json.MarshalIndent(conf, "", "    ")
-	err := ioutil.WriteFile(CONFIG_FILE, _json, 0600)
-    check(err)
+	conf.MustSave()
 
 	fmt.Printf("Config written to %s. Please edit.", CONFIG_FILE)
 }
