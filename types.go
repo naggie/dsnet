@@ -76,6 +76,11 @@ func (conf *DsnetConfig) MustSave() {
 	check(err)
 }
 
+func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
+	// TODO validate PeerConfig!!!
+	conf.Peers = append(conf.Peers, peer)
+}
+
 type Dsnet struct {
 	Name       string
 	PrivateKey wgtypes.Key
@@ -109,6 +114,12 @@ type JSONKey struct {
 
 func (k JSONKey) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + k.Key.String() + "\""), nil
+}
+
+func (k JSONKey) PublicKey() JSONKey {
+	return JSONKey{
+		Key: k.Key.PublicKey(),
+	}
 }
 
 func (k *JSONKey) UnmarshalJSON(b []byte) error {

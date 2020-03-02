@@ -24,11 +24,11 @@ func main() {
 		hostname := dsnet.MustPromptString("Hostname (unique)", true)
 		owner := dsnet.MustPromptString("owner", true)
 		description := dsnet.MustPromptString("Description", true)
-		publicKey := dsnet.MustPromptString("PublicKey (optional)", false)
+		//publicKey := dsnet.MustPromptString("PublicKey (optional)", false)
 
 		dsnet.ConfirmOrAbort("\nDo you want to add the above configuration?")
 
-		dsnet.Add(hostname, owner, description, publicKey)
+		dsnet.Add(hostname, owner, description)//, publicKey)
 
 	case "up":
 
