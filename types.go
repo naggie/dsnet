@@ -12,10 +12,10 @@ import (
 
 // see https://github.com/WireGuard/wgctrl-go/blob/master/wgtypes/types.go for definitions
 type PeerConfig struct {
-	// username of person running this host/router
-	Owner string `validate:"required,gte=1,lte=255"`
 	// Used to update DNS
 	Hostname string `validate:"required,gte=1,lte=255"`
+	// username of person running this host/router
+	Owner string `validate:"required,gte=1,lte=255"`
 	// Description of what the host is and/or does
 	Description string `validate:"required,gte=1,lte=255"`
 
@@ -152,7 +152,8 @@ func (n JSONIPNet) MarshalJSON() ([]byte, error) {
 
 func (n *JSONIPNet) UnmarshalJSON(b []byte) error {
 	cidr := strings.Trim(string(b), "\"")
-	_, IPNet, err := net.ParseCIDR(cidr)
+	IP, IPNet, err := net.ParseCIDR(cidr)
+	IPNet.IP = IP
 	n.IPNet = *IPNet
 	return err
 }
