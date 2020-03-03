@@ -20,16 +20,16 @@ const (
 
 func (s Status) String() string {
 	switch s {
-		case Pending:
-			return "pending"
-		case Offline:
-			return "offline"
-		case Online:
-			return "online"
-		case Expired:
-			return "expired"
-		default:
-			return "unknown"
+	case Pending:
+		return "pending"
+	case Offline:
+		return "offline"
+	case Online:
+		return "online"
+	case Expired:
+		return "expired"
+	default:
+		return "unknown"
 	}
 }
 
