@@ -61,10 +61,7 @@ type PeerReport struct {
 	Description string
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
 	IP net.IP
-	// whether last heartbeat/rxdata was received (50% margin)
-	Online bool
-	// if no data for x days, consider revoking access
-	Expired bool
+	Status Status
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
 	// TODO support routing additional networks (AllowedIPs)
