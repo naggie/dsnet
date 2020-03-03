@@ -5,8 +5,16 @@ import (
 	"text/template"
 )
 
-func Add(hostname string, owner string, description string) { //, publicKey string) {
+func Add() {
+	// TODO maybe accept flags to avoid prompt and allow programmatic use
+	// TODO accept existing pubkey
 	conf := MustLoadDsnetConfig()
+
+	hostname := MustPromptString("Hostname (unique)", true)
+	owner := MustPromptString("owner", true)
+	description := MustPromptString("Description", true)
+	//publicKey := MustPromptString("PublicKey (optional)", false)
+	ConfirmOrAbort("\nDo you want to add the above configuration?")
 
 	privateKey := GenerateJSONPrivateKey()
 	publicKey := privateKey.PublicKey()

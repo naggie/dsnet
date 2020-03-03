@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net"
+	"os"
 )
 
 // see https://github.com/WireGuard/wgctrl-go/blob/master/wgtypes/types.go for definitions
@@ -45,7 +46,15 @@ type DsnetConfig struct {
 
 func MustLoadDsnetConfig() *DsnetConfig {
 	raw, err := ioutil.ReadFile(CONFIG_FILE)
-	check(err)
+
+	if os.IsNotExist(err) {
+		ExitFail("%s does not exist. `dsnet init` may be required.", CONFIG_FILE)
+	} else if os.IsPermission(err) {
+		ExitFail("%s cannot be accessed. Sudo may be required.", CONFIG_FILE)
+	} else {
+		check(err)
+	}
+
 	conf := DsnetConfig{}
 	err = json.Unmarshal(raw, &conf)
 	check(err)

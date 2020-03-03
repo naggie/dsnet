@@ -6,11 +6,18 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
 
 func Init() {
+	_, err := os.Stat(CONFIG_FILE)
+
+	if !os.IsNotExist(err) {
+		ExitFail("Refusing to overwrite existing %s", CONFIG_FILE)
+	}
+
 	privateKey := GenerateJSONPrivateKey()
 	presharedKey := GenerateJSONKey()
 
