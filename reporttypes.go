@@ -5,6 +5,42 @@ import (
 	"time"
 )
 
+type Status int
+
+const (
+	Pending = iota
+	Offline
+	Online
+	Expired
+)
+
+func (s Status) String() string {
+	switch s {
+		case Pending:
+			return "pending"
+		case Offline:
+			return "offline"
+		case Online:
+			return "online"
+		case Expired:
+			return "expired"
+		default:
+			return "unknown"
+	}
+}
+
+func (s Status) MarshalJSON() ([]byte, error) {
+	return []byte("\"" + s.String() + "\""), nil
+}
+
+func (s *Status) UnmarshalJSON(b []byte) error {
+	strStatus := strings.Trim(string(b), "\"")
+	key, err := wgtypes.ParseKey(b64Key)
+	s.Key = key
+	return err
+}
+
+
 type DsnetReport struct {
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
