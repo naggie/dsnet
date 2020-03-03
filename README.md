@@ -1,4 +1,5 @@
-dsnet is a simple tool to manage a wireguard VPN. Think wg-quick but quicker.
+dsnet is a simple tool to manage a centralised wireguard VPN. Think wg-quick
+but quicker.
 
     Usage: dsnet <cmd>
 
@@ -12,7 +13,7 @@ dsnet is a simple tool to manage a wireguard VPN. Think wg-quick but quicker.
     To remove an interface or bring it down, use standard tools such as iproute2.
     To modify or remove peers, edit /etc/dsnet-config.json and then run sync.
 
-
+Dsnet assumes a DNS server is running on the server.
 
 To send configurations, ffsend (with separately transferred password) or a local QR code generator may be used.
 

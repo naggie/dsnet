@@ -2,6 +2,8 @@ package dsnet
 
 import (
 	"net"
+	"os"
+	"text/template"
 )
 
 func Add(hostname string, owner string, description string) { //, publicKey string) {
@@ -30,19 +32,30 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 	}
 
 	conf.MustAddPeer(peer)
+	PrintPeerCfg(peer, conf)
 	conf.MustSave()
 }
 
-func GetPeerWgQuickConf(peer PeerConfig) string {
-	return `[Interface]
-Address = 10.50.60.2/24
-PrivateKey={{
-DNS = 8.8.8.8
+func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
+	const peerConf = `[Interface]
+Address = {{ index .Peer.AllowedIPs 0 }}
+PrivateKey={{ .Peer.PrivateKey.Key }}
+PresharedKey={{ .Peer.PresharedKey.Key }}
+DNS = {{ .DsnetConfig.InternalDNS }}
 
 [Peer]
-PublicKey=cAR+SMd+yvGw2TVzVSRoLtxF5TLA2Y/ceebO8ZAyITw=
-Endpoint=3.9.82.135:51820
-AllowedIPs=0.0.0.0/0
+PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}
+PresharedKey={{ .DsnetConfig.PresharedKey.Key }}
+Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
+#AllowedIPs=0.0.0.0/0
+AllowedIPs={{ .DsnetConfig.Network }}
 PersistentKeepalive=21
 `
+
+	t := template.Must(template.New("peerConf").Parse(peerConf))
+	err := t.Execute(os.Stdout, map[string]interface{}{
+		"Peer":        peer,
+		"DsnetConfig": conf,
+	})
+	check(err)
 }
