@@ -8,9 +8,13 @@ import (
 type Status int
 
 const (
+	// Host has not been loaded into wireguard yet
 	Pending = iota
+	// Host has not transferred anything (not even a keepalive) for 30 seconds
 	Offline
+	// Host has transferred something in the last 30 seconds, keepalive counts
 	Online
+	// Host has not connected for 28 days and may be removed
 	Expired
 )
 
