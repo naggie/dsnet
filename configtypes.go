@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+
+	"github.com/go-playground/validator/v10"
 )
 
 // see https://github.com/WireGuard/wgctrl-go/blob/master/wgtypes/types.go for definitions
@@ -16,32 +18,32 @@ type PeerConfig struct {
 	// Description of what the host is and/or does
 	Description string `validate:"required,gte=1,lte=255"`
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
-	IP           net.IP  `validate:"required,ip`
+	IP           net.IP  `validate:"required`
 	PublicKey    JSONKey `validate:"required,len=44"`
 	PrivateKey   JSONKey `json:"-"` // omitted from config!
 	PresharedKey JSONKey `validate:"required,len=44"`
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
 	// TODO support routing additional networks (AllowedIPs)
-	Networks []JSONIPNet `validate:"dive,cidr"`
+	Networks []JSONIPNet
 }
 
 type DsnetConfig struct {
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
-	ExternalIP net.IP `validate:"required,cidr"`
+	ExternalIP net.IP `validate:"required"`
 	ListenPort int    `validate:"gte=1024,lte=65535"`
 	Domain     string `validate:"required,gte=1,lte=255"`
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
 	Network JSONIPNet `validate:"required"`
-	IP      net.IP    `validate:"required,cidr"`
-	DNS     net.IP    `validate:"required,cidr"`
+	IP      net.IP    `validate:"required"`
+	DNS     net.IP    `validate:"required"`
 	// TODO Default subnets to route via VPN
-	ReportFile   string  `validate:"required"`
-	PrivateKey   JSONKey `validate:"required,len=44"`
-	PresharedKey JSONKey `validate:"required,len=44"`
-	Peers        []PeerConfig
+	ReportFile   string       `validate:"required"`
+	PrivateKey   JSONKey      `validate:"required,len=44"`
+	PresharedKey JSONKey      `validate:"required,len=44"`
+	Peers        []PeerConfig `validate:"dive"`
 }
 
 func MustLoadDsnetConfig() *DsnetConfig {
@@ -58,6 +60,10 @@ func MustLoadDsnetConfig() *DsnetConfig {
 	conf := DsnetConfig{}
 	err = json.Unmarshal(raw, &conf)
 	check(err)
+
+	err = validator.New().Struct(conf)
+	check(err)
+
 	return &conf
 }
 
