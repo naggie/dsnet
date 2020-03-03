@@ -2,11 +2,11 @@ package dsnet
 
 const (
 	// could be overridden in future via env
-	CONFIG_FILE = "/etc/dsnet-config.json"
+	CONFIG_FILE = "/etc/dsnetconfig.json"
 
 	// these end up in the config file
 	DEFAULT_INTERFACE_NAME = "dsnet"
-	DEFAULT_REPORT_FILE    = "/var/lib/dsnet-report.json"
+	DEFAULT_REPORT_FILE    = "/var/lib/dsnetreport.json"
 	DEFAULT_LISTEN_PORT    = 51820
 
 	// keepalive always configured for everything
