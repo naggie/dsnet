@@ -12,7 +12,7 @@ type DsnetReport struct {
 	PrivateKey wgtypes.Key
 	PublicKey  wgtypes.Key
 	ListenPort int
-	Peers      []Peer
+	Peers      []PeerReport
 }
 
 type PeerReport struct {

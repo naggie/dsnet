@@ -1,7 +1,6 @@
 package dsnet
 
 import (
-	"net"
 	"os"
 	"text/template"
 )
@@ -21,14 +20,7 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 		PublicKey:    publicKey,
 		PrivateKey:   privateKey, // omitted from server config JSON!
 		PresharedKey: GenerateJSONKey(),
-		AllowedIPs: []JSONIPNet{
-			JSONIPNet{
-				IPNet: net.IPNet{
-					IP:   IP,
-					Mask: net.CIDRMask(32, 32),
-				},
-			},
-		},
+		IP:           IP,
 	}
 
 	conf.MustAddPeer(peer)
@@ -38,10 +30,10 @@ func Add(hostname string, owner string, description string) { //, publicKey stri
 
 func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 	const peerConf = `[Interface]
-Address = {{ index .Peer.AllowedIPs 0 }}
+Address = {{ .Peer.IP }}
 PrivateKey={{ .Peer.PrivateKey.Key }}
 PresharedKey={{ .Peer.PresharedKey.Key }}
-DNS = {{ .DsnetConfig.InternalDNS }}
+DNS = {{ .DsnetConfig.DNS }}
 
 [Peer]
 PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}

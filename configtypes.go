@@ -14,13 +14,15 @@ type PeerConfig struct {
 	Owner string `validate:"required,gte=1,lte=255"`
 	// Description of what the host is and/or does
 	Description string `validate:"required,gte=1,lte=255"`
-
+	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
+	IP           net.IP  `validate:"required,ip`
 	PublicKey    JSONKey `validate:"required,len=44"`
 	PrivateKey   JSONKey `json:"-"` // omitted from config!
 	PresharedKey JSONKey `validate:"required,len=44"`
-	// TODO endpoint support
-	//Endpoint     net.UDPAddr `validate:"required,udp4_addr"`
-	AllowedIPs []JSONIPNet `validate:"dive,required,cidr"`
+	// TODO ExternalIP support (Endpoint)
+	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
+	// TODO support routing additional networks (AllowedIPs)
+	Networks []JSONIPNet `validate:"dive,cidr"`
 }
 
 type DsnetConfig struct {
@@ -31,9 +33,9 @@ type DsnetConfig struct {
 	Domain     string `validate:"required,gte=1,lte=255"`
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
-	Network     JSONIPNet `validate:"required"`
-	InternalIP  net.IP    `validate:"required,cidr"`
-	InternalDNS net.IP    `validate:"required,cidr"`
+	Network JSONIPNet `validate:"required"`
+	IP      net.IP    `validate:"required,cidr"`
+	DNS     net.IP    `validate:"required,cidr"`
 	// TODO Default subnets to route via VPN
 	ReportFile   string  `validate:"required"`
 	PrivateKey   JSONKey `validate:"required,len=44"`
@@ -65,7 +67,11 @@ func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
 		}
 	}
 
-	for _, peerIPNet := range peer.AllowedIPs {
+	if conf.IPAllocated(peer.IP) {
+		ExitFail("%s is already allocated", peer.IP)
+	}
+
+	for _, peerIPNet := range peer.Networks {
 		if conf.IPAllocated(peerIPNet.IPNet.IP) {
 			ExitFail("%s is already allocated", peerIPNet)
 		}
@@ -75,12 +81,16 @@ func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
 }
 
 func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
-	if IP.Equal(conf.InternalIP) {
+	if IP.Equal(conf.IP) {
 		return true
 	}
 
 	for _, peer := range conf.Peers {
-		for _, peerIPNet := range peer.AllowedIPs {
+		if IP.Equal(peer.IP) {
+			return true
+		}
+
+		for _, peerIPNet := range peer.Networks {
 			if IP.Equal(peerIPNet.IPNet.IP) {
 				return true
 			}

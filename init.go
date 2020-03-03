@@ -26,8 +26,8 @@ func Init() {
 	}
 
 	IP := conf.MustAllocateIP()
-	conf.InternalIP = IP
-	conf.InternalDNS = IP
+	conf.IP = IP
+	conf.DNS = IP
 
 	conf.MustSave()
 
