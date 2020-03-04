@@ -29,6 +29,7 @@ func Add() {
 		PrivateKey:   privateKey, // omitted from server config JSON!
 		PresharedKey: GenerateJSONKey(),
 		IP:           IP,
+		Networks:     []JSONIPNet{},
 	}
 
 	conf.MustAddPeer(peer)

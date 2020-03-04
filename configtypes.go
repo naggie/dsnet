@@ -25,7 +25,7 @@ type PeerConfig struct {
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
 	// TODO support routing additional networks (AllowedIPs)
-	Networks []JSONIPNet
+	Networks []JSONIPNet `validate:"required"`
 }
 
 type DsnetConfig struct {
