@@ -42,6 +42,10 @@ func CreateLink(conf *DsnetConfig) {
 
 	// bring up interface (UNKNOWN state instead of UP, a wireguard quirk)
 	err = netlink.LinkSetUp(link)
+
+	if err != nil {
+		ExitFail("Could not bring up device '%s' (%v)", conf.InterfaceName, err)
+	}
 }
 
 func ConfigureDevice(conf *DsnetConfig) {
@@ -60,9 +64,5 @@ func ConfigureDevice(conf *DsnetConfig) {
 
 	if err != nil {
 		ExitFail("Could not configure device '%s' (%v)", conf.InterfaceName, err)
-	}
-
-	if err != nil {
-		ExitFail("Could not bring up device '%s' (%v)", conf.InterfaceName, err)
 	}
 }
