@@ -23,6 +23,7 @@ func main() {
 		dsnet.Add()
 
 	case "up":
+		dsnet.Up()
 
 	case "update":
 
