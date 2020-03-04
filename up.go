@@ -4,8 +4,6 @@ import (
 	"net"
 
 	"github.com/vishvananda/netlink"
-	"golang.zx2c4.com/wireguard/wgctrl"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 func Up() {
@@ -45,24 +43,5 @@ func CreateLink(conf *DsnetConfig) {
 
 	if err != nil {
 		ExitFail("Could not bring up device '%s' (%v)", conf.InterfaceName, err)
-	}
-}
-
-func ConfigureDevice(conf *DsnetConfig) {
-	wgConfig := wgtypes.Config{
-		PrivateKey:   &conf.PrivateKey.Key,
-		ListenPort:   &conf.ListenPort,
-		ReplacePeers: true,
-		Peers:        conf.GetWgPeerConfigs(),
-	}
-
-	wg, err := wgctrl.New()
-	check(err)
-	defer wg.Close()
-
-	err = wg.ConfigureDevice(conf.InterfaceName, wgConfig)
-
-	if err != nil {
-		ExitFail("Could not configure device '%s' (%v)", conf.InterfaceName, err)
 	}
 }
