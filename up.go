@@ -39,15 +39,17 @@ func CreateInterface(conf *DsnetConfig) {
 		ExitFail("Could not add addr %s to interface %s", addr.IP, err)
 	}
 
-	deviceConfig := wgtypes.Config{
+	wgConfig := wgtypes.Config{
 		PrivateKey: &conf.PrivateKey.Key,
 		ListenPort: &conf.ListenPort,
+		ReplacePeers: true,
+		Peers: conf.GetWgPeerConfigs(),
 	}
 
 	wg, err := wgctrl.New()
 	check(err)
 
-	err = wg.ConfigureDevice(linkAttrs.Name, deviceConfig)
+	err = wg.ConfigureDevice(linkAttrs.Name, wgConfig)
 
 	if err != nil {
 		ExitFail("Could not configure device '%s' (%v)", linkAttrs.Name, err)
