@@ -29,7 +29,7 @@ func main() {
 		dsnet.Sync()
 
 	case "report":
-		dsnet.report()
+		dsnet.Report()
 
 	case "down":
 		dsnet.Down()

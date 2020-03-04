@@ -1,6 +1,8 @@
 package dsnet
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net"
 	"time"
 
@@ -54,13 +56,13 @@ type DsnetReport struct {
 	Peers   []PeerReport
 }
 
-func Report(*wgtypes.Device, conf *DsnetConfig) DsnetReport {
-
+func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
+	return DsnetReport{}
 }
 
-func (report *DsnetReport) MustSave() {
+func (report *DsnetReport) MustSave(filename string) {
 	_json, _ := json.MarshalIndent(report, "", "    ")
-	err := ioutil.WriteFile(CONFIG_FILE, _json, 0644)
+	err := ioutil.WriteFile(filename, _json, 0644)
 	check(err)
 }
 

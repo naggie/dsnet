@@ -1,19 +1,22 @@
 package dsnet
 
 import (
-	"net"
-
-	"github.com/vishvananda/netlink"
 	"golang.zx2c4.com/wireguard/wgctrl"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-func Up() {
+func Report() {
 	conf := MustLoadDsnetConfig()
 
-	dev, err := wgctrl.Device(conf.InterfaceName)
+	wg, err := wgctrl.New()
 	check(err)
+	defer wg.Close()
 
-	report := Report(dev, conf)
-	report.MustSave()
+	dev, err := wg.Device(conf.InterfaceName)
+
+	if err != nil {
+		ExitFail("Could not retrieve device '%s' (%v)", conf.InterfaceName, err)
+	}
+
+	report := GenerateReport(dev, conf)
+	report.MustSave(conf.ReportFile)
 }
