@@ -48,6 +48,7 @@ func CreateInterface(conf *DsnetConfig) {
 
 	wg, err := wgctrl.New()
 	check(err)
+	defer wg.Close()
 
 	err = wg.ConfigureDevice(conf.InterfaceName, wgConfig)
 
