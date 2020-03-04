@@ -40,10 +40,10 @@ func CreateInterface(conf *DsnetConfig) {
 	}
 
 	wgConfig := wgtypes.Config{
-		PrivateKey: &conf.PrivateKey.Key,
-		ListenPort: &conf.ListenPort,
+		PrivateKey:   &conf.PrivateKey.Key,
+		ListenPort:   &conf.ListenPort,
 		ReplacePeers: true,
-		Peers: conf.GetWgPeerConfigs(),
+		Peers:        conf.GetWgPeerConfigs(),
 	}
 
 	wg, err := wgctrl.New()
@@ -57,7 +57,7 @@ func CreateInterface(conf *DsnetConfig) {
 
 	// bring up interface (needs conf first)
 	//err = netlink.LinkSetUp(link)
-    //
+	//
 	//if err != nil {
 	//	ExitFail("Could not bring up device '%s' (%v)", linkAttrs.Name, err)
 	//}

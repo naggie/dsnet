@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"github.com/go-playground/validator/v10"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 // see https://github.com/WireGuard/wgctrl-go/blob/master/wgtypes/types.go for definitions
@@ -149,21 +149,21 @@ func (conf DsnetConfig) MustAllocateIP() net.IP {
 func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 	wgPeers := make([]wgtypes.PeerConfig, 0, len(conf.Peers))
 
-	interval := time.Second * KEEPALIVE_SECONDS;
+	interval := time.Second * KEEPALIVE_SECONDS
 
 	for _, peer := range conf.Peers {
 		wgPeers = append(wgPeers, wgtypes.PeerConfig{
-			PublicKey: peer.PublicKey.Key,
-			Remove: false,
-			UpdateOnly: false,
-			PresharedKey: &peer.PresharedKey.Key,
-			Endpoint: nil,
+			PublicKey:                   peer.PublicKey.Key,
+			Remove:                      false,
+			UpdateOnly:                  false,
+			PresharedKey:                &peer.PresharedKey.Key,
+			Endpoint:                    nil,
 			PersistentKeepaliveInterval: &interval,
-			ReplaceAllowedIPs: true,
+			ReplaceAllowedIPs:           true,
 			AllowedIPs: []net.IPNet{
 				net.IPNet{
-					IP: peer.IP,
-					Mask: conf.Network.IPNet.Mask,
+					IP:   peer.IP,
+					Mask: net.IPMask{255, 255, 255, 255},
 				},
 			},
 		})
