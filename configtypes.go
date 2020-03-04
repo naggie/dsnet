@@ -31,9 +31,10 @@ type PeerConfig struct {
 type DsnetConfig struct {
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
-	ExternalIP net.IP `validate:"required"`
-	ListenPort int    `validate:"gte=1024,lte=65535"`
-	Domain     string `validate:"required,gte=1,lte=255"`
+	ExternalIP    net.IP `validate:"required"`
+	ListenPort    int    `validate:"gte=1024,lte=65535"`
+	Domain        string `validate:"required,gte=1,lte=255"`
+	InterfaceName string `validate:"required,gte=1,lte=255"`
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
 	Network JSONIPNet `validate:"required"`

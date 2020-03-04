@@ -22,14 +22,15 @@ func Init() {
 	presharedKey := GenerateJSONKey()
 
 	conf := DsnetConfig{
-		PrivateKey:   privateKey,
-		PresharedKey: presharedKey,
-		ListenPort:   DEFAULT_LISTEN_PORT,
-		Network:      getRandomNetwork(),
-		Peers:        make([]PeerConfig, 0),
-		Domain:       "dsnet",
-		ReportFile:   DEFAULT_REPORT_FILE,
-		ExternalIP:   getExternalIP(),
+		PrivateKey:    privateKey,
+		PresharedKey:  presharedKey,
+		ListenPort:    DEFAULT_LISTEN_PORT,
+		Network:       getRandomNetwork(),
+		Peers:         make([]PeerConfig, 0),
+		Domain:        "dsnet",
+		ReportFile:    DEFAULT_REPORT_FILE,
+		ExternalIP:    getExternalIP(),
+		InterfaceName: DEFAULT_INTERFACE_NAME,
 	}
 
 	IP := conf.MustAllocateIP()

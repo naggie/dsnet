@@ -60,7 +60,7 @@ type PeerReport struct {
 	// Description of what the host is and/or does
 	Description string
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
-	IP net.IP
+	IP     net.IP
 	Status Status
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
