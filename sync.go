@@ -1,6 +1,6 @@
 package dsnet
 
-func Update() {
+func Sync() {
 	// TODO check device settings first
 	conf := MustLoadDsnetConfig()
 	ConfigureDevice(conf)
