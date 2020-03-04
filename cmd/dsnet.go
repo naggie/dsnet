@@ -26,6 +26,7 @@ func main() {
 		dsnet.Up()
 
 	case "update":
+		dsnet.Update()
 
 	case "report":
 
