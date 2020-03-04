@@ -24,7 +24,7 @@ func CreateInterface(conf *DsnetConfig) {
 
 	err := netlink.LinkAdd(link)
 	if err != nil {
-		ExitFail("Could not add interface '%s' (%v)", linkAttrs.Name, err)
+		ExitFail("Could not add interface '%s' (%v)", conf.InterfaceName, err)
 	}
 
 	addr := &netlink.Addr{
@@ -49,16 +49,16 @@ func CreateInterface(conf *DsnetConfig) {
 	wg, err := wgctrl.New()
 	check(err)
 
-	err = wg.ConfigureDevice(linkAttrs.Name, wgConfig)
+	err = wg.ConfigureDevice(conf.InterfaceName, wgConfig)
 
 	if err != nil {
-		ExitFail("Could not configure device '%s' (%v)", linkAttrs.Name, err)
+		ExitFail("Could not configure device '%s' (%v)", conf.InterfaceName, err)
 	}
 
-	// bring up interface (needs conf first)
-	//err = netlink.LinkSetUp(link)
-	//
-	//if err != nil {
-	//	ExitFail("Could not bring up device '%s' (%v)", linkAttrs.Name, err)
-	//}
+	// bring up interface (UNKNOWN state, a wireguard thing)
+	err = netlink.LinkSetUp(link)
+
+	if err != nil {
+		ExitFail("Could not bring up device '%s' (%v)", conf.InterfaceName, err)
+	}
 }
