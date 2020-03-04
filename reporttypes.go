@@ -3,6 +3,8 @@ package dsnet
 import (
 	"net"
 	"time"
+
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 type Status int
@@ -50,6 +52,16 @@ type DsnetReport struct {
 	IP      net.IP
 	DNS     net.IP
 	Peers   []PeerReport
+}
+
+func Report(*wgtypes.Device, conf *DsnetConfig) DsnetReport {
+
+}
+
+func (report *DsnetReport) MustSave() {
+	_json, _ := json.MarshalIndent(report, "", "    ")
+	err := ioutil.WriteFile(CONFIG_FILE, _json, 0644)
+	check(err)
 }
 
 type PeerReport struct {
