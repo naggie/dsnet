@@ -85,6 +85,18 @@ func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
 		}
 	}
 
+	for _, p := range conf.Peers {
+		if peer.PublicKey.Key == p.PublicKey.Key {
+			ExitFail("%s is not an unique public key", peer.Hostname)
+		}
+	}
+
+	for _, p := range conf.Peers {
+		if peer.PresharedKey.Key == p.PresharedKey.Key {
+			ExitFail("%s is not an unique preshared key", peer.Hostname)
+		}
+	}
+
 	if conf.IPAllocated(peer.IP) {
 		ExitFail("%s is already allocated", peer.IP)
 	}

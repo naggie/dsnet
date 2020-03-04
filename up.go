@@ -10,10 +10,11 @@ import (
 
 func Up() {
 	conf := MustLoadDsnetConfig()
-	CreateInterface(conf)
+	CreateLink(conf)
+	ConfigureDevice(conf)
 }
 
-func CreateInterface(conf *DsnetConfig) {
+func CreateLink(conf *DsnetConfig) {
 	linkAttrs := netlink.NewLinkAttrs()
 	linkAttrs.Name = conf.InterfaceName
 
@@ -39,6 +40,11 @@ func CreateInterface(conf *DsnetConfig) {
 		ExitFail("Could not add addr %s to interface %s", addr.IP, err)
 	}
 
+	// bring up interface (UNKNOWN state instead of UP, a wireguard quirk)
+	err = netlink.LinkSetUp(link)
+}
+
+func ConfigureDevice(conf *DsnetConfig) {
 	wgConfig := wgtypes.Config{
 		PrivateKey:   &conf.PrivateKey.Key,
 		ListenPort:   &conf.ListenPort,
@@ -55,9 +61,6 @@ func CreateInterface(conf *DsnetConfig) {
 	if err != nil {
 		ExitFail("Could not configure device '%s' (%v)", conf.InterfaceName, err)
 	}
-
-	// bring up interface (UNKNOWN state, a wireguard thing)
-	err = netlink.LinkSetUp(link)
 
 	if err != nil {
 		ExitFail("Could not bring up device '%s' (%v)", conf.InterfaceName, err)
