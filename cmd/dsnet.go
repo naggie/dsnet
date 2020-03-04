@@ -31,6 +31,7 @@ func main() {
 	case "report":
 
 	case "down":
+		dsnet.Down()
 
 	default:
 		help()
