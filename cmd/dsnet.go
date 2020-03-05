@@ -50,14 +50,19 @@ Usage: dsnet <cmd>
 Available commands:
 
 	init   : Create %s containing default configuration + new keys without loading. Edit to taste.
-	add    : Generate configuration for a new peer, adding to %s. Send with passworded ffsend.
+	add    : Add a new peer + sync
 	up     : Create the interface, run pre/post up, sync
-	sync   : Update wireguard configuration with %s, adding/removing peers after validating matching config
+	sync   : Update wireguard configuration from %s after validating
 	report : Generate a JSON status report to the location configured in %s.
+	remove : Remove a peer by hostname provided as argument + sync
 	down   : Destroy the interface, run pre/post down
 
-To remove an interface or bring it down, use standard tools such as iproute2.
-To modify or remove peers, edit %s and then run sync.
 
-`, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE)
+Examples:
+
+
+	dsnet add > dsnet.conf
+
+
+`, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE)
 }

@@ -2,6 +2,7 @@ package dsnet
 
 import (
 	"os"
+	"fmt"
 	"text/template"
 )
 
@@ -15,6 +16,9 @@ func Add() {
 	description := MustPromptString("Description", true)
 	//publicKey := MustPromptString("PublicKey (optional)", false)
 	ConfirmOrAbort("\nDo you want to add the above configuration?")
+
+	// newline (not on stdout) to separate config
+	fmt.Fprintln(os.Stderr)
 
 	privateKey := GenerateJSONPrivateKey()
 	publicKey := privateKey.PublicKey()
@@ -35,6 +39,7 @@ func Add() {
 	conf.MustAddPeer(peer)
 	PrintPeerCfg(peer, conf)
 	conf.MustSave()
+	ConfigureDevice(conf)
 }
 
 func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {

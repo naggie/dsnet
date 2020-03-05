@@ -12,4 +12,5 @@ func Remove() {
 	hostname := os.Args[2]
 	conf.MustRemovePeer(hostname)
 	conf.MustSave()
+	ConfigureDevice(conf)
 }
