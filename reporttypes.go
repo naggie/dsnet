@@ -22,6 +22,8 @@ const (
 	Expired
 )
 
+// TODO pending/unknown
+
 func (s Status) String() string {
 	switch s {
 	case Pending:
@@ -43,21 +45,54 @@ func (s Status) MarshalJSON() ([]byte, error) {
 }
 
 type DsnetReport struct {
+	ExternalIP net.IP
+	InterfaceName string
+	ListenPort int
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
-	ExternalIP net.IP
-	ListenPort int
 	Domain     string
+	IP      net.IP
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
 	Network JSONIPNet
-	IP      net.IP
 	DNS     net.IP
 	Peers   []PeerReport
 }
 
 func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
-	return DsnetReport{}
+	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
+	peerReports := make([]PeerReport, len(conf.Peers))
+
+	for _, peer := range dev.Peers {
+		wgPeerIndex[peer.PublicKey] = peer
+	}
+
+	for i, peer := range conf.Peers {
+		wgPeer, known := wgPeerIndex[peer.PublicKey.Key]
+
+		peerReports[i] = PeerReport{
+			Hostname: peer.Hostname,
+			Owner: peer.Owner,
+			Description: peer.Description,
+			IP: peer.IP,
+			// TODO Status
+			Networks: peer.Networks,
+			LastHandshakeTime: wgPeer.LastHandshakeTime,
+			ReceiveBytes: wgPeer.ReceiveBytes,
+			TransmitBytes: wgPeer.TransmitBytes,
+		}
+	}
+
+	return DsnetReport{
+		ExternalIP: conf.ExternalIP,
+		InterfaceName: conf.InterfaceName,
+		ListenPort: conf.ListenPort,
+		Domain: conf.Domain,
+		IP: conf.IP,
+		Network: conf.Network,
+		DNS: conf.DNS,
+		Peers: peerReports,
+	}
 }
 
 func (report *DsnetReport) MustSave(filename string) {
