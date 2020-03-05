@@ -18,12 +18,8 @@ func Init() {
 		ExitFail("Refusing to overwrite existing %s", CONFIG_FILE)
 	}
 
-	privateKey := GenerateJSONPrivateKey()
-	presharedKey := GenerateJSONKey()
-
 	conf := DsnetConfig{
-		PrivateKey:    privateKey,
-		PresharedKey:  presharedKey,
+		PrivateKey:    GenerateJSONPrivateKey()
 		ListenPort:    DEFAULT_LISTEN_PORT,
 		Network:       getRandomNetwork(),
 		Peers:         []PeerConfig{},

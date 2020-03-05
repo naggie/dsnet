@@ -44,7 +44,6 @@ type DsnetConfig struct {
 	// TODO Default subnets to route via VPN
 	ReportFile   string       `validate:"required"`
 	PrivateKey   JSONKey      `validate:"required,len=44"`
-	PresharedKey JSONKey      `validate:"required,len=44"`
 	Peers        []PeerConfig `validate:"dive"`
 }
 

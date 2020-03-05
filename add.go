@@ -51,12 +51,11 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 	const peerConf = `[Interface]
 Address = {{ .Peer.IP }}
 PrivateKey={{ .Peer.PrivateKey.Key }}
-PresharedKey={{ .Peer.PresharedKey.Key }}
 DNS = {{ .DsnetConfig.DNS }}
 
 [Peer]
 PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}
-PresharedKey={{ .DsnetConfig.PresharedKey.Key }}
+PresharedKey={{ .Peer.PresharedKey.Key }}
 Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
 #AllowedIPs=0.0.0.0/0
 AllowedIPs={{ .DsnetConfig.Network }}
