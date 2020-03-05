@@ -8,7 +8,7 @@ import (
 )
 
 type JSONIPNet struct {
-	IPNet net.IPNet
+	net.IPNet
 }
 
 func (n JSONIPNet) MarshalJSON() ([]byte, error) {
@@ -28,7 +28,7 @@ func (n *JSONIPNet) String() string {
 }
 
 type JSONKey struct {
-	Key wgtypes.Key
+	wgtypes.Key
 }
 
 func (k JSONKey) MarshalJSON() ([]byte, error) {

@@ -1,8 +1,8 @@
 package dsnet
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"text/template"
 )
 

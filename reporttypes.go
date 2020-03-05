@@ -51,9 +51,9 @@ type DsnetReport struct {
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
 	Network JSONIPNet
-	IP      net.IP
-	DNS     net.IP
-	Peers   []PeerReport
+	net.IP
+	DNS   net.IP
+	Peers []PeerReport
 }
 
 func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
@@ -74,8 +74,8 @@ type PeerReport struct {
 	// Description of what the host is and/or does
 	Description string
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
-	IP     net.IP
-	Status Status
+	net.IP
+	Status
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
 	// TODO support routing additional networks (AllowedIPs)
