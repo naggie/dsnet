@@ -110,6 +110,26 @@ func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
 	conf.Peers = append(conf.Peers, peer)
 }
 
+func (conf *DsnetConfig) MustRemovePeer(hostname string) {
+	peerIndex := -1;
+
+	for i, peer := range conf.Peers {
+		if peer.Hostname == hostname {
+			peerIndex = i
+		}
+	}
+
+	if peerIndex == -1 {
+		ExitFail("Could not find peer with hostname %s", hostname)
+	}
+
+	// remove peer from slice (by moving the last element to peerIndex, and
+	// truncating)
+	conf.Peers[peerIndex] = conf.Peers[len(conf.Peers)-1]
+	conf.Peers = conf.Peers[:len(conf.Peers)-1]
+}
+
+
 func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
 	if IP.Equal(conf.IP) {
 		return true

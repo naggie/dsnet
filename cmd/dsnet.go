@@ -31,6 +31,9 @@ func main() {
 	case "report":
 		dsnet.Report()
 
+	case "remove":
+		dsnet.Remove()
+
 	case "down":
 		dsnet.Down()
 
