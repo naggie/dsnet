@@ -19,7 +19,7 @@ func Init() {
 	}
 
 	conf := DsnetConfig{
-		PrivateKey:    GenerateJSONPrivateKey()
+		PrivateKey:    GenerateJSONPrivateKey(),
 		ListenPort:    DEFAULT_LISTEN_PORT,
 		Network:       getRandomNetwork(),
 		Peers:         []PeerConfig{},

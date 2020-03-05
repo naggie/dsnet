@@ -17,6 +17,7 @@ func Report() {
 		ExitFail("Could not retrieve device '%s' (%v)", conf.InterfaceName, err)
 	}
 
-	report := GenerateReport(dev, conf)
+	oldReport := MustLoadDsnetReport()
+	report := GenerateReport(dev, conf, oldReport)
 	report.MustSave(conf.ReportFile)
 }

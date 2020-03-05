@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net"
+	"os"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -46,13 +48,13 @@ func (s Status) MarshalJSON() ([]byte, error) {
 }
 
 type DsnetReport struct {
-	ExternalIP net.IP
+	ExternalIP    net.IP
 	InterfaceName string
-	ListenPort int
+	ListenPort    int
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
-	Domain     string
-	IP      net.IP
+	Domain string
+	IP     net.IP
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
 	Network JSONIPNet
@@ -60,7 +62,7 @@ type DsnetReport struct {
 	Peers   []PeerReport
 }
 
-func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
+func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
 	peerReports := make([]PeerReport, len(conf.Peers))
 
@@ -84,27 +86,27 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
 		}
 
 		peerReports[i] = PeerReport{
-			Hostname: peer.Hostname,
-			Owner: peer.Owner,
-			Description: peer.Description,
-			IP: peer.IP,
-			Status: status,
-			Networks: peer.Networks,
+			Hostname:          peer.Hostname,
+			Owner:             peer.Owner,
+			Description:       peer.Description,
+			IP:                peer.IP,
+			Status:            status,
+			Networks:          peer.Networks,
 			LastHandshakeTime: wgPeer.LastHandshakeTime,
-			ReceiveBytes: wgPeer.ReceiveBytes,
-			TransmitBytes: wgPeer.TransmitBytes,
+			ReceiveBytes:      wgPeer.ReceiveBytes,
+			TransmitBytes:     wgPeer.TransmitBytes,
 		}
 	}
 
 	return DsnetReport{
-		ExternalIP: conf.ExternalIP,
+		ExternalIP:    conf.ExternalIP,
 		InterfaceName: conf.InterfaceName,
-		ListenPort: conf.ListenPort,
-		Domain: conf.Domain,
-		IP: conf.IP,
-		Network: conf.Network,
-		DNS: conf.DNS,
-		Peers: peerReports,
+		ListenPort:    conf.ListenPort,
+		Domain:        conf.Domain,
+		IP:            conf.IP,
+		Network:       conf.Network,
+		DNS:           conf.DNS,
+		Peers:         peerReports,
 	}
 }
 
@@ -112,6 +114,27 @@ func (report *DsnetReport) MustSave(filename string) {
 	_json, _ := json.MarshalIndent(report, "", "    ")
 	err := ioutil.WriteFile(filename, _json, 0644)
 	check(err)
+}
+
+func MustLoadDsnetReport() *DsnetReport {
+	raw, err := ioutil.ReadFile(CONFIG_FILE)
+
+	if os.IsNotExist(err) {
+		return nil
+	} else if os.IsPermission(err) {
+		ExitFail("%s cannot be accessed. Check read permissions.", CONFIG_FILE)
+	} else {
+		check(err)
+	}
+
+	report := DsnetReport{}
+	err = json.Unmarshal(raw, &report)
+	check(err)
+
+	err = validator.New().Struct(report)
+	check(err)
+
+	return &report
 }
 
 type PeerReport struct {
