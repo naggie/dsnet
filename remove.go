@@ -6,6 +6,7 @@ import (
 
 func Remove() {
 	if len(os.Args) <= 2 {
+		// TODO non-red
 		ExitFail("Hostname argument required: dsnet remove <hostname>")
 	}
 	conf := MustLoadDsnetConfig()

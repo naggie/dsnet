@@ -7,11 +7,16 @@ import (
 )
 
 func Add() {
-	// TODO maybe accept flags to avoid prompt and allow programmatic use
+	if len(os.Args) <= 2 {
+		// TODO non-red
+		ExitFail("Hostname argument required: dsnet add <hostname>")
+	}
+
+	// TODO maybe accept flags to avoid prompt and allow programmatic use?
 	// TODO accept existing pubkey
 	conf := MustLoadDsnetConfig()
 
-	hostname := MustPromptString("Hostname (unique)", true)
+	hostname := os.Args[2]
 	owner := MustPromptString("owner", true)
 	description := MustPromptString("Description", true)
 	//publicKey := MustPromptString("PublicKey (optional)", false)
