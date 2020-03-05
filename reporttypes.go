@@ -12,27 +12,28 @@ import (
 type Status int
 
 const (
+	StatusUnknown = iota
 	// Host has not been loaded into wireguard yet
-	Pending = iota
+	StatusSyncRequired
 	// Host has not transferred anything (not even a keepalive) for 30 seconds
-	Offline
+	StatusOffline
 	// Host has transferred something in the last 30 seconds, keepalive counts
-	Online
+	StatusOnline
 	// Host has not connected for 28 days and may be removed
-	Expired
+	StatusExpired
 )
 
 // TODO pending/unknown
 
 func (s Status) String() string {
 	switch s {
-	case Pending:
-		return "pending"
-	case Offline:
+	case StatusSyncRequired:
+		return "syncrequired"
+	case StatusOffline:
 		return "offline"
-	case Online:
+	case StatusOnline:
 		return "online"
-	case Expired:
+	case StatusExpired:
 		return "expired"
 	default:
 		return "unknown"
@@ -70,12 +71,24 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
 	for i, peer := range conf.Peers {
 		wgPeer, known := wgPeerIndex[peer.PublicKey.Key]
 
+		status := Status(StatusUnknown)
+
+		if !known {
+			status = StatusSyncRequired
+		} else if wgPeer.LastHandshakeTime.After(time.Now().Add(-TIMEOUT)) {
+			status = StatusOnline
+			// TODO same test but with rx byte data from last report (otherwise
+			// peer can fake online status by disabling handshake)
+		} else {
+			status = StatusOffline
+		}
+
 		peerReports[i] = PeerReport{
 			Hostname: peer.Hostname,
 			Owner: peer.Owner,
 			Description: peer.Description,
 			IP: peer.IP,
-			// TODO Status
+			Status: status,
 			Networks: peer.Networks,
 			LastHandshakeTime: wgPeer.LastHandshakeTime,
 			ReceiveBytes: wgPeer.ReceiveBytes,

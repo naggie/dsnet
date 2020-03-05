@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -180,7 +179,7 @@ func (conf DsnetConfig) MustAllocateIP() net.IP {
 func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 	wgPeers := make([]wgtypes.PeerConfig, 0, len(conf.Peers))
 
-	interval := time.Second * KEEPALIVE_SECONDS
+	interval := KEEPALIVE
 
 	for _, peer := range conf.Peers {
 		wgPeers = append(wgPeers, wgtypes.PeerConfig{
