@@ -84,7 +84,7 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 
 		if !known {
 			status = StatusSyncRequired
-		} else if wgPeer.LastHandshakeTime.After(time.Now().Add(-TIMEOUT)) {
+		} else if time.Since(wgPeer.LastHandshakeTime) < TIMEOUT {
 			status = StatusOnline
 			// TODO same test but with rx byte data from last report (otherwise
 			// peer can fake online status by disabling handshake)
