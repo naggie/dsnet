@@ -88,6 +88,8 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 			status = StatusOnline
 			// TODO same test but with rx byte data from last report (otherwise
 			// peer can fake online status by disabling handshake)
+		} else if !wgPeer.LastHandshakeTime.IsZero() && time.Since(wgPeer.LastHandshakeTime) > EXPIRY {
+			status = StatusExpired
 		} else {
 			status = StatusOffline
 		}

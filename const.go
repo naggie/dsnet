@@ -20,5 +20,5 @@ const (
 	TIMEOUT = 50 * time.Second
 
 	// when is a peer considered gone forever? (could remove)
-	EXPIRY_DAYS = 28
+	EXPIRY = 28 * time.Hour * 24
 )
