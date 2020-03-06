@@ -102,6 +102,8 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 			LastHandshakeTime: wgPeer.LastHandshakeTime,
 			ReceiveBytes:      wgPeer.ReceiveBytes,
 			TransmitBytes:     wgPeer.TransmitBytes,
+			ReceiveBytesSI:    BytesToSI(wgPeer.ReceiveBytes),
+			TransmitBytesSI:   BytesToSI(wgPeer.TransmitBytes),
 		}
 	}
 
@@ -161,4 +163,6 @@ type PeerReport struct {
 	LastHandshakeTime time.Time
 	ReceiveBytes      int64
 	TransmitBytes     int64
+	ReceiveBytesSI    string
+	TransmitBytesSI   string
 }
