@@ -65,9 +65,16 @@ type DsnetReport struct {
 func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
 	peerReports := make([]PeerReport, len(conf.Peers))
+	oldPeerReportIndex := make(map[string]PeerReport)
 
 	for _, peer := range dev.Peers {
 		wgPeerIndex[peer.PublicKey] = peer
+	}
+
+	if oldReport != nil {
+		for _, report := range oldReport.Peers {
+			oldPeerReportIndex[report.Hostname] = report
+		}
 	}
 
 	for i, peer := range conf.Peers {
