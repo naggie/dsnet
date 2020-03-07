@@ -3,6 +3,7 @@ package dsnet
 import (
 	"fmt"
 	"os"
+	"time"
 	"text/template"
 )
 
@@ -59,13 +60,14 @@ PresharedKey={{ .Peer.PresharedKey.Key }}
 Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
 #AllowedIPs=0.0.0.0/0
 AllowedIPs={{ .DsnetConfig.Network }}
-PersistentKeepalive=21
+PersistentKeepalive={{ .Keepalive }}
 `
 
 	t := template.Must(template.New("peerConf").Parse(peerConf))
 	err := t.Execute(os.Stdout, map[string]interface{}{
 		"Peer":        peer,
 		"DsnetConfig": conf,
+		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
 	})
 	check(err)
 }
