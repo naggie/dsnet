@@ -43,7 +43,7 @@ func main() {
 }
 
 func help() {
-	fmt.Printf(`dsnet is a simple tool to manage a wireguard VPN.
+	fmt.Printf(`dsnet is a simple tool to manage a centralised wireguard VPN.
 
 Usage: dsnet <cmd>
 
@@ -52,17 +52,10 @@ Available commands:
 	init   : Create %s containing default configuration + new keys without loading. Edit to taste.
 	add    : Add a new peer + sync
 	up     : Create the interface, run pre/post up, sync
-	sync   : Update wireguard configuration from %s after validating
 	report : Generate a JSON status report to the location configured in %s.
 	remove : Remove a peer by hostname provided as argument + sync
 	down   : Destroy the interface, run pre/post down
-
-
-Examples:
-
-
-	dsnet add > dsnet.conf
-
+	sync   : Update wireguard configuration from %s after validating
 
 `, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE, dsnet.CONFIG_FILE)
 }
