@@ -3,8 +3,8 @@ package dsnet
 import (
 	"fmt"
 	"os"
-	"time"
 	"text/template"
+	"time"
 )
 
 func Add() {

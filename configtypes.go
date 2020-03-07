@@ -180,12 +180,12 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 
 	for _, peer := range conf.Peers {
 		wgPeers = append(wgPeers, wgtypes.PeerConfig{
-			PublicKey:                   peer.PublicKey.Key,
-			Remove:                      false,
-			UpdateOnly:                  false,
-			PresharedKey:                &peer.PresharedKey.Key,
-			Endpoint:                    nil,
-			ReplaceAllowedIPs:           true,
+			PublicKey:         peer.PublicKey.Key,
+			Remove:            false,
+			UpdateOnly:        false,
+			PresharedKey:      &peer.PresharedKey.Key,
+			Endpoint:          nil,
+			ReplaceAllowedIPs: true,
 			AllowedIPs: []net.IPNet{
 				net.IPNet{
 					IP:   peer.IP,

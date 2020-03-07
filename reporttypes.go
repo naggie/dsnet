@@ -57,15 +57,18 @@ type DsnetReport struct {
 	IP     net.IP
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
-	Network JSONIPNet
-	DNS     net.IP
-	Peers   []PeerReport
+	Network     JSONIPNet
+	DNS         net.IP
+	Peers       []PeerReport
+	PeersOnline int
+	PeersTotal  int
 }
 
 func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
 	peerReports := make([]PeerReport, len(conf.Peers))
 	oldPeerReportIndex := make(map[string]PeerReport)
+	peersOnline := 0
 
 	for _, peer := range dev.Peers {
 		wgPeerIndex[peer.PublicKey] = peer
@@ -86,6 +89,7 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 			status = StatusSyncRequired
 		} else if time.Since(wgPeer.LastHandshakeTime) < TIMEOUT {
 			status = StatusOnline
+			peersOnline += 1
 			// TODO same test but with rx byte data from last report (otherwise
 			// peer can fake online status by disabling handshake)
 		} else if !wgPeer.LastHandshakeTime.IsZero() && time.Since(wgPeer.LastHandshakeTime) > EXPIRY {
@@ -118,6 +122,8 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 		Network:       conf.Network,
 		DNS:           conf.DNS,
 		Peers:         peerReports,
+		PeersOnline:   peersOnline,
+		PeersTotal:    len(peerReports),
 	}
 }
 

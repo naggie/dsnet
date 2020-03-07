@@ -37,14 +37,14 @@ func ConfigureDevice(conf *DsnetConfig) {
 		if !knownKeys[peer.PublicKey] {
 			peers = append(peers, wgtypes.PeerConfig{
 				PublicKey: peer.PublicKey,
-				Remove: true,
+				Remove:    true,
 			})
 		}
 	}
 
 	wgConfig := wgtypes.Config{
-		PrivateKey:   &conf.PrivateKey.Key,
-		ListenPort:   &conf.ListenPort,
+		PrivateKey: &conf.PrivateKey.Key,
+		ListenPort: &conf.ListenPort,
 		// ReplacePeers with the same peers results in those peers losing
 		// connection, so it's not possible to do declarative configuration
 		// idempotently with ReplacePeers like I had assumed. Instead, peers
@@ -53,7 +53,6 @@ func ConfigureDevice(conf *DsnetConfig) {
 		ReplacePeers: false,
 		Peers:        peers,
 	}
-
 
 	err = wg.ConfigureDevice(conf.InterfaceName, wgConfig)
 
