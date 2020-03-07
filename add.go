@@ -58,7 +58,6 @@ DNS = {{ .DsnetConfig.DNS }}
 PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}
 PresharedKey={{ .Peer.PresharedKey.Key }}
 Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
-#AllowedIPs=0.0.0.0/0
 AllowedIPs={{ .DsnetConfig.Network }}
 PersistentKeepalive={{ .Keepalive }}
 `
