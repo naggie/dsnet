@@ -178,8 +178,6 @@ func (conf DsnetConfig) MustAllocateIP() net.IP {
 func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 	wgPeers := make([]wgtypes.PeerConfig, 0, len(conf.Peers))
 
-	interval := KEEPALIVE
-
 	for _, peer := range conf.Peers {
 		wgPeers = append(wgPeers, wgtypes.PeerConfig{
 			PublicKey:                   peer.PublicKey.Key,
@@ -187,7 +185,6 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 			UpdateOnly:                  false,
 			PresharedKey:                &peer.PresharedKey.Key,
 			Endpoint:                    nil,
-			PersistentKeepaliveInterval: &interval,
 			ReplaceAllowedIPs:           true,
 			AllowedIPs: []net.IPNet{
 				net.IPNet{
