@@ -45,6 +45,8 @@ type DsnetConfig struct {
 	ReportFile string       `validate:"required"`
 	PrivateKey JSONKey      `validate:"required,len=44"`
 	Peers      []PeerConfig `validate:"dive"`
+	// extra networks available, will be added to AllowedIPs
+	Networks []JSONIPNet `validate:"required"`
 }
 
 func MustLoadDsnetConfig() *DsnetConfig {

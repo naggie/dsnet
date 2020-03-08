@@ -27,6 +27,7 @@ func Init() {
 		ReportFile:    DEFAULT_REPORT_FILE,
 		ExternalIP:    getExternalIP(),
 		InterfaceName: DEFAULT_INTERFACE_NAME,
+		Networks:      []JSONIPNet{},
 	}
 
 	IP := conf.MustAllocateIP()

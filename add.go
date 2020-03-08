@@ -3,6 +3,7 @@ package dsnet
 import (
 	"fmt"
 	"os"
+	"strings"
 	"text/template"
 	"time"
 )
@@ -49,6 +50,13 @@ func Add() {
 }
 
 func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
+	allowedIPsStr := make([]string, len(conf.Networks)+1)
+	allowedIPsStr[0] = conf.Network.String()
+
+	for i, net := range conf.Networks {
+		allowedIPsStr[i+1] = net.String()
+	}
+
 	const peerConf = `[Interface]
 Address = {{ .Peer.IP }}
 PrivateKey={{ .Peer.PrivateKey.Key }}
@@ -58,7 +66,7 @@ DNS = {{ .DsnetConfig.DNS }}
 PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}
 PresharedKey={{ .Peer.PresharedKey.Key }}
 Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
-AllowedIPs={{ .DsnetConfig.Network }}
+AllowedIPs={{ .AllowedIPs }}
 PersistentKeepalive={{ .Keepalive }}
 `
 
@@ -67,6 +75,7 @@ PersistentKeepalive={{ .Keepalive }}
 		"Peer":        peer,
 		"DsnetConfig": conf,
 		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
+		"AllowedIPs":  strings.Join(allowedIPsStr, ","),
 	})
 	check(err)
 }
