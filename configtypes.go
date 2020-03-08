@@ -179,11 +179,15 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 	wgPeers := make([]wgtypes.PeerConfig, 0, len(conf.Peers))
 
 	for _, peer := range conf.Peers {
+		// create a new PSK in memory to avoid passing the same value by
+		// pointer to each peer (d'oh)
+		presharedKey := peer.PresharedKey.Key
+
 		wgPeers = append(wgPeers, wgtypes.PeerConfig{
 			PublicKey:         peer.PublicKey.Key,
 			Remove:            false,
 			UpdateOnly:        false,
-			PresharedKey:      &peer.PresharedKey.Key,
+			PresharedKey:      &presharedKey,
 			Endpoint:          nil,
 			ReplaceAllowedIPs: true,
 			AllowedIPs: []net.IPNet{
