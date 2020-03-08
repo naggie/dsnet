@@ -32,5 +32,6 @@ TODO after first release:
 
   * Hooks for adding routes/ IPtables forwarding rules
   * Route entire internet option
-  * Support for additional subnets in peer config (with routes)
+  * Support for additional subnets in peer config (with routes) in separate networks section in report
   * Peer endpoint support
+  * Decide what to do with assumed default DNS server
