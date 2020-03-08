@@ -19,14 +19,14 @@ type PeerConfig struct {
 	// Description of what the host is and/or does
 	Description string `validate:"required,gte=1,lte=255"`
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
-	IP           net.IP  `validate:"required`
-	PublicKey    JSONKey `validate:"required,len=44"`
-	PrivateKey   JSONKey `json:"-"` // omitted from config!
-	PresharedKey JSONKey `validate:"required,len=44"`
+	IP net.IP `validate:"required`
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
 	// TODO support routing additional networks (AllowedIPs)
-	Networks []JSONIPNet `validate:"required"`
+	Networks     []JSONIPNet `validate:"required"`
+	PublicKey    JSONKey     `validate:"required,len=44"`
+	PrivateKey   JSONKey     `json:"-"` // omitted from config!
+	PresharedKey JSONKey     `validate:"required,len=44"`
 }
 
 type DsnetConfig struct {
@@ -41,12 +41,12 @@ type DsnetConfig struct {
 	Network JSONIPNet `validate:"required"`
 	IP      net.IP    `validate:"required"`
 	DNS     net.IP    `validate:"required"`
+	// extra networks available, will be added to AllowedIPs
+	Networks []JSONIPNet `validate:"required"`
 	// TODO Default subnets to route via VPN
 	ReportFile string       `validate:"required"`
 	PrivateKey JSONKey      `validate:"required,len=44"`
 	Peers      []PeerConfig `validate:"dive"`
-	// extra networks available, will be added to AllowedIPs
-	Networks []JSONIPNet `validate:"required"`
 }
 
 func MustLoadDsnetConfig() *DsnetConfig {
