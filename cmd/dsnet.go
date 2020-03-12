@@ -1,8 +1,9 @@
 package main
 
 import (
-	"os"
 	"fmt"
+	"os"
+
 	"github.com/naggie/dsnet"
 )
 

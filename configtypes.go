@@ -185,6 +185,17 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 		// pointer to each peer (d'oh)
 		presharedKey := peer.PresharedKey.Key
 
+		// AllowedIPs = private IP + defined networks
+		allowedIPs := make([]net.IPNet, len(peer.Networks)+1)
+		allowedIPs[0] = net.IPNet{
+			IP:   peer.IP,
+			Mask: net.IPMask{255, 255, 255, 255},
+		}
+
+		for i, net := range peer.Networks {
+			allowedIPs[i+1] = net.IPNet
+		}
+
 		wgPeers = append(wgPeers, wgtypes.PeerConfig{
 			PublicKey:         peer.PublicKey.Key,
 			Remove:            false,
@@ -192,12 +203,7 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 			PresharedKey:      &presharedKey,
 			Endpoint:          nil,
 			ReplaceAllowedIPs: true,
-			AllowedIPs: []net.IPNet{
-				net.IPNet{
-					IP:   peer.IP,
-					Mask: net.IPMask{255, 255, 255, 255},
-				},
-			},
+			AllowedIPs:        allowedIPs,
 		})
 	}
 
