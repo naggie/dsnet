@@ -98,11 +98,17 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 			status = StatusOffline
 		}
 
+		externalIP := net.IP{}
+		if wgPeer.Endpoint != nil {
+			externalIP = wgPeer.Endpoint.IP
+		}
+
 		peerReports[i] = PeerReport{
 			Hostname:          peer.Hostname,
 			Owner:             peer.Owner,
 			Description:       peer.Description,
 			IP:                peer.IP,
+			ExternalIP:        externalIP,
 			Status:            status,
 			Networks:          peer.Networks,
 			LastHandshakeTime: wgPeer.LastHandshakeTime,
@@ -162,8 +168,10 @@ type PeerReport struct {
 	// Description of what the host is and/or does
 	Description string
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
-	IP     net.IP
-	Status Status
+	IP net.IP
+	// Last known external IP
+	ExternalIP net.IP
+	Status     Status
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
 	// TODO support routing additional networks (AllowedIPs)
