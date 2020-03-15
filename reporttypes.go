@@ -59,9 +59,9 @@ type DsnetReport struct {
 	// Network is chosen randomly when not specified
 	Network     JSONIPNet
 	DNS         net.IP
-	Peers       []PeerReport
 	PeersOnline int
 	PeersTotal  int
+	Peers       []PeerReport
 }
 
 func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
