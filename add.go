@@ -60,7 +60,9 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 	const peerConf = `[Interface]
 Address = {{ .Peer.IP }}
 PrivateKey={{ .Peer.PrivateKey.Key }}
+{{- if .DsnetConfig.DNS }}
 DNS = {{ .DsnetConfig.DNS }}
+{{ end }}
 
 [Peer]
 PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}

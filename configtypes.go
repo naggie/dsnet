@@ -40,7 +40,7 @@ type DsnetConfig struct {
 	// Network is chosen randomly when not specified
 	Network JSONIPNet `validate:"required"`
 	IP      net.IP    `validate:"required"`
-	DNS     net.IP    `validate:"required"`
+	DNS     net.IP
 	// extra networks available, will be added to AllowedIPs
 	Networks []JSONIPNet `validate:"required"`
 	// TODO Default subnets to route via VPN

@@ -32,7 +32,8 @@ func Init() {
 
 	IP := conf.MustAllocateIP()
 	conf.IP = IP
-	conf.DNS = IP
+	// DNS not set by default
+	//conf.DNS = IP
 
 	conf.MustSave()
 
