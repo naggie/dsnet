@@ -36,6 +36,7 @@ func Add() {
 		Owner:        owner,
 		Hostname:     hostname,
 		Description:  description,
+		Added:        time.Now(),
 		PublicKey:    publicKey,
 		PrivateKey:   privateKey, // omitted from server config JSON!
 		PresharedKey: GenerateJSONKey(),

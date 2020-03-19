@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -20,6 +21,7 @@ type PeerConfig struct {
 	Description string `validate:"required,gte=1,lte=255"`
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
 	IP net.IP `validate:"required`
+	Added time.Time `validate:"required"`
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
 	// TODO support routing additional networks (AllowedIPs)

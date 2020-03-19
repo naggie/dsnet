@@ -107,6 +107,7 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 			Hostname:          peer.Hostname,
 			Owner:             peer.Owner,
 			Description:       peer.Description,
+			Added:             peer.Added,
 			IP:                peer.IP,
 			ExternalIP:        externalIP,
 			Status:            status,
@@ -167,6 +168,8 @@ type PeerReport struct {
 	Owner string
 	// Description of what the host is and/or does
 	Description string
+	// date peer was added to dsnet config
+	Added time.Time
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
 	IP net.IP
 	// Last known external IP
