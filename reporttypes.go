@@ -14,31 +14,28 @@ import (
 type Status int
 
 const (
-	StatusUnknown = iota
 	// Host has not been loaded into wireguard yet
-	StatusSyncRequired
+	StatusUnknown = iota
 	// No handshake in 3 minutes
 	StatusOffline
 	// Handshake in 3 minutes
 	StatusOnline
 	// Host has not connected for 28 days and may be removed
-	StatusExpired
+	StatusDormant
 )
-
-// TODO pending/unknown
 
 func (s Status) String() string {
 	switch s {
-	case StatusSyncRequired:
-		return "syncrequired"
+	case StatusUnknown:
+		return "unknown"
 	case StatusOffline:
 		return "offline"
 	case StatusOnline:
 		return "online"
-	case StatusExpired:
-		return "expired"
+	case StatusDormant:
+		return "dormant"
 	default:
-		return "unknown"
+		return "";
 	}
 }
 
@@ -86,14 +83,12 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 		status := Status(StatusUnknown)
 
 		if !known {
-			status = StatusSyncRequired
+			status = StatusUnknown
 		} else if time.Since(wgPeer.LastHandshakeTime) < TIMEOUT {
 			status = StatusOnline
 			peersOnline += 1
-			// TODO same test but with rx byte data from last report (otherwise
-			// peer can fake online status by disabling handshake)
 		} else if !wgPeer.LastHandshakeTime.IsZero() && time.Since(wgPeer.LastHandshakeTime) > EXPIRY {
-			status = StatusExpired
+			status = StatusDormant
 		} else {
 			status = StatusOffline
 		}
