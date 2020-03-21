@@ -11,39 +11,6 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-type Status int
-
-const (
-	// Host has not been loaded into wireguard yet
-	StatusUnknown = iota
-	// No handshake in 3 minutes
-	StatusOffline
-	// Handshake in 3 minutes
-	StatusOnline
-	// Host has not connected for 28 days and may be removed
-	StatusDormant
-)
-
-func (s Status) String() string {
-	switch s {
-	case StatusUnknown:
-		return "unknown"
-	case StatusOffline:
-		return "offline"
-	case StatusOnline:
-		return "online"
-	case StatusDormant:
-		return "dormant"
-	default:
-		return "";
-	}
-}
-
-// note unmarshal not required
-func (s Status) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + s.String() + "\""), nil
-}
-
 type DsnetReport struct {
 	ExternalIP    net.IP
 	InterfaceName string
@@ -80,17 +47,17 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 	for i, peer := range conf.Peers {
 		wgPeer, known := wgPeerIndex[peer.PublicKey.Key]
 
-		status := Status(StatusUnknown)
-
 		if !known {
-			status = StatusUnknown
-		} else if time.Since(wgPeer.LastHandshakeTime) < TIMEOUT {
-			status = StatusOnline
+			// dangling peer, sync will remove. Dangling peers aren't such a
+			// problem now that add/remove performs a sync too.
+			continue
+		}
+
+		online := time.Since(wgPeer.LastHandshakeTime) < TIMEOUT
+		dormant := !wgPeer.LastHandshakeTime.IsZero() && time.Since(wgPeer.LastHandshakeTime) > EXPIRY
+
+		if online {
 			peersOnline += 1
-		} else if !wgPeer.LastHandshakeTime.IsZero() && time.Since(wgPeer.LastHandshakeTime) > EXPIRY {
-			status = StatusDormant
-		} else {
-			status = StatusOffline
 		}
 
 		externalIP := net.IP{}
@@ -100,12 +67,13 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 
 		peerReports[i] = PeerReport{
 			Hostname:          peer.Hostname,
+			Online:            online,
+			Dormant:           dormant,
 			Owner:             peer.Owner,
 			Description:       peer.Description,
 			Added:             peer.Added,
 			IP:                peer.IP,
 			ExternalIP:        externalIP,
-			Status:            status,
 			Networks:          peer.Networks,
 			LastHandshakeTime: wgPeer.LastHandshakeTime,
 			ReceiveBytes:      wgPeer.ReceiveBytes,
@@ -163,13 +131,16 @@ type PeerReport struct {
 	Owner string
 	// Description of what the host is and/or does
 	Description string
+	// Has a handshake occurred in the last 3 mins?
+	Online bool
+	// No handshake for 28 days
+	Dormant bool
 	// date peer was added to dsnet config
 	Added time.Time
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
 	IP net.IP
 	// Last known external IP
 	ExternalIP net.IP
-	Status     Status
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
 	// TODO support routing additional networks (AllowedIPs)
