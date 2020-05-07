@@ -23,8 +23,8 @@ Quick start (AMD64 linux) -- install wireguard, then, after making sure `/usr/lo
     sudo dsnet init
     sudo dsnet up
     # edit /etc/dsnetconfig.json to taste
-	dsnet add banana > dsnet-banana.conf
-	dsnet add apple > dsnet-apple.conf
+	sudo dsnet add banana > dsnet-banana.conf
+	sudo dsnet add apple > dsnet-apple.conf
 
 Copy the generated configuration file to your device and connect!
 
