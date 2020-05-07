@@ -24,7 +24,14 @@ Quick start -- install wireguard and dsnet, then:
 
 Copy the generated configuration file to your device and connect!
 
-To send configurations, ffsend (with separately transferred password) or a local QR code generator may be used.
+To send configurations, ffsend (with separately transferred password) or a
+local QR code generator may be used.
+
+The peer private key is generated on the server, which is technically not as
+secure as generating it on the client peer and then providing the server the
+public key; there is provision to specify a public key in the code when adding
+a peer to avoid the server generating the private key. The feature will be
+added when requested.
 
 # Configuration overview
 
