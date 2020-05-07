@@ -24,3 +24,10 @@ const (
 	// when is a peer considered gone forever? (could remove)
 	EXPIRY = 28 * time.Hour * 24
 )
+
+var (
+	// populated with LDFLAGS, see do-release.sh
+	VERSION = "unknown"
+	GIT_COMMIT = "unknown"
+	BUILD_DATE = "unknown"
+)
