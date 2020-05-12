@@ -136,7 +136,8 @@ consumed by a web service or DNS integration script, for instance.
 The report contains no sensitive information. At one site I use it together
 with [hugo](https://gohugo.io/)
 [shortcodes](https://gohugo.io/templates/shortcode-templates/) to generate a
-network overview page.
+network overview page. The shortcode file is included in this repository under
+`etc/`.
 
         "PrivateKey": "uC+xz3v1mfjWBHepwiCgAmPebZcY+EdhaHAvqX2r7U8=",
 

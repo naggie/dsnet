@@ -1,0 +1,54 @@
+<!-- This hugo shortcode can be used to render a table from /var/lib/dsnetreport.json if it is copied to the data/ directory -->
+{{ $report := $.Site.Data.dsnetreport }}
+
+{{ with $report }}
+<table class="wide">
+    <caption>
+        {{ $report.PeersOnline }} of {{ $report.PeersTotal }} devices connected
+    </caption>
+    <thead>
+        <tr>
+            <th>Hostname</th>
+            <th>Status</th>
+            <th>IP</th>
+            <th>Owner</th>
+            <th>Description</th>
+            <th title="Data send from peer to server">Up</th>
+            <th title="Data sent from server to peer">Down</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range $report.Peers }}
+        {{ if .Dormant }}
+        <tr class="dormant">
+        {{ else }}
+        <tr>
+        {{ end }}
+            <td title="{{ .Hostname }}.{{ $report.Domain }}">{{ .Hostname }}</td>
+
+            {{ if .Online }}
+            <td class="indicator-green" title="Handshake in last 3 minutes" nowrap>online</td>
+
+            {{ else }}
+            <td class="indicator-null" title="No handshake since since {{ dateFormat "2 Jan 2006 15:04" .LastHandshakeTime }}" nowrap>offline</td>
+
+            {{ end }}
+
+
+            <td>{{ .IP }}</td>
+            <td>{{ .Owner }}</td>
+            <td>{{ .Description }}</td>
+            <td>{{ .ReceiveBytesSI }}</td>
+            <td>{{ .TransmitBytesSI }}</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+{{ else }}
+<!-- Could be an error callout -->
+<pre>
+    <code>
+        /etc/dsnetreport.json not found or empty
+    </code>
+</pre>
+{{ end }}
