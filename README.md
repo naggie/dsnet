@@ -3,6 +3,10 @@ Think wg-quick but quicker:
 
 ![dsnet add](https://raw.githubusercontent.com/naggie/dsnet/master/etc/add.png)
 
+The peer is now added to the wireguard server. Simple as that!
+
+![wg](https://raw.githubusercontent.com/naggie/dsnet/master/etc/wg.png)
+
 It works on AMD64 based linux and also ARMv5.
 
     Usage: dsnet <cmd>
