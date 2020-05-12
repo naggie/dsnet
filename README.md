@@ -1,5 +1,7 @@
 dsnet is a simple configuration tool to manage a centralised wireguard VPN.
-Think wg-quick but quicker.
+Think wg-quick but quicker:
+
+![dsnet add](https://raw.githubusercontent.com/naggie/dsnet/master/etc/add.png)
 
 It works on AMD64 based linux and also ARMv5.
 
