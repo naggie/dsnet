@@ -1,11 +1,14 @@
 dsnet is a simple configuration tool to manage a centralised wireguard VPN.
-Think wg-quick but quicker:
+Think wg-quick but quicker. From scratch:
 
-![dsnet add](https://raw.githubusercontent.com/naggie/dsnet/master/etc/add.png)
+![dsnet add](https://raw.githubusercontent.com/naggie/dsnet/master/etc/init+add.png)
 
-The peer is now added to the wireguard server. Simple as that!
+The server peer is listening, and a client peer config has been generated and
+added to the server peer:
 
-![wg](https://raw.githubusercontent.com/naggie/dsnet/master/etc/wg.png)
+![wg](https://raw.githubusercontent.com/naggie/dsnet/master/etc/wg2.png)
+
+More client peers can be added with `dsnet add`. They can connect immediately after!
 
 It works on AMD64 based linux and also ARMv5.
 
