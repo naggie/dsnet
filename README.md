@@ -273,3 +273,9 @@ I'm tracking development elsewhere using
 [dstask](https://github.com/naggie/dstask). I keep public initiated issues on
 github though, and will probably migrate issues over if this gains use outside
 of what I'm doing.
+
+> Client private keys are generated on the server. Can I avoid this?
+
+Allowing generation of the pub/priv keypair on the client is not yet supported,
+but will be soon as provision exists within the code base. Note that whilst
+client peer private keys are generated on the server, they are never stored.
