@@ -30,8 +30,8 @@ Quick start (AMD64 linux) -- install wireguard, then, after making sure `/usr/lo
     sudo wget https://github.com/naggie/dsnet/releases/download/v0.1/dsnet-linux-amd64 -O /usr/local/bin/dsnet
     sudo chmod +x /usr/local/bin/dsnet
     sudo dsnet init
-    sudo dsnet up
     # edit /etc/dsnetconfig.json to taste
+    sudo dsnet up
 	sudo dsnet add banana > dsnet-banana.conf
 	sudo dsnet add apple > dsnet-apple.conf
 
