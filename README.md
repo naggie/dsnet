@@ -279,3 +279,14 @@ of what I'm doing.
 Allowing generation of the pub/priv keypair on the client is not yet supported,
 but will be soon as provision exists within the code base. Note that whilst
 client peer private keys are generated on the server, they are never stored.
+
+
+> How do I get dsnet to bring the (server) interface up on startup?
+
+Assuming you're running a systemd powered linux distribution (most of them are):
+
+1. Copy
+   [etc/dsnet.service](https://github.com/naggie/dsnet/blob/master/etc/dsnet.service)
+   to `/etc/systemd/system/`
+2. Run `sudo systemctl daemon-reload` to get systemd to see it
+3. Then run `sudo systemctl enable dsnet` to enable it at boot

@@ -1,0 +1,13 @@
+# Copy this service file to /etc/systemd/system/ to start dsnet on boot,
+# assuming dsnet is installed to /usr/local/bin
+[Unit]
+Description=dsnet
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/dsnet up
+
+[Install]
+WantedBy=default.target
