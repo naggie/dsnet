@@ -1,5 +1,7 @@
 <?php
 
+// Thanks to github.com/Write. See https://github.com/naggie/dsnet/issues/4#issuecomment-632928158 for background.
+
 /* Look for dsnetreport.json in current directory */
 /* Change "ReportFile": "/var/lib/dsnetreport.json" accordingly */
 /* Also add a crontab to run "dsnet report" to refresh the dsnetreport file */
