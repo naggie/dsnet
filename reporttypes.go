@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/vishvananda/netlink"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -21,11 +22,15 @@ type DsnetReport struct {
 	IP     net.IP
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
-	Network     JSONIPNet
-	DNS         net.IP
-	PeersOnline int
-	PeersTotal  int
-	Peers       []PeerReport
+	Network         JSONIPNet
+	DNS             net.IP
+	PeersOnline     int
+	PeersTotal      int
+	Peers           []PeerReport
+	ReceiveBytes    uint64
+	TransmitBytes   uint64
+	ReceiveBytesSI  string
+	TransmitBytesSI string
 }
 
 func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
@@ -33,6 +38,11 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 	peerReports := make([]PeerReport, len(conf.Peers))
 	oldPeerReportIndex := make(map[string]PeerReport)
 	peersOnline := 0
+
+	linkDev, err := netlink.LinkByName(conf.InterfaceName)
+	check(err)
+
+	stats := linkDev.Attrs().Statistics
 
 	for _, peer := range dev.Peers {
 		wgPeerIndex[peer.PublicKey] = peer
@@ -57,13 +67,16 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 		dormant := !wgPeer.LastHandshakeTime.IsZero() && time.Since(wgPeer.LastHandshakeTime) > EXPIRY
 
 		if online {
-			peersOnline += 1
+			peersOnline++
 		}
 
 		externalIP := net.IP{}
 		if wgPeer.Endpoint != nil {
 			externalIP = wgPeer.Endpoint.IP
 		}
+
+		uReceiveBytes := uint64(wgPeer.ReceiveBytes)
+		uTransmitBytes := uint64(wgPeer.TransmitBytes)
 
 		peerReports[i] = PeerReport{
 			Hostname:          peer.Hostname,
@@ -76,24 +89,28 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 			ExternalIP:        externalIP,
 			Networks:          peer.Networks,
 			LastHandshakeTime: wgPeer.LastHandshakeTime,
-			ReceiveBytes:      wgPeer.ReceiveBytes,
-			TransmitBytes:     wgPeer.TransmitBytes,
-			ReceiveBytesSI:    BytesToSI(wgPeer.ReceiveBytes),
-			TransmitBytesSI:   BytesToSI(wgPeer.TransmitBytes),
+			ReceiveBytes:      uReceiveBytes,
+			TransmitBytes:     uTransmitBytes,
+			ReceiveBytesSI:    BytesToSI(uReceiveBytes),
+			TransmitBytesSI:   BytesToSI(uTransmitBytes),
 		}
 	}
 
 	return DsnetReport{
-		ExternalIP:    conf.ExternalIP,
-		InterfaceName: conf.InterfaceName,
-		ListenPort:    conf.ListenPort,
-		Domain:        conf.Domain,
-		IP:            conf.IP,
-		Network:       conf.Network,
-		DNS:           conf.DNS,
-		Peers:         peerReports,
-		PeersOnline:   peersOnline,
-		PeersTotal:    len(peerReports),
+		ExternalIP:      conf.ExternalIP,
+		InterfaceName:   conf.InterfaceName,
+		ListenPort:      conf.ListenPort,
+		Domain:          conf.Domain,
+		IP:              conf.IP,
+		Network:         conf.Network,
+		DNS:             conf.DNS,
+		Peers:           peerReports,
+		PeersOnline:     peersOnline,
+		PeersTotal:      len(peerReports),
+		ReceiveBytes:    stats.RxBytes,
+		TransmitBytes:   stats.TxBytes,
+		ReceiveBytesSI:  BytesToSI(stats.RxBytes),
+		TransmitBytesSI: BytesToSI(stats.TxBytes),
 	}
 }
 
@@ -146,8 +163,8 @@ type PeerReport struct {
 	// TODO support routing additional networks (AllowedIPs)
 	Networks          []JSONIPNet
 	LastHandshakeTime time.Time
-	ReceiveBytes      int64
-	TransmitBytes     int64
+	ReceiveBytes      uint64
+	TransmitBytes     uint64
 	ReceiveBytesSI    string
 	TransmitBytesSI   string
 }
