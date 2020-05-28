@@ -49,7 +49,7 @@ func ConfirmOrAbort(format string, a ...interface{}) {
 	}
 }
 
-func BytesToSI(b int64) string {
+func BytesToSI(b uint64) string {
 	const unit = 1000
 	if b < unit {
 		return fmt.Sprintf("%d B", b)
