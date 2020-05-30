@@ -31,6 +31,8 @@ type DsnetReport struct {
 	TransmitBytes   uint64
 	ReceiveBytesSI  string
 	TransmitBytesSI string
+	// when the report was made
+	Timestamp time.Time
 }
 
 func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
@@ -111,6 +113,7 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 		TransmitBytes:   stats.TxBytes,
 		ReceiveBytesSI:  BytesToSI(stats.RxBytes),
 		TransmitBytesSI: BytesToSI(stats.TxBytes),
+		Timestamp:       time.Now(),
 	}
 }
 
