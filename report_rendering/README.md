@@ -11,4 +11,9 @@ do a PR.
 
 Most look something like this:
 
+## Hugo shortcode template
 ![dsnet report table](https://raw.githubusercontent.com/naggie/dsnet/master/etc/report.png)
+
+# PHP template
+![dsnet report table](https://user-images.githubusercontent.com/541722/82712747-0cf42180-9c89-11ea-92fa-0974a34c5c79.jpg)
+![dsnet report table](https://user-images.githubusercontent.com/541722/82712745-0a91c780-9c89-11ea-91a8-828e0be38951.jpg)
