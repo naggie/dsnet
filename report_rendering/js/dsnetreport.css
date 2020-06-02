@@ -1,0 +1,132 @@
+:root {
+  --bg: #031010;
+  --bg-highlight: #202525;
+  --text: #aaaaaa;
+  --text-muted: #666666;
+  --text-faint: #444444;
+  --heading: #cccccc;
+}
+
+[data-theme=light] {
+  --bg: #ffffff;
+  --bg-highlight: #f5f5f5;
+  --text: #444444;
+  --text-muted: #777777;
+  --text-faint: #999999;
+  --heading: #111111;
+}
+
+html {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  background: var(--bg)
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  margin: var(--nav-height)0 0;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 20px;
+  min-height: 100%;
+  overscroll-behavior: none;
+  overflow-x: hidden
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 400;
+  color: var(--heading)
+}
+
+h1 {
+  margin-top: -20px;
+  padding-top: 80px
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 80px 0 30px;
+  width: 100%
+}
+
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 80px 0;
+  user-select: text
+}
+
+table th,
+table td {
+  text-align: left;
+  padding: 10px 5px;
+  padding: .6em
+}
+
+table th {
+  border-bottom: 1px solid var(--heading);
+  color: var(--heading)
+}
+
+table tr.dormant {
+  opacity: .3
+}
+
+table tr:nth-child(even) {
+  background: var(--bg-highlight)
+}
+
+table td.indicator-green::before,
+table td.indicator-amber::before,
+table td.indicator-red::before,
+table td.indicator-null::before {
+  display: inline-block;
+  content: "";
+  margin-right: .4em;
+  width: .5em;
+  height: .5em;
+  border: .05em solid transparent
+}
+
+table td.indicator-green::before {
+  background: #0f0;
+  box-shadow: 0 0 .5em rgba(100, 255, 100, .5)
+}
+
+table td.indicator-amber::before {
+  background: orange
+}
+
+table td.indicator-red::before {
+  background: red
+}
+
+table td.indicator-null::before {
+  background: #000;
+  border: .05em solid var(--text-faint)
+}
+
+@media only screen and (max-width:1200px) {
+  aside {
+    display: none
+  }
+
+  aside~main {
+    transform: translateX(0)
+  }
+}
+
+@media(max-width:900px) {
+  table * {
+    font-size: 2.2vw
+  }
+
+  pre * {
+    font-size: 2.5vw
+  }
+}
