@@ -20,5 +20,5 @@ Most look something like this:
 * `js/dsnetreport.html`: Basic HTML with a `div` for our table, nothing fancy.
 * `js/dsnetreport.js`: The brains of the operation. Fetches `dsnetreport.json` and turns it into a HTML table.
 * `js/dsnetreport.css`: The beauty of the operation. Makes the table look rather dapper.
-![dsnet report table](https://user-images.githubusercontent.com/1956773/83567062-e8b20380-a518-11ea-98b2-40176c73a1da.png)
+![dsnet report table](https://user-images.githubusercontent.com/1956773/83570601-439a2980-a51e-11ea-874d-fea32f05abb4.png)
 
