@@ -17,8 +17,8 @@ Most look something like this:
 ![dsnet report table](https://user-images.githubusercontent.com/541722/82712745-0a91c780-9c89-11ea-91a8-828e0be38951.jpg)
 
 # Clientside JavaScript
-* `js/dsnetreport.html`: Basic HTML with a `div` for our table, nothing fancy.
-* `js/dsnetreport.js`: The brains of the operation. Fetches `dsnetreport.json` and turns it into a HTML table.
-* `js/dsnetreport.css`: The beauty of the operation. Makes the table look rather dapper.
+* `js/dsnetreport.html`: Basic HTML with a `div` to place the table in.
+* `js/dsnetreport.js`: Fetches `dsnetreport.json` and renders table.
+* `js/dsnetreport.css`: CSS to render the table as per screenshot.
 ![dsnet report table](https://user-images.githubusercontent.com/1956773/83570601-439a2980-a51e-11ea-874d-fea32f05abb4.png)
 
