@@ -1,0 +1,72 @@
+:root {
+  --bg: #030303;
+  --bg-highlight: #202020;
+  --text: #aaaaaa;
+  --text-muted: #666666;
+  --text-faint: #444444;
+  --heading: #cccccc;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 80px 0;
+  user-select: text
+}
+
+table th,
+table td {
+  text-align: left;
+  padding: 10px 5px;
+  padding: .6em
+}
+
+table th {
+  border-bottom: 1px solid var(--heading);
+  color: var(--heading)
+}
+
+table tr.dormant {
+  opacity: .3
+}
+
+table tr:nth-child(even) {
+  background: var(--bg-highlight)
+}
+
+table td.indicator-green::before,
+table td.indicator-amber::before,
+table td.indicator-red::before,
+table td.indicator-null::before {
+  display: inline-block;
+  content: "";
+  margin-right: .4em;
+  width: .5em;
+  height: .5em;
+  border: .05em solid transparent
+}
+
+table td.indicator-green::before {
+  background: #0f0;
+  box-shadow: 0 0 .5em rgba(100, 255, 100, .5)
+}
+
+table td.indicator-amber::before {
+  background: orange
+}
+
+table td.indicator-red::before {
+  background: red
+}
+
+table td.indicator-null::before {
+  background: #000;
+  border: .05em solid var(--text-faint)
+}
