@@ -1,5 +1,9 @@
 // Simple javascript to build a HTML table from 'dsnetreport.json'
 
+// URL for dsnetreport.json
+var dsnetreport_url = "dsnetreport.json"
+// Update interval in seconds
+var update_interval = 10
 // Declare our headings
 var header_list = ["Hostname", "Status", "IP", "Owner", "Description", "Up", "Down"];
 
@@ -20,7 +24,7 @@ function build_table() {
   var devices_online = document.createElement("em")
 
   // By default, this looks for dsnetreport.json in the current directory
-  fetch("dsnetreport.json")
+  fetch(dsnetreport_url, {cache: "no-cache"})
     .then(response => response.json())
     .then(data => {
       // Create our summary statement
@@ -96,7 +100,53 @@ function build_table() {
   report.appendChild(devices_online);
 }
 
+// Currently only updates online status and transfer stats
+function update_table() {
+  fetch(dsnetreport_url, {cache: "no-cache"})
+    .then(response => response.json())
+    .then(data => {
+      data.Peers.forEach(function(peer, index) {
+        var peer_row = document.getElementById("peer-"+peer.Hostname)
+
+        // Update status
+        var status = peer_row.getElementsByClassName('status')[0]
+        status.classList.remove("indicator-green", "indicator-null")
+        // Set indicators based on online status
+        if (peer.Online) {
+          status.title = "Handshake in last 3 minutes";
+          status.classList.add("indicator-green")
+          status.innerHTML = "online";
+        } else {
+          handshake = new Date(peer.LastHandshakeTime);
+          // Add some information about when the peer was last seen
+          status.title = "No handshake since since " + handshake.toLocaleString();
+          status.classList.add("indicator-null")
+          status.innerHTML = "offline";
+        }
+
+        // Data up in SI units
+        var data_up = peer_row.getElementsByClassName('up')[0];
+        data_up.innerHTML = peer.ReceiveBytesSI;
+
+        // Data down in SI units
+        var data_down = peer_row.getElementsByClassName('down')[0];
+        data_down.innerHTML = peer.TransmitBytesSI;
+
+      });
+    }).catch(error => {
+      // If we encounter an error, don't do anything useful, just complain
+      console.log(error);
+    });
+}
+
 // Build the table when the page has loaded
 document.addEventListener("DOMContentLoaded", function() {
   build_table();
+
+  // Set up interval to update table
+  var counter = 0;
+  var i = setInterval(function() {
+    update_table();
+  }, update_interval * 1000);
+
 }, false);
