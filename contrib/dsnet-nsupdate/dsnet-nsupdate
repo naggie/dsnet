@@ -39,7 +39,7 @@ dsnet_int_nameserver = 'json'
 dsnet_ext_nameserver = None
 
 # Specifically declare our zone (NOTE THE '.' AT THE END)
-#dsnet_zone = 'darksky.io.'
+#dsnet_zone = 'example.com.'
 # Or set to 'json' to use "Domain" from dsnetreport.json
 dsnet_zone = 'json'
 
