@@ -258,7 +258,7 @@ The report can be converted, for instance, into a HTML table as below:
 ![dsnet report table](https://raw.githubusercontent.com/naggie/dsnet/master/etc/report.png)
 
 See
-[etc/README.md](https://github.com/naggie/dsnet/blob/master/report_rendering/README.md)
+[etc/README.md](https://github.com/naggie/dsnet/blob/master/contrib/report_rendering/README.md)
 for hugo and PHP code for rendering a similar table.
 
 # FAQ
