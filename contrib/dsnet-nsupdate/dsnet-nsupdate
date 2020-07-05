@@ -44,7 +44,7 @@ dsnet_ext_nameserver = None
 dsnet_zone = 'json'
 
 # Which TSIG key file do we need to use
-dns_tsig_key_file = '/etc/bind/dsnet-udpate.key'
+dns_tsig_key_file = '/etc/bind/dsnet-update.key'
 
 # Which TXT record are we using to track current peers?
 dsnet_current_peers_record = '_dsnet_peers'
