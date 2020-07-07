@@ -8,6 +8,9 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/dsnet up
+ExecStop=/usr/local/bin/dsnet down
+RemainAfterExit=yes
+ExecReload=/usr/local/bin/dsnet sync
 
 [Install]
 WantedBy=default.target
