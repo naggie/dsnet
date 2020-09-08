@@ -56,7 +56,8 @@ func getRandomNetwork() JSONIPNet {
 
 // TODO support IPv6
 func getExternalIP() net.IP {
-	conn, _ := net.Dial("udp", "8.8.8.8:80")
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	check(err, "Could not detect internet connection")
 	defer conn.Close()
 
 	localAddr := conn.LocalAddr().String()
