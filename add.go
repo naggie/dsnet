@@ -8,8 +8,10 @@ import (
 	"time"
 )
 
+// TODO -- replace hardcoded /22 with one derived from conf.Network
+
 const wgQuickPeerConf = `[Interface]
-Address = {{ .Peer.IP }}
+Address = {{ .Peer.IP }}/22
 PrivateKey={{ .Peer.PrivateKey.Key }}
 {{- if .DsnetConfig.DNS }}
 DNS = {{ .DsnetConfig.DNS }}
@@ -26,7 +28,7 @@ PersistentKeepalive={{ .Keepalive }}
 const vyattaPeerConf = `[Interface]
 configure
 
-set interfaces wireguard dsnet address {{ .Peer.IP }}
+set interfaces wireguard dsnet address {{ .Peer.IP }}/22
 set interfaces wireguard dsnet route-allowed-ips true
 
 set interfaces wireguard dsnet peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
