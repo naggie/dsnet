@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-// TODO -- replace hardcoded /22 with one derived from conf.Network
-
 const wgQuickPeerConf = `[Interface]
 Address = {{ .Peer.IP }}/22
 PrivateKey={{ .Peer.PrivateKey.Key }}
@@ -28,12 +26,12 @@ PersistentKeepalive={{ .Keepalive }}
 const vyattaPeerConf = `[Interface]
 configure
 
-set interfaces wireguard dsnet address {{ .Peer.IP }}/22
+set interfaces wireguard dsnet address {{ .Peer.IP }}/{{ .Cidrmask }}
 set interfaces wireguard dsnet route-allowed-ips true
 
 set interfaces wireguard dsnet peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
-set interfaces wireguard dsnet peer allowed-ips {{.AllowedIPs}}
-set interfaces wireguard dsnet peer persistent-keepalive {{.AllowedIPs}}
+set interfaces wireguard dsnet peer allowed-ips {{ .AllowedIPs }}
+set interfaces wireguard dsnet peer persistent-keepalive {{ .Keepalive }}
 
 {{- if .DsnetConfig.DNS }}
 #set service dns forwarding name-server {{ .DsnetConfig.DNS }}
@@ -108,12 +106,15 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		ExitFail("Unrecognised DSNET_OUTPUT type")
 	}
 
+	cidrmask, _ := conf.Network.IPNet.Mask.Size()
+
 	t := template.Must(template.New("peerConf").Parse(peerConf))
 	err := t.Execute(os.Stdout, map[string]interface{}{
 		"Peer":        peer,
 		"DsnetConfig": conf,
 		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
 		"AllowedIPs":  strings.Join(allowedIPsStr, ","),
+		"Cidrmask":    cidrmask,
 	})
 	check(err)
 }
