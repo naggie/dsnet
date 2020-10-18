@@ -8,6 +8,41 @@ import (
 	"time"
 )
 
+const wgQuickPeerConf = `[Interface]
+Address = {{ .Peer.IP }}
+PrivateKey={{ .Peer.PrivateKey.Key }}
+{{- if .DsnetConfig.DNS }}
+DNS = {{ .DsnetConfig.DNS }}
+{{ end }}
+
+[Peer]
+PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}
+PresharedKey={{ .Peer.PresharedKey.Key }}
+Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
+AllowedIPs={{ .AllowedIPs }}
+PersistentKeepalive={{ .Keepalive }}
+`
+
+const vyattaPeerConf = `[Interface]
+configure
+
+set interfaces wireguard dsnet address {{ .Peer.IP }}
+set interfaces wireguard dsnet route-allowed-ips true
+
+set interfaces wireguard dsnet peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
+set interfaces wireguard dsnet peer allowed-ips {{.AllowedIPs}}
+set interfaces wireguard dsnet peer persistent-keepalive {{.AllowedIPs}}
+
+{{- if .DsnetConfig.DNS }}
+#set service dns forwarding name-server {{ .DsnetConfig.DNS }}
+{{ end }}
+
+set interfaces wireguard dsnet private-key {{ .Peer.PrivateKey.Key }}
+set interfaces wireguard dsnet preshared-key {{ .Peer.PresharedKey.Key }}
+
+commit; save
+`
+
 func Add() {
 	if len(os.Args) != 3 {
 		// TODO non-red
@@ -58,20 +93,18 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		allowedIPsStr[i+1] = net.String()
 	}
 
-	const peerConf = `[Interface]
-Address = {{ .Peer.IP }}
-PrivateKey={{ .Peer.PrivateKey.Key }}
-{{- if .DsnetConfig.DNS }}
-DNS = {{ .DsnetConfig.DNS }}
-{{ end }}
+	var peerConf string
 
-[Peer]
-PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}
-PresharedKey={{ .Peer.PresharedKey.Key }}
-Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
-AllowedIPs={{ .AllowedIPs }}
-PersistentKeepalive={{ .Keepalive }}
-`
+	switch os.Getenv("DSNET_OUTPUT") {
+	// https://manpages.debian.org/unstable/wireguard-tools/wg-quick.8.en.html
+	case "", "wg-quick":
+		peerConf = wgQuickPeerConf
+	// https://github.com/WireGuard/wireguard-vyatta-ubnt/
+	case "vyatta":
+		peerConf = vyattaPeerConf
+	default:
+		ExitFail("Unrecognised DSNET_OUTPUT type")
+	}
 
 	t := template.Must(template.New("peerConf").Parse(peerConf))
 	err := t.Execute(os.Stdout, map[string]interface{}{

@@ -58,6 +58,10 @@ Available commands:
 	down   : Destroy the interface, run pre/post down
 	sync   : Update wireguard configuration from %[1]s after validating
 
+Environment variables:
+
+	DSNET_OUTPUT=wg-quick : The add command will generate a wg-quick config
+	DSNET_OUTPUT=vyatta   : The add command will generate a vyatta (edgeos) config
 
 dsnet version %[2]s
 commit %[3]s
