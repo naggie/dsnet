@@ -23,10 +23,12 @@ AllowedIPs={{ .AllowedIPs }}
 PersistentKeepalive={{ .Keepalive }}
 `
 
+// TODO use random wg0-wg999 to hopefully avoid conflict by default?
 const vyattaPeerConf = `configure
 set interfaces wireguard wg0 address {{ .Peer.IP }}/{{ .Cidrmask }}
 set interfaces wireguard wg0 route-allowed-ips true
 set interfaces wireguard wg0 private-key {{ .Peer.PrivateKey.Key }}
+set interfaces wireguard wg0 description dsnet
 {{- if .DsnetConfig.DNS }}
 #set service dns forwarding name-server {{ .DsnetConfig.DNS }}
 {{ end }}
