@@ -23,23 +23,18 @@ AllowedIPs={{ .AllowedIPs }}
 PersistentKeepalive={{ .Keepalive }}
 `
 
-const vyattaPeerConf = `[Interface]
-configure
-
+const vyattaPeerConf = `configure
 set interfaces wireguard dsnet address {{ .Peer.IP }}/{{ .Cidrmask }}
 set interfaces wireguard dsnet route-allowed-ips true
-
-set interfaces wireguard dsnet peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
-set interfaces wireguard dsnet peer allowed-ips {{ .AllowedIPs }}
-set interfaces wireguard dsnet peer persistent-keepalive {{ .Keepalive }}
-
+set interfaces wireguard dsnet private-key {{ .Peer.PrivateKey.Key }}
+set interfaces wireguard dsnet preshared-key {{ .Peer.PresharedKey.Key }}
 {{- if .DsnetConfig.DNS }}
 #set service dns forwarding name-server {{ .DsnetConfig.DNS }}
 {{ end }}
 
-set interfaces wireguard dsnet private-key {{ .Peer.PrivateKey.Key }}
-set interfaces wireguard dsnet preshared-key {{ .Peer.PresharedKey.Key }}
-
+set interfaces wireguard dsnet peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
+set interfaces wireguard dsnet peer allowed-ips {{ .AllowedIPs }}
+set interfaces wireguard dsnet peer persistent-keepalive {{ .Keepalive }}
 commit; save
 `
 
