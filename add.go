@@ -27,7 +27,6 @@ const vyattaPeerConf = `configure
 set interfaces wireguard wg0 address {{ .Peer.IP }}/{{ .Cidrmask }}
 set interfaces wireguard wg0 route-allowed-ips true
 set interfaces wireguard wg0 private-key {{ .Peer.PrivateKey.Key }}
-set interfaces wireguard wg0 preshared-key {{ .Peer.PresharedKey.Key }}
 {{- if .DsnetConfig.DNS }}
 #set service dns forwarding name-server {{ .DsnetConfig.DNS }}
 {{ end }}
@@ -35,6 +34,7 @@ set interfaces wireguard wg0 preshared-key {{ .Peer.PresharedKey.Key }}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ .AllowedIPs }}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
+set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
 commit; save
 `
 
