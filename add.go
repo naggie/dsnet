@@ -28,7 +28,7 @@ const vyattaPeerConf = `configure
 set interfaces wireguard wg0 address {{ .Peer.IP }}/{{ .Cidrmask }}
 set interfaces wireguard wg0 route-allowed-ips true
 set interfaces wireguard wg0 private-key {{ .Peer.PrivateKey.Key }}
-set interfaces wireguard wg0 description dsnet
+set interfaces wireguard wg0 description {{ conf.InterfaceName }}
 {{- if .DsnetConfig.DNS }}
 #set service dns forwarding name-server {{ .DsnetConfig.DNS }}
 {{ end }}
