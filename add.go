@@ -33,8 +33,8 @@ set interfaces wireguard wg0 preshared-key {{ .Peer.PresharedKey.Key }}
 {{ end }}
 
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
-set interfaces wireguard wg0 peer allowed-ips {{ .AllowedIPs }}
-set interfaces wireguard wg0 peer persistent-keepalive {{ .Keepalive }}
+set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ .AllowedIPs }}
+set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
 commit; save
 `
 
