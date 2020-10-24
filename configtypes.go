@@ -21,6 +21,7 @@ type PeerConfig struct {
 	Description string `validate:"required,gte=1,lte=255"`
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
 	IP    net.IP    `validate:"required`
+	IP6   net.IP    `validate:"required`
 	Added time.Time `validate:"required"`
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
@@ -40,9 +41,11 @@ type DsnetConfig struct {
 	InterfaceName string `validate:"required,gte=1,lte=255"`
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
-	Network JSONIPNet `validate:"required"`
-	IP      net.IP    `validate:"required"`
-	DNS     net.IP
+	Network  JSONIPNet `validate:"required"`
+	Network6 JSONIPNet `validate:"required"`
+	IP       net.IP    `validate:"required"`
+	IP6      net.IP    `validate:"required"`
+	DNS      net.IP
 	// extra networks available, will be added to AllowedIPs
 	Networks []JSONIPNet `validate:"required"`
 	// TODO Default subnets to route via VPN
@@ -127,7 +130,7 @@ func (conf *DsnetConfig) MustRemovePeer(hostname string) {
 
 	// remove peer from slice, retaining order
 	copy(conf.Peers[peerIndex:], conf.Peers[peerIndex+1:]) // shift left
-	conf.Peers = conf.Peers[:len(conf.Peers)-1] // truncate
+	conf.Peers = conf.Peers[:len(conf.Peers)-1]            // truncate
 }
 
 func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
