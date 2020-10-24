@@ -11,6 +11,13 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
+type ipVersion int
+
+const (
+	IPv4 ipVersion = 4
+	IPv6 ipVersion = 6
+)
+
 // see https://github.com/WireGuard/wgctrl-go/blob/master/wgtypes/types.go for definitions
 type PeerConfig struct {
 	// Used to update DNS
