@@ -134,12 +134,12 @@ func (conf *DsnetConfig) MustRemovePeer(hostname string) {
 }
 
 func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
-	if IP.Equal(conf.IP) {
+	if IP.Equal(conf.IP) || IP.Equal(conf.IP6) {
 		return true
 	}
 
 	for _, peer := range conf.Peers {
-		if IP.Equal(peer.IP) {
+		if IP.Equal(peer.IP) || IP.Equal(peer.IP6) {
 			return true
 		}
 
