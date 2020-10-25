@@ -165,8 +165,9 @@ func (conf DsnetConfig) MustAllocateIP() net.IP {
 	// avoids broadcast addr + overflow
 	max := (1 << zeros) - 2
 
+	IP := make(net.IP, len(network.IP))
+
 	for i := min; i <= max; i++ {
-		IP := make(net.IP, len(network.IP))
 		// dst, src!
 		copy(IP, network.IP)
 
@@ -195,9 +196,10 @@ func (conf DsnetConfig) MustAllocateIP6() net.IP {
 	rbs := make([]byte, zeros)
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	IP := make(net.IP, len(network.IP))
+
 	for i := 0; i <= 10000; i++ {
 		rand.Read(rbs)
-		IP := make(net.IP, len(network.IP))
 		// dst, src! Copy prefix of IP
 		copy(IP, network.IP)
 
