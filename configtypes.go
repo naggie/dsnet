@@ -2,8 +2,8 @@ package dsnet
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"os"
 	"time"
@@ -206,7 +206,6 @@ func (conf DsnetConfig) MustAllocateIP6() net.IP {
 		// OR the host part with the network part
 		for j := ones / 8; j < len(IP); j++ {
 			IP[j] = IP[j] | rbs[j]
-			fmt.Println("%d, %s", j, IP[j])
 		}
 
 		if !conf.IPAllocated(IP) {
