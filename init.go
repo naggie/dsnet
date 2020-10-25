@@ -22,7 +22,7 @@ func Init() {
 		PrivateKey:    GenerateJSONPrivateKey(),
 		ListenPort:    DEFAULT_LISTEN_PORT,
 		Network:       getPrivateNet(),
-		Network6:      getULA(),
+		Network6:      getULANet(),
 		Peers:         []PeerConfig{},
 		Domain:        "dsnet",
 		ReportFile:    DEFAULT_REPORT_FILE,
@@ -32,7 +32,7 @@ func Init() {
 	}
 
 	conf.IP = conf.MustAllocateIP(conf.Network.IPNet)
-	//conf.IP6 = conf.MustAllocateIP(conf.Network6.IPNet)
+	conf.IP6 = conf.MustAllocateIP(conf.Network6.IPNet)
 
 	// DNS not set by default
 	//conf.DNS = IP
@@ -56,7 +56,7 @@ func getPrivateNet() JSONIPNet {
 	}
 }
 
-func getULA() JSONIPNet {
+func getULANet() JSONIPNet {
 	rbs := make([]byte, 5)
 	rand.Seed(time.Now().UTC().UnixNano())
 	rand.Read(rbs)
