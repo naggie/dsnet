@@ -154,12 +154,15 @@ func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
 }
 
 // choose a free IP for a new Peer
-func (conf DsnetConfig) MustAllocateIP() net.IP {
-	network := conf.Network.IPNet
+func (conf DsnetConfig) MustAllocateIP(network net.IPNet) net.IP {
 	ones, bits := network.Mask.Size()
 	zeros := bits - ones
-	min := 1                // avoids network addr
-	max := (1 << zeros) - 2 // avoids broadcast addr + overflow
+
+	// avoids network addr
+	min := 1
+	// avoids broadcast addr + overflow. Note there is no broadcast addr with
+	// IPv6, but I don't care about losing one when there are so many!
+	max := (1 << zeros) - 2
 
 	for i := min; i <= max; i++ {
 		IP := make(net.IP, len(network.IP))
