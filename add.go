@@ -62,9 +62,6 @@ func Add() {
 	privateKey := GenerateJSONPrivateKey()
 	publicKey := privateKey.PublicKey()
 
-	IP := conf.MustAllocateIP()
-	IP6 := conf.MustAllocateIP6()
-
 	peer := PeerConfig{
 		Owner:        owner,
 		Hostname:     hostname,
@@ -73,9 +70,19 @@ func Add() {
 		PublicKey:    publicKey,
 		PrivateKey:   privateKey, // omitted from server config JSON!
 		PresharedKey: GenerateJSONKey(),
-		IP:           IP,
-		IP6:          IP6,
 		Networks:     []JSONIPNet{},
+	}
+
+	if len(conf.Network.IPNet.Mask) > 0 {
+		peer.IP = conf.MustAllocateIP()
+	}
+
+	if len(conf.Network6.IPNet.Mask) > 0 {
+		peer.IP6 = conf.MustAllocateIP6()
+	}
+
+	if len(conf.IP) == 0 && len(conf.IP6) == 0 {
+		ExitFail("No IPv4 or IPv6 network defined in config")
 	}
 
 	conf.MustAddPeer(peer)
