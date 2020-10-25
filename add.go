@@ -96,13 +96,10 @@ func Add() {
 }
 
 func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
-	allowedIPsStr := make([]string, len(conf.Networks)+2)
-	allowedIPsStr[0] = conf.Network.String()
-	allowedIPsStr[1] = conf.Network6.String()
-
-	for i, net := range conf.Networks {
-		allowedIPsStr[i+2] = net.String()
-	}
+	allowedIPs := make([]JSONIPNet, len(conf.Networks)+2)
+	allowedIPs[0] = conf.Network
+	allowedIPs[1] = conf.Network6
+	allowedIPs = append(allowedIPs, conf.Networks...)
 
 	var peerConf string
 
@@ -124,7 +121,7 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		"Peer":        peer,
 		"DsnetConfig": conf,
 		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
-		"AllowedIPs":  allowedIPsStr,
+		"AllowedIPs":  allowedIPs,
 		"Cidrmask":    cidrmask,
 	})
 	check(err)
