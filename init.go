@@ -38,7 +38,7 @@ func Init() {
 
 	conf.MustSave()
 
-	fmt.Printf("Config written to %s. Please check/edit.", CONFIG_FILE)
+	fmt.Printf("Config written to %s. Please check/edit.\n", CONFIG_FILE)
 }
 
 // get a random IPv4  /22 subnet on 10.0.0.0 (1023 hosts) (or /24?)
