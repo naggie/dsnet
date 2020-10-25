@@ -63,7 +63,7 @@ func getULA() JSONIPNet {
 	// fc00 prefix with 40 bit global id and zero (16 bit) subnet ID
 	return JSONIPNet{
 		IPNet: net.IPNet{
-			net.IP{0xfc, 0, rbs[0], rbs[1], rbs[2], rbs[3], rbs[4], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			net.IP{0xfc, 0, rbs[0], rbs[1], rbs[2], rbs[3], rbs[4], 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0},
 		},
 	}
