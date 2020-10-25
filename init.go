@@ -31,8 +31,8 @@ func Init() {
 		Networks:      []JSONIPNet{},
 	}
 
-	conf.IP = conf.MustAllocateIP(conf.Network.IPNet)
-	conf.IP6 = conf.MustAllocateIP(conf.Network6.IPNet)
+	conf.IP = conf.MustAllocateIP()
+	conf.IP6 = conf.MustAllocateIP6()
 
 	// DNS not set by default
 	//conf.DNS = IP

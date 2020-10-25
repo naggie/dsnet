@@ -2,6 +2,7 @@ package dsnet
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -153,19 +154,20 @@ func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
 	return false
 }
 
-// choose a free IP for a new Peer
-func (conf DsnetConfig) MustAllocateIP(network net.IPNet) net.IP {
+// choose a free IPv4 for a new Peer (sequential allocation)
+func (conf DsnetConfig) MustAllocateIP() net.IP {
+	network := conf.Network.IPNet
 	ones, bits := network.Mask.Size()
 	zeros := bits - ones
 
 	// avoids network addr
 	min := 1
-	// avoids broadcast addr + overflow. Note there is no broadcast addr with
-	// IPv6, but I don't care about losing one when there are so many!
+	// avoids broadcast addr + overflow
 	max := (1 << zeros) - 2
 
 	for i := min; i <= max; i++ {
 		IP := make(net.IP, len(network.IP))
+		// dst, src!
 		copy(IP, network.IP)
 
 		// OR the host part with the network part
@@ -180,6 +182,37 @@ func (conf DsnetConfig) MustAllocateIP(network net.IPNet) net.IP {
 	}
 
 	ExitFail("IP range exhausted")
+
+	return net.IP{}
+}
+
+// choose a free IPv6 for a new Peer (pseudorandom allocation)
+func (conf DsnetConfig) MustAllocateIP6() net.IP {
+	network := conf.Network6.IPNet
+	ones, bits := network.Mask.Size()
+	zeros := bits - ones
+
+	rbs := make([]byte, zeros)
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	for i := 0; i <= 10000; i++ {
+		rand.Read(rbs)
+		IP := make(net.IP, len(network.IP))
+		// dst, src! Copy prefix of IP
+		copy(IP, network.IP)
+
+		// OR the host part with the network part
+		for j := ones / 8; j < len(IP); j++ {
+			IP[j] = IP[j] | rbs[j]
+			fmt.Println("%d, %s", j, IP[j])
+		}
+
+		if !conf.IPAllocated(IP) {
+			return IP
+		}
+	}
+
+	ExitFail("Could not allocate random IPv6 after 10000 tries. This was highly unlikely!")
 
 	return net.IP{}
 }

@@ -62,8 +62,8 @@ func Add() {
 	privateKey := GenerateJSONPrivateKey()
 	publicKey := privateKey.PublicKey()
 
-	IP := conf.MustAllocateIP(conf.Network.IPNet)
-	IP6 := conf.MustAllocateIP(conf.Network6.IPNet)
+	IP := conf.MustAllocateIP()
+	IP6 := conf.MustAllocateIP6()
 
 	peer := PeerConfig{
 		Owner:        owner,
