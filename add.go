@@ -3,24 +3,26 @@ package dsnet
 import (
 	"fmt"
 	"os"
-	"strings"
 	"text/template"
 	"time"
 )
 
 const wgQuickPeerConf = `[Interface]
-Address = {{ .Peer.IP }}/22
+Address={{ .Peer.IP }}/22
+Address={{ .Peer.IP6 }}/64
 PrivateKey={{ .Peer.PrivateKey.Key }}
 {{- if .DsnetConfig.DNS }}
-DNS = {{ .DsnetConfig.DNS }}
+DNS={{ .DsnetConfig.DNS }}
 {{ end }}
 
 [Peer]
 PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}
 PresharedKey={{ .Peer.PresharedKey.Key }}
 Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
-AllowedIPs={{ .AllowedIPs }}
 PersistentKeepalive={{ .Keepalive }}
+{{ range .AllowedIPs -}}
+AllowedIPs={{ . }}
+{{ end }}
 `
 
 // TODO use random wg0-wg999 to hopefully avoid conflict by default?
@@ -34,9 +36,11 @@ set interfaces wireguard wg0 description {{ conf.InterfaceName }}
 {{ end }}
 
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
-set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ .AllowedIPs }}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
+{{ range .AllowedIPs -}}
+set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
+{{ end }}
 commit; save
 `
 
@@ -92,11 +96,12 @@ func Add() {
 }
 
 func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
-	allowedIPsStr := make([]string, len(conf.Networks)+1)
+	allowedIPsStr := make([]string, len(conf.Networks)+2)
 	allowedIPsStr[0] = conf.Network.String()
+	allowedIPsStr[1] = conf.Network6.String()
 
 	for i, net := range conf.Networks {
-		allowedIPsStr[i+1] = net.String()
+		allowedIPsStr[i+2] = net.String()
 	}
 
 	var peerConf string
@@ -119,7 +124,7 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		"Peer":        peer,
 		"DsnetConfig": conf,
 		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
-		"AllowedIPs":  strings.Join(allowedIPsStr, ","),
+		"AllowedIPs":  allowedIPsStr,
 		"Cidrmask":    cidrmask,
 	})
 	check(err)
