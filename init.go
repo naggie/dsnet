@@ -21,7 +21,8 @@ func Init() {
 	conf := DsnetConfig{
 		PrivateKey:    GenerateJSONPrivateKey(),
 		ListenPort:    DEFAULT_LISTEN_PORT,
-		Network:       getRandomNetwork(),
+		Network:       getPrivateNet(),
+		Network6:      getULA(),
 		Peers:         []PeerConfig{},
 		Domain:        "dsnet",
 		ReportFile:    DEFAULT_REPORT_FILE,
@@ -40,8 +41,8 @@ func Init() {
 	fmt.Printf("Config written to %s. Please check/edit.", CONFIG_FILE)
 }
 
-// get a random /22 subnet on 10.0.0.0 (1023 hosts) (or /24?)
-func getRandomNetwork() JSONIPNet {
+// get a random IPv4  /22 subnet on 10.0.0.0 (1023 hosts) (or /24?)
+func getPrivateNet() JSONIPNet {
 	rbs := make([]byte, 2)
 	rand.Seed(time.Now().UTC().UnixNano())
 	rand.Read(rbs)
@@ -50,6 +51,20 @@ func getRandomNetwork() JSONIPNet {
 		IPNet: net.IPNet{
 			net.IP{10, rbs[0], rbs[1] << 2, 0},
 			net.IPMask{255, 255, 252, 0},
+		},
+	}
+}
+
+func getULA() JSONIPNet {
+	rbs := make([]byte, 5)
+	rand.Seed(time.Now().UTC().UnixNano())
+	rand.Read(rbs)
+
+	// fc00 prefix with 40 bit global id and zero (16 bit) subnet ID
+	return JSONIPNet{
+		IPNet: net.IPNet{
+			net.IP{0xfc, 0, rbs[0], rbs[1], rbs[2], rbs[3], rbs[4], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0},
 		},
 	}
 }
