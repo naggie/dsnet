@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const wgQuickPeerConf = `[Interface
+const wgQuickPeerConf = `[Interface]
 Address={{ .Peer.IP }}/22
 Address={{ .Peer.IP6 }}/64
 PrivateKey={{ .Peer.PrivateKey.Key }}
