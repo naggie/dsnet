@@ -24,7 +24,11 @@ func (n *JSONIPNet) UnmarshalJSON(b []byte) error {
 }
 
 func (n *JSONIPNet) String() string {
-	return n.IPNet.String()
+	if len(n.IPNet.IP) == 0 {
+		return "\"\""
+	} else {
+		return n.IPNet.String()
+	}
 }
 
 type JSONKey struct {
