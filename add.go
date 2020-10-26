@@ -3,6 +3,7 @@ package dsnet
 import (
 	"fmt"
 	"os"
+	"net"
 	"text/template"
 	"time"
 )
@@ -123,6 +124,14 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
 		"AllowedIPs":  allowedIPs,
 		"Cidrmask":    cidrmask,
+		"Address": net.IPNet{
+			IP: peer.IP,
+			Mask: conf.Network.IPNet.Mask,
+		},
+		"Address6": net.IPNet{
+			IP: peer.IP6,
+			Mask: conf.Network6.IPNet.Mask,
+		},
 	})
 	check(err)
 }
