@@ -77,7 +77,7 @@ func getExternalIP() net.IP {
 	// arbitrary external IP is used (one that's guaranteed to route outside.
 	// In this case, Google's DNS server. Doesn't actually need to be online.)
 	conn, err := net.Dial("udp", "8.8.8.8:53")
-	if err != nil {
+	if err == nil {
 		defer conn.Close()
 
 		localAddr := conn.LocalAddr().String()
@@ -111,7 +111,7 @@ func getExternalIP() net.IP {
 func getExternalIP6() net.IP {
 	var IP net.IP
 	conn, err := net.Dial("udp", "2001:4860:4860::8888:53")
-	if err != nil {
+	if err == nil {
 		defer conn.Close()
 
 		localAddr := conn.LocalAddr().String()
@@ -123,14 +123,15 @@ func getExternalIP6() net.IP {
 		Timeout: 5 * time.Second,
 	}
 	resp, err := client.Get("https://ipv6.icanhazip.com/")
-	check(err)
-	defer resp.Body.Close()
+	if err == nil {
+		defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
-		check(err)
-		IP = net.ParseIP(strings.TrimSpace(string(body)))
-		return IP
+		if resp.StatusCode == http.StatusOK {
+			body, err := ioutil.ReadAll(resp.Body)
+			check(err)
+			IP = net.ParseIP(strings.TrimSpace(string(body)))
+			return IP
+		}
 	}
 
 	return net.IP{}

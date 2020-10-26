@@ -21,9 +21,15 @@ PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}
 PresharedKey={{ .Peer.PresharedKey.Key }}
 Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
 PersistentKeepalive={{ .Keepalive }}
-{{ range .AllowedIPs -}}
+{{ with .DsnetConfig.Network -}}
 AllowedIPs={{ . }}
-{{ end }}
+{{ end -}}
+{{ with .DsnetConfig.Network6 -}}
+AllowedIPs={{ . }}
+{{ end -}}
+{{ range .DsnetConfig.Networks -}}
+AllowedIPs={{ . }}
+{{ end -}}
 `
 
 // TODO use random wg0-wg999 to hopefully avoid conflict by default?
@@ -39,9 +45,15 @@ set interfaces wireguard wg0 description {{ conf.InterfaceName }}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
-{{ range .AllowedIPs -}}
+{{ with .DsnetConfig.Network -}}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
-{{ end }}
+{{ end -}}
+{{ with .DsnetConfig.Network6 -}}
+set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
+{{ end -}}
+{{ range .DsnetConfig.Networks -}}
+set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
+{{ end -}}
 commit; save
 `
 
@@ -122,7 +134,6 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		"Peer":        peer,
 		"DsnetConfig": conf,
 		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
-		"AllowedIPs":  allowedIPs,
 		"Cidrmask":    cidrmask,
 		"Address": net.IPNet{
 			IP: peer.IP,

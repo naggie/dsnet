@@ -21,8 +21,8 @@ type PeerConfig struct {
 	// Description of what the host is and/or does
 	Description string `validate:"required,gte=1,lte=255"`
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
-	IP    net.IP    `validate:"required`
-	IP6   net.IP    `validate:"required`
+	IP    net.IP
+	IP6   net.IP
 	Added time.Time `validate:"required"`
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
@@ -45,8 +45,8 @@ type DsnetConfig struct {
 	// Network is chosen randomly when not specified
 	Network  JSONIPNet `validate:"required"`
 	Network6 JSONIPNet `validate:"required"`
-	IP       net.IP    `validate:"required"`
-	IP6      net.IP    `validate:"required"`
+	IP       net.IP
+	IP6      net.IP
 	DNS      net.IP
 	// extra networks available, will be added to AllowedIPs
 	Networks []JSONIPNet `validate:"required"`
