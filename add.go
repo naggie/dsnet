@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const wgQuickPeerConf = `[Interface]
+const wgQuickPeerConf = `[Interface
 Address={{ .Peer.IP }}/22
 Address={{ .Peer.IP6 }}/64
 PrivateKey={{ .Peer.PrivateKey.Key }}
@@ -46,7 +46,11 @@ set interfaces wireguard wg0 description {{ conf.InterfaceName }}
 #set service dns forwarding name-server {{ .DsnetConfig.DNS }}
 {{ end }}
 
+{{ if gt (.DsnetConfig.ExternalIP | len) 0 -}}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
+{{ else -}}
+set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP6 }}:{{ .DsnetConfig.ListenPort }}
+{{ end -}}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
 {{ with .DsnetConfig.Network -}}
