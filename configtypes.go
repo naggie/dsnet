@@ -74,6 +74,10 @@ func MustLoadDsnetConfig() *DsnetConfig {
 	err = validator.New().Struct(conf)
 	check(err)
 
+	if len(conf.ExternalIP) == 0 && len(conf.ExternalIP6) == 0 {
+		ExitFail("Config does not contain ExternalIP or ExternalIP6")
+	}
+
 	return &conf
 }
 
