@@ -19,7 +19,11 @@ DNS={{ .DsnetConfig.DNS }}
 [Peer]
 PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}
 PresharedKey={{ .Peer.PresharedKey.Key }}
+{{ if gt (.DsnetConfig.ExternalIP | len) 0 -}}
 Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
+{{ else -}}
+Endpoint={{ .DsnetConfig.ExternalIP6 }}:{{ .DsnetConfig.ListenPort }}
+{{ end -}}
 PersistentKeepalive={{ .Keepalive }}
 {{ with .DsnetConfig.Network -}}
 AllowedIPs={{ . }}

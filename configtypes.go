@@ -36,7 +36,7 @@ type PeerConfig struct {
 type DsnetConfig struct {
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
-	ExternalIP    net.IP `validate:"required"`
+	ExternalIP    net.IP
 	ExternalIP6   net.IP
 	ListenPort    int    `validate:"gte=1024,lte=65535"`
 	Domain        string `validate:"required,gte=1,lte=255"`
