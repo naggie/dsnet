@@ -3,14 +3,13 @@ package dsnet
 import (
 	"fmt"
 	"os"
-	"net"
 	"text/template"
 	"time"
 )
 
 const wgQuickPeerConf = `[Interface]
-Address={{ .Peer.IP }}/22
-Address={{ .Peer.IP6 }}/64
+Address={{ .Peer.IP }}/{{ .CidrSize }}
+Address={{ .Peer.IP6 }}/{{ .CidrSize6 }}
 PrivateKey={{ .Peer.PrivateKey.Key }}
 {{- if .DsnetConfig.DNS }}
 DNS={{ .DsnetConfig.DNS }}
@@ -38,7 +37,8 @@ AllowedIPs={{ . }}
 
 // TODO use random wg0-wg999 to hopefully avoid conflict by default?
 const vyattaPeerConf = `configure
-set interfaces wireguard wg0 address {{ .Peer.IP }}/{{ .Cidrmask }}
+set interfaces wireguard wg0 address {{ .Peer.IP }}/{{ .CidrSize }}
+set interfaces wireguard wg0 address {{ .Peer.IP6 }}/{{ .CidrSize6 }}
 set interfaces wireguard wg0 route-allowed-ips true
 set interfaces wireguard wg0 private-key {{ .Peer.PrivateKey.Key }}
 set interfaces wireguard wg0 description {{ conf.InterfaceName }}
@@ -135,22 +135,16 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		ExitFail("Unrecognised DSNET_OUTPUT type")
 	}
 
-	cidrmask, _ := conf.Network.IPNet.Mask.Size()
+	cidrSize, _ := conf.Network.IPNet.Mask.Size()
+	cidrSize6, _ := conf.Network6.IPNet.Mask.Size()
 
 	t := template.Must(template.New("peerConf").Parse(peerConf))
 	err := t.Execute(os.Stdout, map[string]interface{}{
 		"Peer":        peer,
 		"DsnetConfig": conf,
 		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
-		"Cidrmask":    cidrmask,
-		"Address": net.IPNet{
-			IP: peer.IP,
-			Mask: conf.Network.IPNet.Mask,
-		},
-		"Address6": net.IPNet{
-			IP: peer.IP6,
-			Mask: conf.Network6.IPNet.Mask,
-		},
+		"CidrSize": cidrSize,
+		"CidrSize6": cidrSize6,
 	})
 	check(err)
 }
