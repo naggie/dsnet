@@ -17,6 +17,14 @@ func (n JSONIPNet) MarshalJSON() ([]byte, error) {
 
 func (n *JSONIPNet) UnmarshalJSON(b []byte) error {
 	cidr := strings.Trim(string(b), "\"")
+
+	if cidr == "" {
+		// Leave as empty/uninitialised IPNet. A bit like omitempty behaviour,
+		// but we can leave the field there and blank which is useful if the
+		// user wishes to add the cidr manually.
+		return nil
+	}
+
 	IP, IPNet, err := net.ParseCIDR(cidr)
 
 	if err == nil {
