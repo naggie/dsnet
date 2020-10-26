@@ -27,6 +27,7 @@ func Init() {
 		Domain:        "dsnet",
 		ReportFile:    DEFAULT_REPORT_FILE,
 		ExternalIP:    getExternalIP(),
+		ExternalIP6:   getExternalIP6(),
 		InterfaceName: DEFAULT_INTERFACE_NAME,
 		Networks:      []JSONIPNet{},
 	}
@@ -70,19 +71,23 @@ func getULANet() JSONIPNet {
 	}
 }
 
-// TODO support IPv6
+// TODO factor getExternalIP + getExternalIP6
 func getExternalIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	check(err, "Could not detect internet connection")
-	defer conn.Close()
+	var IP net.IP
+	// arbitrary external IP is used (one that's guaranteed to route outside.
+	// In this case, Google's DNS server. Doesn't actually need to be online.)
+	conn, err := net.Dial("udp", "8.8.8.8:53")
+	if err != nil {
+		defer conn.Close()
 
-	localAddr := conn.LocalAddr().String()
-	IP := net.ParseIP(strings.Split(localAddr, ":")[0])
-	IP = IP.To4()
+		localAddr := conn.LocalAddr().String()
+		IP = net.ParseIP(strings.Split(localAddr, ":")[0])
+		IP = IP.To4()
 
-	if !(IP[0] == 10 || (IP[0] == 172 && IP[1] >= 16 && IP[1] <= 31) || (IP[0] == 192 && IP[1] == 168)) {
-		// not private, so public
-		return IP
+		if !(IP[0] == 10 || (IP[0] == 172 && IP[1] >= 16 && IP[1] <= 31) || (IP[0] == 192 && IP[1] == 168)) {
+			// not private, so public
+			return IP
+		}
 	}
 
 	// detect private IP and use icanhazip.com instead
@@ -98,6 +103,34 @@ func getExternalIP() net.IP {
 		check(err)
 		IP = net.ParseIP(strings.TrimSpace(string(body)))
 		return IP.To4()
+	}
+
+	return net.IP{}
+}
+
+func getExternalIP6() net.IP {
+	var IP net.IP
+	conn, err := net.Dial("udp", "2001:4860:4860::8888:53")
+	if err != nil {
+		defer conn.Close()
+
+		localAddr := conn.LocalAddr().String()
+		IP = net.ParseIP(strings.Split(localAddr, ":")[0])
+		return IP
+	}
+
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Get("https://ipv6.icanhazip.com/")
+	check(err)
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		body, err := ioutil.ReadAll(resp.Body)
+		check(err)
+		IP = net.ParseIP(strings.TrimSpace(string(body)))
+		return IP
 	}
 
 	return net.IP{}
