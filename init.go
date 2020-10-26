@@ -66,7 +66,7 @@ func getULANet() JSONIPNet {
 	rand.Seed(time.Now().UTC().UnixNano())
 	rand.Read(rbs)
 
-	// fc00 prefix with 40 bit global id and zero (16 bit) subnet ID
+	// fd00 prefix with 40 bit global id and zero (16 bit) subnet ID
 	return JSONIPNet{
 		IPNet: net.IPNet{
 			net.IP{0xfd, 0, rbs[0], rbs[1], rbs[2], rbs[3], rbs[4], 0, 0, 0, 0, 0, 0, 0, 0, 0},
