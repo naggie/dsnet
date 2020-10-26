@@ -18,8 +18,12 @@ func (n JSONIPNet) MarshalJSON() ([]byte, error) {
 func (n *JSONIPNet) UnmarshalJSON(b []byte) error {
 	cidr := strings.Trim(string(b), "\"")
 	IP, IPNet, err := net.ParseCIDR(cidr)
-	IPNet.IP = IP
-	n.IPNet = *IPNet
+
+	if err == nil {
+		IPNet.IP = IP
+		n.IPNet = *IPNet
+	}
+
 	return err
 }
 
