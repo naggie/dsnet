@@ -35,6 +35,10 @@ func Init() {
 	conf.IP = conf.MustAllocateIP()
 	conf.IP6 = conf.MustAllocateIP6()
 
+	if len(conf.ExternalIP) == 0 && len(conf.ExternalIP6) == 0 {
+		ExitFail("Could not determine any external IP, v4 or v6")
+	}
+
 	// DNS not set by default
 	//conf.DNS = IP
 
@@ -116,7 +120,11 @@ func getExternalIP6() net.IP {
 
 		localAddr := conn.LocalAddr().String()
 		IP = net.ParseIP(strings.Split(localAddr, ":")[0])
-		return IP
+
+		// check is not a ULA
+		if IP[0] != 0xfd && IP[0] != 0xfc {
+			return IP
+		}
 	}
 
 	client := http.Client{
