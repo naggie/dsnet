@@ -8,8 +8,12 @@ import (
 )
 
 const wgQuickPeerConf = `[Interface]
+{{ if gt (.DsnetConfig.Network.IPNet.IP | len) 0 -}}
 Address={{ .Peer.IP }}/{{ .CidrSize }}
+{{ end -}}
+{{ if gt (.DsnetConfig.Network6.IPNet.IP | len) 0 -}}
 Address={{ .Peer.IP6 }}/{{ .CidrSize6 }}
+{{ end -}}
 PrivateKey={{ .Peer.PrivateKey.Key }}
 {{- if .DsnetConfig.DNS }}
 DNS={{ .DsnetConfig.DNS }}
@@ -37,11 +41,15 @@ AllowedIPs={{ . }}
 
 // TODO use random wg0-wg999 to hopefully avoid conflict by default?
 const vyattaPeerConf = `configure
+{{ if gt (.DsnetConfig.Network.IPNet.IP | len) 0 -}}
 set interfaces wireguard wg0 address {{ .Peer.IP }}/{{ .CidrSize }}
+{{ end -}}
+{{ if gt (.DsnetConfig.Network6.IPNet.IP | len) 0 -}}
 set interfaces wireguard wg0 address {{ .Peer.IP6 }}/{{ .CidrSize6 }}
+{{ end -}}
 set interfaces wireguard wg0 route-allowed-ips true
 set interfaces wireguard wg0 private-key {{ .Peer.PrivateKey.Key }}
-set interfaces wireguard wg0 description {{ conf.InterfaceName }}
+set interfaces wireguard wg0 description {{ .DsnetConfig.InterfaceName }}
 {{- if .DsnetConfig.DNS }}
 #set service dns forwarding name-server {{ .DsnetConfig.DNS }}
 {{ end }}
