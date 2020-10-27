@@ -12,7 +12,11 @@ type JSONIPNet struct {
 }
 
 func (n JSONIPNet) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + n.IPNet.String() + "\""), nil
+	if len(n.IPNet.IP) == 0 {
+		return []byte("\"\""), nil
+	} else {
+		return []byte("\"" + n.IPNet.String() + "\""), nil
+	}
 }
 
 func (n *JSONIPNet) UnmarshalJSON(b []byte) error {
@@ -36,11 +40,7 @@ func (n *JSONIPNet) UnmarshalJSON(b []byte) error {
 }
 
 func (n *JSONIPNet) String() string {
-	if len(n.IPNet.IP) == 0 {
-		return "\"\""
-	} else {
-		return n.IPNet.String()
-	}
+	return n.IPNet.String()
 }
 
 type JSONKey struct {
