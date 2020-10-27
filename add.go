@@ -125,18 +125,6 @@ func Add() {
 }
 
 func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
-	allowedIPs := make([]JSONIPNet, 0, len(conf.Networks)+2)
-
-	if len(conf.Network.IPNet.Mask) > 0 {
-		allowedIPs = append(allowedIPs, conf.Network)
-	}
-
-	if len(conf.Network6.IPNet.Mask) > 0 {
-		allowedIPs = append(allowedIPs, conf.Network6)
-	}
-
-	allowedIPs = append(allowedIPs, conf.Networks...)
-
 	var peerConf string
 
 	switch os.Getenv("DSNET_OUTPUT") {
