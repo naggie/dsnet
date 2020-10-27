@@ -24,11 +24,11 @@ Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
 Endpoint={{ .DsnetConfig.ExternalIP6 }}:{{ .DsnetConfig.ListenPort }}
 {{ end -}}
 PersistentKeepalive={{ .Keepalive }}
-{{ with .DsnetConfig.Network -}}
-AllowedIPs={{ . }}
+{{ if gt (.DsnetConfig.Network.IPNet.IP | len) 0 -}}
+AllowedIPs={{ .DsnetConfig.Network }}
 {{ end -}}
-{{ with .DsnetConfig.Network6 -}}
-AllowedIPs={{ . }}
+{{ if gt (.DsnetConfig.Network6.IPNet.IP | len) 0 -}}
+AllowedIPs={{ .DsnetConfig.Network6 }}
 {{ end -}}
 {{ range .DsnetConfig.Networks -}}
 AllowedIPs={{ . }}
@@ -53,11 +53,11 @@ set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} en
 {{ end -}}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
-{{ with .DsnetConfig.Network -}}
-set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
+{{ if gt (.DsnetConfig.Network.IPNet.IP | len) 0 -}}
+set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ .DsnetConfig.Network }}
 {{ end -}}
-{{ with .DsnetConfig.Network6 -}}
-set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
+{{ if gt (.DsnetConfig.Network6.IPNet.IP | len) 0 -}}
+set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ .DsnetConfig.Network6 }}
 {{ end -}}
 {{ range .DsnetConfig.Networks -}}
 set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
