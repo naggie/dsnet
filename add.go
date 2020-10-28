@@ -146,8 +146,8 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		"Peer":        peer,
 		"DsnetConfig": conf,
 		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
-		"CidrSize": cidrSize,
-		"CidrSize6": cidrSize6,
+		"CidrSize":    cidrSize,
+		"CidrSize6":   cidrSize6,
 	})
 	check(err)
 }
