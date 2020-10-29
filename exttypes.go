@@ -12,14 +12,30 @@ type JSONIPNet struct {
 }
 
 func (n JSONIPNet) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + n.IPNet.String() + "\""), nil
+	if len(n.IPNet.IP) == 0 {
+		return []byte("\"\""), nil
+	} else {
+		return []byte("\"" + n.IPNet.String() + "\""), nil
+	}
 }
 
 func (n *JSONIPNet) UnmarshalJSON(b []byte) error {
 	cidr := strings.Trim(string(b), "\"")
+
+	if cidr == "" {
+		// Leave as empty/uninitialised IPNet. A bit like omitempty behaviour,
+		// but we can leave the field there and blank which is useful if the
+		// user wishes to add the cidr manually.
+		return nil
+	}
+
 	IP, IPNet, err := net.ParseCIDR(cidr)
-	IPNet.IP = IP
-	n.IPNet = *IPNet
+
+	if err == nil {
+		IPNet.IP = IP
+		n.IPNet = *IPNet
+	}
+
 	return err
 }
 

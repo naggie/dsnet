@@ -61,10 +61,12 @@ Main configuration example:
 
     {
         "ExternalIP": "198.51.100.2",
+        "ExternalIP6": "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
         "ListenPort": 51820,
         "Domain": "dsnet",
         "InterfaceName": "dsnet",
         "Network": "10.164.236.0/22",
+        "Network6": "fd00:7b31:106a:ae00::/64",
         "IP": "10.164.236.1",
         "DNS": "",
         "Networks": [],
@@ -76,6 +78,7 @@ Main configuration example:
                 "Owner": "naggie",
                 "Description": "Home server",
                 "IP": "10.164.236.2",
+                "IP6": "fd00:7b31:106a:ae00:44c3:29c3:53b1:a6f9",
                 "Added": "2020-05-07T10:04:46.336286992+01:00",
                 "Networks": [],
                 "PublicKey": "altJeQ/V52JZQrGcA9RiKcpZusYU6zMUJhl7Wbd9rX0=",
@@ -88,11 +91,11 @@ Explanation of each field:
 
     {
         "ExternalIP": "198.51.100.2",
+        "ExternalIP6": "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
 
 This is the external IP that will be the value of Endpoint for the server peer
 in client configs. It is automatically detected by opening a socket or using an
-external IP discovery service -- the first to give a valid public IPv4 will
-win.
+external IP discovery service -- the first to give a valid public IP will win.
 
 
         "ListenPort": 51820,
@@ -110,6 +113,7 @@ connection by polling the report file.
 The wireguard interface name.
 
         "Network": "10.164.236.0/22",
+        "Network6": "fd00:7b31:106a:ae00::/64",
 
 The CIDR network to use when allocating IPs to peers. This subnet, a `/22` in
 the `10.0.0.0/16` block is generated randomly to (probably) avoid collisions
@@ -117,7 +121,10 @@ with other networks. There are 1022 addresses available. Addresses are
 allocated to peers when peers are added with `dsnet add` using the lowest
 available address.
 
+A random ULA network with a subnet of 0 is generated for IPv6.
+
         "IP": "10.164.236.1",
+        "IP6": "fd00:7b31:106a:ae00:44c3:29c3:53b1:a6f9",
 
 This is the private VPN IP of the server peer. It is the first address in the
 above pool.
@@ -261,11 +268,54 @@ See
 [etc/README.md](https://github.com/naggie/dsnet/blob/master/contrib/report_rendering/README.md)
 for hugo and PHP code for rendering a similar table.
 
+# Generating other config files
+
+dsnet currently supports the generation of `wg-quick` configuration by default.
+It can also generate VyOS/Vyatta configuration for EdgeOS/Unifi devices such as
+the Edgerouter 4 using the
+[wireguard-vyatta](https://github.com/WireGuard/wireguard-vyatta-ubnt) package.
+
+To change the config file format, set the following environment variables:
+
+* `DSNET_OUTPUT=vyatta`
+* `DSNET_OUTPUT=wg-quick`
+
+Example vyatta output:
+
+    configure
+    set interfaces wireguard wg0 address 10.165.52.3/22
+    set interfaces wireguard wg0 address fd00:7b31:106a:ae00:f7bb:bf31:201f:60ab/64
+    set interfaces wireguard wg0 route-allowed-ips true
+    set interfaces wireguard wg0 private-key cAtj1tbjGGmVoxdY78q9Sv0EgNlawbzffGWjajQkLFw=
+    set interfaces wireguard wg0 description dsnet
+
+    set interfaces wireguard wg0 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= endpoint 123.123.123.123:51820
+    set interfaces wireguard wg0 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= persistent-keepalive 25
+    set interfaces wireguard wg0 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= preshared-key w1FtOKoMEdnhsjREtSvpg1CHEKFzFzJWaQYZwaUCV38=
+    set interfaces wireguard wg0 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= allowed-ips 10.165.52.0/22
+    set interfaces wireguard wg0 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= allowed-ips fd00:7b31:106a:ae00::/64
+    commit; save
+
+Replace `wg0` with an unused interface name in the range `wg0-wg999`.
+
 # FAQ
 
 > Does dsnet support IPv6?
 
-Not currently but this is a [planned feature](https://github.com/naggie/dsnet/issues/1).
+Yes! By default since version 0.2, a random ULA subnet is generated with a 0
+subnet ID. Peers are allocated random addresses when added. Existing IPv4
+configs will not be updated -- add a `Network6` subnet to the existing config
+to allocate addresses to new peers.
+
+Like IPv4, it's up to you if you want to provide NAT IPv6 access to the
+internet; alternatively (and preferably) you can allocate a a real IPv6 subnet
+such that all peers have a real globally routeable IPv6 address.
+
+Upon initialisation, the server IPv4 and IPv6 external IP addresses are
+discovered on a best-effort basis. Clients will have configuration configured
+for the server IPv4 preferentially. If not IPv4 is configured, IPv6 is used;
+this is to give the best chance of the VPN working regardless of the dodgy
+network you're on.
 
 > Is dsnet production ready?
 

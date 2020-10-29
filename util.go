@@ -9,7 +9,7 @@ import (
 
 func check(e error, optMsg ...string) {
 	if e != nil {
-		if (len(optMsg) > 0) {
+		if len(optMsg) > 0 {
 			ExitFail("%s - %s", e, strings.Join(optMsg, " "))
 		}
 		ExitFail("%s", e)

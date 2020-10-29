@@ -3,6 +3,7 @@ package dsnet
 import (
 	"encoding/json"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"os"
 	"time"
@@ -20,7 +21,8 @@ type PeerConfig struct {
 	// Description of what the host is and/or does
 	Description string `validate:"required,gte=1,lte=255"`
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
-	IP    net.IP    `validate:"required`
+	IP    net.IP
+	IP6   net.IP
 	Added time.Time `validate:"required"`
 	// TODO ExternalIP support (Endpoint)
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
@@ -34,15 +36,18 @@ type PeerConfig struct {
 type DsnetConfig struct {
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
-	ExternalIP    net.IP `validate:"required"`
+	ExternalIP    net.IP
+	ExternalIP6   net.IP
 	ListenPort    int    `validate:"gte=1024,lte=65535"`
 	Domain        string `validate:"required,gte=1,lte=255"`
 	InterfaceName string `validate:"required,gte=1,lte=255"`
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
-	Network JSONIPNet `validate:"required"`
-	IP      net.IP    `validate:"required"`
-	DNS     net.IP
+	Network  JSONIPNet `validate:"required"`
+	Network6 JSONIPNet `validate:"required"`
+	IP       net.IP
+	IP6      net.IP
+	DNS      net.IP
 	// extra networks available, will be added to AllowedIPs
 	Networks []JSONIPNet `validate:"required"`
 	// TODO Default subnets to route via VPN
@@ -68,6 +73,10 @@ func MustLoadDsnetConfig() *DsnetConfig {
 
 	err = validator.New().Struct(conf)
 	check(err)
+
+	if len(conf.ExternalIP) == 0 && len(conf.ExternalIP6) == 0 {
+		ExitFail("Config does not contain ExternalIP or ExternalIP6")
+	}
 
 	return &conf
 }
@@ -127,16 +136,16 @@ func (conf *DsnetConfig) MustRemovePeer(hostname string) {
 
 	// remove peer from slice, retaining order
 	copy(conf.Peers[peerIndex:], conf.Peers[peerIndex+1:]) // shift left
-	conf.Peers = conf.Peers[:len(conf.Peers)-1] // truncate
+	conf.Peers = conf.Peers[:len(conf.Peers)-1]            // truncate
 }
 
 func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
-	if IP.Equal(conf.IP) {
+	if IP.Equal(conf.IP) || IP.Equal(conf.IP6) {
 		return true
 	}
 
 	for _, peer := range conf.Peers {
-		if IP.Equal(peer.IP) {
+		if IP.Equal(peer.IP) || IP.Equal(peer.IP6) {
 			return true
 		}
 
@@ -150,16 +159,21 @@ func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
 	return false
 }
 
-// choose a free IP for a new Peer
+// choose a free IPv4 for a new Peer (sequential allocation)
 func (conf DsnetConfig) MustAllocateIP() net.IP {
 	network := conf.Network.IPNet
 	ones, bits := network.Mask.Size()
 	zeros := bits - ones
-	min := 1                // avoids network addr
-	max := (1 << zeros) - 2 // avoids broadcast addr + overflow
+
+	// avoids network addr
+	min := 1
+	// avoids broadcast addr + overflow
+	max := (1 << zeros) - 2
+
+	IP := make(net.IP, len(network.IP))
 
 	for i := min; i <= max; i++ {
-		IP := make(net.IP, len(network.IP))
+		// dst, src!
 		copy(IP, network.IP)
 
 		// OR the host part with the network part
@@ -178,6 +192,37 @@ func (conf DsnetConfig) MustAllocateIP() net.IP {
 	return net.IP{}
 }
 
+// choose a free IPv6 for a new Peer (pseudorandom allocation)
+func (conf DsnetConfig) MustAllocateIP6() net.IP {
+	network := conf.Network6.IPNet
+	ones, bits := network.Mask.Size()
+	zeros := bits - ones
+
+	rbs := make([]byte, zeros)
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	IP := make(net.IP, len(network.IP))
+
+	for i := 0; i <= 10000; i++ {
+		rand.Read(rbs)
+		// dst, src! Copy prefix of IP
+		copy(IP, network.IP)
+
+		// OR the host part with the network part
+		for j := ones / 8; j < len(IP); j++ {
+			IP[j] = IP[j] | rbs[j]
+		}
+
+		if !conf.IPAllocated(IP) {
+			return IP
+		}
+	}
+
+	ExitFail("Could not allocate random IPv6 after 10000 tries. This was highly unlikely!")
+
+	return net.IP{}
+}
+
 func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 	wgPeers := make([]wgtypes.PeerConfig, 0, len(conf.Peers))
 
@@ -187,10 +232,26 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 		presharedKey := peer.PresharedKey.Key
 
 		// AllowedIPs = private IP + defined networks
-		allowedIPs := make([]net.IPNet, len(peer.Networks)+1)
-		allowedIPs[0] = net.IPNet{
-			IP:   peer.IP,
-			Mask: net.IPMask{255, 255, 255, 255},
+		allowedIPs := make([]net.IPNet, 0, len(peer.Networks)+2)
+
+		if len(peer.IP) > 0 {
+			allowedIPs = append(
+				allowedIPs,
+				net.IPNet{
+					IP:   peer.IP,
+					Mask: net.IPMask{255, 255, 255, 255},
+				},
+			)
+		}
+
+		if len(peer.IP6) > 0 {
+			allowedIPs = append(
+				allowedIPs,
+				net.IPNet{
+					IP:   peer.IP6,
+					Mask: net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+				},
+			)
 		}
 
 		for i, net := range peer.Networks {

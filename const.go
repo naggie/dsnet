@@ -27,7 +27,7 @@ const (
 
 var (
 	// populated with LDFLAGS, see do-release.sh
-	VERSION = "unknown"
+	VERSION    = "unknown"
 	GIT_COMMIT = "unknown"
 	BUILD_DATE = "unknown"
 )
