@@ -60,7 +60,7 @@ Available commands:
 
 Environment variables:
 
-	DSNET_OUTPUT=wg-quick : The add command will generate a wg-quick config
+	DSNET_OUTPUT=wg-quick : The add command will generate a wg-quick config (default)
 	DSNET_OUTPUT=vyatta   : The add command will generate a vyatta (edgeos) config
 
 dsnet version %[2]s
