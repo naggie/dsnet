@@ -38,6 +38,18 @@ func CreateLink(conf *DsnetConfig) {
 		ExitFail("Could not add addr %s to interface %s", addr.IP, err)
 	}
 
+	addr6 := &netlink.Addr{
+		IPNet: &net.IPNet{
+			IP:   conf.IP6,
+			Mask: conf.Network6.IPNet.Mask,
+		},
+	}
+
+	err = netlink.AddrAdd(link, addr6)
+	if err != nil {
+		ExitFail("Could not add addr %s to interface %s", addr.IP, err)
+	}
+
 	// bring up interface (UNKNOWN state instead of UP, a wireguard quirk)
 	err = netlink.LinkSetUp(link)
 
