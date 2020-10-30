@@ -42,33 +42,33 @@ AllowedIPs={{ . }}
 // TODO use random wg0-wg999 to hopefully avoid conflict by default?
 const vyattaPeerConf = `configure
 {{ if gt (.DsnetConfig.Network.IPNet.IP | len) 0 -}}
-set interfaces wireguard wg0 address {{ .Peer.IP }}/{{ .CidrSize }}
+set interfaces wireguard {{ .Wgif }} address {{ .Peer.IP }}/{{ .CidrSize }}
 {{ end -}}
 {{ if gt (.DsnetConfig.Network6.IPNet.IP | len) 0 -}}
-set interfaces wireguard wg0 address {{ .Peer.IP6 }}/{{ .CidrSize6 }}
+set interfaces wireguard {{ .Wgif }} address {{ .Peer.IP6 }}/{{ .CidrSize6 }}
 {{ end -}}
-set interfaces wireguard wg0 route-allowed-ips true
-set interfaces wireguard wg0 private-key {{ .Peer.PrivateKey.Key }}
-set interfaces wireguard wg0 description {{ .DsnetConfig.InterfaceName }}
+set interfaces wireguard {{ .Wgif }} route-allowed-ips true
+set interfaces wireguard {{ .Wgif }} private-key {{ .Peer.PrivateKey.Key }}
+set interfaces wireguard {{ .Wgif }} description {{ .DsnetConfig.InterfaceName }}
 {{- if .DsnetConfig.DNS }}
 #set service dns forwarding name-server {{ .DsnetConfig.DNS }}
 {{ end }}
 
 {{ if gt (.DsnetConfig.ExternalIP | len) 0 -}}
-set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
+set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
 {{ else -}}
-set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP6 }}:{{ .DsnetConfig.ListenPort }}
+set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP6 }}:{{ .DsnetConfig.ListenPort }}
 {{ end -}}
-set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
-set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
+set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
+set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
 {{ if gt (.DsnetConfig.Network.IPNet.IP | len) 0 -}}
-set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ .DsnetConfig.Network }}
+set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ .DsnetConfig.Network }}
 {{ end -}}
 {{ if gt (.DsnetConfig.Network6.IPNet.IP | len) 0 -}}
-set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ .DsnetConfig.Network6 }}
+set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ .DsnetConfig.Network6 }}
 {{ end -}}
 {{ range .DsnetConfig.Networks -}}
-set interfaces wireguard wg0 peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
+set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
 {{ end -}}
 commit; save
 `
@@ -141,6 +141,17 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 	cidrSize, _ := conf.Network.IPNet.Mask.Size()
 	cidrSize6, _ := conf.Network6.IPNet.Mask.Size()
 
+	// derive deterministic interface name
+	wgifSeed := 0
+	for _, b := range conf.IP {
+		wgifSeed += int(b)
+	}
+
+	for _, b := range conf.IP6 {
+		wgifSeed += int(b)
+	}
+
+
 	t := template.Must(template.New("peerConf").Parse(peerConf))
 	err := t.Execute(os.Stdout, map[string]interface{}{
 		"Peer":        peer,
@@ -148,6 +159,10 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
 		"CidrSize":    cidrSize,
 		"CidrSize6":   cidrSize6,
+		// vyatta requires an interface in range/format wg0-wg999
+		// deterministically choosing one in this range will probably allow use
+		// of the config without a colliding interface name
+		"Wgif":        fmt.Sprintf("wg%d", wgifSeed % 999),
 	})
 	check(err)
 }
