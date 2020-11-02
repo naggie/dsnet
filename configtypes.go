@@ -254,8 +254,8 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 			)
 		}
 
-		for i, net := range peer.Networks {
-			allowedIPs[i+1] = net.IPNet
+		for _, net := range peer.Networks {
+			allowedIPs = append(allowedIPs, net.IPNet)
 		}
 
 		wgPeers = append(wgPeers, wgtypes.PeerConfig{
