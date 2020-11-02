@@ -20,9 +20,11 @@ type DsnetReport struct {
 	// resolution. Informational only.
 	Domain string
 	IP     net.IP
+	IP6    net.IP
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
 	Network         JSONIPNet
+	Network6        JSONIPNet
 	DNS             net.IP
 	PeersOnline     int
 	PeersTotal      int
@@ -88,6 +90,7 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 			Description:       peer.Description,
 			Added:             peer.Added,
 			IP:                peer.IP,
+			IP6:               peer.IP6,
 			ExternalIP:        externalIP,
 			Networks:          peer.Networks,
 			LastHandshakeTime: wgPeer.LastHandshakeTime,
@@ -104,7 +107,9 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 		ListenPort:      conf.ListenPort,
 		Domain:          conf.Domain,
 		IP:              conf.IP,
+		IP6:             conf.IP6,
 		Network:         conf.Network,
+		Network6:        conf.Network6,
 		DNS:             conf.DNS,
 		Peers:           peerReports,
 		PeersOnline:     peersOnline,
@@ -159,6 +164,7 @@ type PeerReport struct {
 	Added time.Time
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
 	IP net.IP
+	IP6 net.IP
 	// Last known external IP
 	ExternalIP net.IP
 	// TODO ExternalIP support (Endpoint)
