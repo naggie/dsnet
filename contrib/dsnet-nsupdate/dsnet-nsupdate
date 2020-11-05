@@ -15,7 +15,7 @@ import dns.rdata
 import dns.rdatatype
 
 # Only log warnings
-log_level = logging.WARN
+log_level = logging.INFO
 
 #########################################
 #
@@ -27,30 +27,36 @@ log_level = logging.WARN
 default_ttl = 300
 
 # Declare our internal DNS server
-#dsnet_int_nameserver = '172.18.0.1'
+# dsnet_int_nameserver = '10.164.236.1'
 # Or leave as 'json' to use "DNS" from dsnetreport.json
 dsnet_int_nameserver = 'json'
 
 # Define an external DNS server here if using split horizon
-#dsnet_ext_nameserver = '217.70.177.40'
+# dsnet_ext_nameserver = '198.51.100.2'
 # Or set to 'json' to use "ExternalIP" from dsnetreport.json
-#dsnet_ext_nameserver = 'json'
+# dsnet_ext_nameserver = 'json'
 # Or set to 'None' to disable split horizon DNS
 dsnet_ext_nameserver = None
 
 # Specifically declare our zone (NOTE THE '.' AT THE END)
-#dsnet_zone = 'example.com.'
+dsnet_zone = 'example.com.'
 # Or set to 'json' to use "Domain" from dsnetreport.json
-dsnet_zone = 'json'
+# dsnet_zone = 'json'
+
+# Declare our reverse zones here
+dsnet_reverse_zone = '236.164.10.in-addr.arpa.'
+dsnet_reverse6_zone = '0.0.e.a.a.6.0.1.1.3.b.7.0.0.d.f.ip6.arpa.'
+# In the future we should automatically determine the reverse zone
+# from the 'Network' and 'Network6' parameters in the JSON
+# Currently the below does not work correctly:
+# dns.reversename.from_address(ipv4_space).to_text()
+# dns.reversename.from_address(ipv6_space).to_text()
 
 # Which TSIG key file do we need to use
 dns_tsig_key_file = '/etc/bind/dsnet-update.key'
 
 # Which TXT record are we using to track current peers?
 dsnet_current_peers_record = '_dsnet_peers'
-
-# Dirty IPv6 prefix hack
-network6_workaround = 'fdca:9217:f2de:cf86::/64'
 
 #########################################
 
@@ -81,6 +87,7 @@ resolver_int = dns.resolver.Resolver(configure=False)
 # And externally
 if dsnet_ext_nameserver:
     resolver_ext = dns.resolver.Resolver(configure=False)
+
 
 # Dirty function to load a TSIG key from a file
 def load_tsig_key(tsig_file):
@@ -186,7 +193,7 @@ def get_current_peers(peer_txt_record):
                 # Determine if the name is delegated
                 answer_ns = resolver_int.query(fqdn, 'NS')
                 ns_record = answer_ns[0].to_text()
-                logger.info(fqdn + ' has been delegated to ' + ns_record)
+                logger.debug(fqdn + ' has been delegated to ' + ns_record)
                 current_peers[peer]['delegated'] = True
             except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
                 current_peers[peer]['delegated'] = False
@@ -202,7 +209,7 @@ def get_current_peers(peer_txt_record):
                 current_peers[peer]['reverse'] = reverse_ptr.to_text()
             except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
                 # Set these to None if they do not exist
-                logger.info('Incomplete IPv4 records for ' + fqdn)
+                logger.debug('Incomplete IPv4 records for ' + fqdn)
                 current_peers[peer]['ip'] = None
                 current_peers[peer]['reverse'] = None
             if current_peers[peer]['reverse']:
@@ -213,6 +220,7 @@ def get_current_peers(peer_txt_record):
                     current_peers[peer]['reverse_ptr'] = answer_ptr[0].to_text()
                 except(dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
                     # Set to None if it doesn't exist
+                    logger.debug('Incomplete IPv4 records for ' + fqdn)
                     current_peers[peer]['reverse_ptr'] = None
             else:
                 current_peers[peer]['reverse_ptr'] = None
@@ -228,7 +236,7 @@ def get_current_peers(peer_txt_record):
                 current_peers[peer]['reverse6'] = reverse6_ptr.to_text()
             except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
                 # Set these to None if they do not exist
-                logger.info('Incomplete IPv6 records for ' + fqdn)
+                logger.debug('Incomplete IPv6 records for ' + fqdn)
                 current_peers[peer]['ip6'] = None
                 current_peers[peer]['reverse6'] = None
             if current_peers[peer]['reverse6']:
@@ -239,7 +247,7 @@ def get_current_peers(peer_txt_record):
                     current_peers[peer]['reverse6_ptr'] = answer6_ptr[0].to_text()
                 except(dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
                     # Set to None if it doesn't exist
-                    logger.info('Incomplete IPv6 records for ' + fqdn)
+                    logger.debug('Incomplete IPv6 records for ' + fqdn)
                     current_peers[peer]['reverse6_ptr'] = None
             else:
                 current_peers[peer]['reverse6_ptr'] = None
@@ -285,20 +293,6 @@ def process_peer_json(json_data):
         # Set the IPv4
         new_peers[peer]['ip'] = peer_entry['IP']
         # Set the IPv6
-        # Not officially supported by dsnet... yet!
-        # It's tracked under issue #1
-        # So here's a dirty hack
-        if not 'IP6' in peer_entry:
-            peer_entry['IP6'] = None
-            for network in peer_entry['Networks']:
-                # Get the IPv6 prefix from network6_workaround declare at the top
-                ipv6_prefix = re.sub('\:+\/[0-9]+$', '', network6_workaround)
-                if network.startswith(ipv6_prefix):
-                    # And then check it's a single unicast address
-                    if network.endswith('/128'):
-                        # Strip the prefix length and we have the IPv6
-                        peer_entry['IP6'] = network[:-4]
-        # End of dirty hack
         new_peers[peer]['ip6'] = peer_entry['IP6']
         if dsnet_ext_nameserver:
             if peer_entry['Online']:
@@ -319,6 +313,7 @@ def process_peer_json(json_data):
             new_peers[peer]['reverse6_ptr'] = fqdn
         else:
             # Else set to None
+            new_peers[peer]['ip6'] = None
             new_peers[peer]['reverse6'] = None
             new_peers[peer]['reverse6_ptr'] = None
 
@@ -327,6 +322,7 @@ def process_peer_json(json_data):
 
 
 def main():
+    logger.info('Updating dsnet DNS zone')
     # We should have a json file as an argument
     if len(sys.argv) < 2:
         # Quit if not present
@@ -375,16 +371,11 @@ def main():
     # Determine our reverse zones from the data in the JSON
     # For IPv4
     ipv4_space = re.sub('\/[0-9]+$', '', dsnet_json['Network'])
-    dsnet_reverse_zone = dns.reversename.from_address(ipv4_space).to_text()
     logger.debug('Using IPv4 address space ' + dsnet_json['Network'])
     logger.debug('with reverse zone ' + dsnet_reverse_zone)
 
-    # Some dirty IPv6 fudging
-    if not 'Network6' in dsnet_json:
-        dsnet_json['Network6'] = network6_workaround
     # And for IPv6
     ipv6_space = re.sub('\/[0-9]+$', '', dsnet_json['Network6'])
-    dsnet_reverse6_zone = dns.reversename.from_address(ipv6_space).to_text()
     logger.debug('Using IPv6 address space ' + dsnet_json['Network6'])
     logger.debug('with reverse zone ' + dsnet_reverse6_zone)
 
@@ -445,17 +436,15 @@ def main():
                     # Update if the external IP doesn't match
                     update_ext_peers.append(peer)
 
-            # Check if this peer is delegated to it's own DNS first
-            if not current_peers[peer]['delegated']:
-                # Check reverse IPv4 record
-                if new_peers[peer]['reverse_ptr'] != current_peers[peer]['reverse_ptr']:
-                    # Update if the PTR records don't match
-                    update_ptr_peers.append(peer)
+            # Check reverse IPv4 record
+            if new_peers[peer]['reverse_ptr'] != current_peers[peer]['reverse_ptr']:
+                # Update if the PTR records don't match
+                update_ptr_peers.append(peer)
 
-                # Check reverse IPv4 record
-                if new_peers[peer]['reverse6_ptr'] != current_peers[peer]['reverse6_ptr']:
-                    # Update if the PTR records don't match
-                    update_ptr6_peers.append(peer)
+            # Check reverse IPv6 record
+            if new_peers[peer]['reverse6_ptr'] != current_peers[peer]['reverse6_ptr']:
+                # Update if the PTR records don't match
+                update_ptr6_peers.append(peer)
 
     # List peers we're adding
     if add_peers:
@@ -507,10 +496,10 @@ def main():
             if not update_ptr_peers and not update_ptr6_peers:
                 if dsnet_ext_nameserver:
                     if not update_ext_peers:
-                        logger.debug("Nothing to do! Exiting...")
+                        logger.info("Nothing to do! Exiting...")
                         sys.exit(0)
                 else:
-                    logger.debug("Nothing to do! Exiting...")
+                    logger.info("Nothing to do! Exiting...")
                     sys.exit(0)
 
     # Load the TSIG key from file
