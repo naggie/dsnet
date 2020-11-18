@@ -160,20 +160,24 @@ To change the config file format, set the following environment variables:
 Example vyatta output:
 
     configure
-    set interfaces wireguard wg0 address 10.165.52.3/22
-    set interfaces wireguard wg0 address fd00:7b31:106a:ae00:f7bb:bf31:201f:60ab/64
-    set interfaces wireguard wg0 route-allowed-ips true
-    set interfaces wireguard wg0 private-key cAtj1tbjGGmVoxdY78q9Sv0EgNlawbzffGWjajQkLFw=
-    set interfaces wireguard wg0 description dsnet
+    set interfaces wireguard wg23 address 10.165.52.3/22
+    set interfaces wireguard wg23 address fd00:7b31:106a:ae00:f7bb:bf31:201f:60ab/64
+    set interfaces wireguard wg23 route-allowed-ips true
+    set interfaces wireguard wg23 private-key cAtj1tbjGGmVoxdY78q9Sv0EgNlawbzffGWjajQkLFw=
+    set interfaces wireguard wg23 description dsnet
 
-    set interfaces wireguard wg0 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= endpoint 123.123.123.123:51820
-    set interfaces wireguard wg0 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= persistent-keepalive 25
-    set interfaces wireguard wg0 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= preshared-key w1FtOKoMEdnhsjREtSvpg1CHEKFzFzJWaQYZwaUCV38=
-    set interfaces wireguard wg0 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= allowed-ips 10.165.52.0/22
-    set interfaces wireguard wg0 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= allowed-ips fd00:7b31:106a:ae00::/64
+    set interfaces wireguard wg23 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= endpoint 123.123.123.123:51820
+    set interfaces wireguard wg23 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= persistent-keepalive 25
+    set interfaces wireguard wg23 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= preshared-key w1FtOKoMEdnhsjREtSvpg1CHEKFzFzJWaQYZwaUCV38=
+    set interfaces wireguard wg23 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= allowed-ips 10.165.52.0/22
+    set interfaces wireguard wg23 peer PjxQM7OwVYvOJfORA1EluLw8CchSu7jLq92YYJi5ohY= allowed-ips fd00:7b31:106a:ae00::/64
     commit; save
 
-Replace `wg0` with an unused interface name in the range `wg0-wg999`.
+The interface (in this case `wg23`) is deterministically chosen in the range
+`wg0-wg999`. This is such that you can use multiple dsnet configurations and
+the interface numbers will (probably) be different. The interface number is
+arbitrary, so if it is already assigned replace it with a number of your
+choice.
 
 # FAQ
 
