@@ -51,9 +51,11 @@ type DsnetConfig struct {
 	// extra networks available, will be added to AllowedIPs
 	Networks []JSONIPNet `validate:"required"`
 	// TODO Default subnets to route via VPN
-	ReportFile string       `validate:"required"`
-	PrivateKey JSONKey      `validate:"required,len=44"`
-	Peers      []PeerConfig `validate:"dive"`
+	ReportFile string  `validate:"required"`
+	PrivateKey JSONKey `validate:"required,len=44"`
+	PostUp   string
+	PostDown string
+	Peers    []PeerConfig `validate:"dive"`
 }
 
 func MustLoadDsnetConfig() *DsnetConfig {

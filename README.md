@@ -73,6 +73,8 @@ Main (automatically generated) configuration example:
         "Networks": [],
         "ReportFile": "/var/lib/dsnetreport.json",
         "PrivateKey": "uC+xz3v1mfjWBHepwiCgAmPebZcY+EdhaHAvqX2r7U8=",
+        "PostUp": "",
+        "PostDown" "",
         "Peers": [
             {
                 "Hostname": "test",

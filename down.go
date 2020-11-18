@@ -7,6 +7,11 @@ import (
 func Down() {
 	conf := MustLoadDsnetConfig()
 	DelLink(conf)
+	RunPostDown(conf)
+}
+
+func RunPostDown(conf *DsnetConfig) {
+	ShellOut(conf.PostDown, "PostDown")
 }
 
 func DelLink(conf *DsnetConfig) {
