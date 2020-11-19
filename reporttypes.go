@@ -163,7 +163,7 @@ type PeerReport struct {
 	// date peer was added to dsnet config
 	Added time.Time
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
-	IP net.IP
+	IP  net.IP
 	IP6 net.IP
 	// Last known external IP
 	ExternalIP net.IP

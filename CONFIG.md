@@ -66,6 +66,14 @@ with [hugo](https://gohugo.io/)
 network overview page. The shortcode file is included in this repository under
 `etc/`.
 
+        "PostUp": ""
+        "PostDown": ""
+
+Allows a user to specify commands to run after the device is up or down. This is
+typcially a collection of `iptables` invocations. The commands are executed by
+`/bin/sh`. *NOTE* These commands run as root, so make sure you check that they
+are secure.
+
         "PrivateKey": "uC+xz3v1mfjWBHepwiCgAmPebZcY+EdhaHAvqX2r7U8=",
 
 The server private key, automatically generated and very sensitive!

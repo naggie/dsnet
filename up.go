@@ -10,6 +10,11 @@ func Up() {
 	conf := MustLoadDsnetConfig()
 	CreateLink(conf)
 	ConfigureDevice(conf)
+	RunPostUp(conf)
+}
+
+func RunPostUp(conf *DsnetConfig) {
+	ShellOut(conf.PostUp, "PostUp")
 }
 
 func CreateLink(conf *DsnetConfig) {

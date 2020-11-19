@@ -151,7 +151,6 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		wgifSeed += int(b)
 	}
 
-
 	t := template.Must(template.New("peerConf").Parse(peerConf))
 	err := t.Execute(os.Stdout, map[string]interface{}{
 		"Peer":        peer,
@@ -162,7 +161,7 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		// vyatta requires an interface in range/format wg0-wg999
 		// deterministically choosing one in this range will probably allow use
 		// of the config without a colliding interface name
-		"Wgif":        fmt.Sprintf("wg%d", wgifSeed % 999),
+		"Wgif": fmt.Sprintf("wg%d", wgifSeed%999),
 	})
 	check(err)
 }

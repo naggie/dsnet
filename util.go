@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -33,6 +34,17 @@ func MustPromptString(prompt string, required bool) string {
 func ExitFail(format string, a ...interface{}) {
 	fmt.Fprintf(os.Stderr, "\033[31m"+format+"\033[0m\n", a...)
 	os.Exit(1)
+}
+
+func ShellOut(command string, name string) {
+	if command != "" {
+        fmt.Printf("Running %s commands:\n %s", name, command)
+		shell := exec.Command("/bin/sh", "-c", command)
+		err := shell.Run()
+		if err != nil {
+			ExitFail("%s '%s' failed", name, command, err)
+		}
+	}
 }
 
 func ConfirmOrAbort(format string, a ...interface{}) {
