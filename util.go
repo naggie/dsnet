@@ -38,7 +38,6 @@ func ExitFail(format string, a ...interface{}) {
 
 func ShellOut(command string, name string) {
 	if command != "" {
-        fmt.Printf("Running %s commands:\n %s", name, command)
 		shell := exec.Command("/bin/sh", "-c", command)
 		err := shell.Run()
 		if err != nil {
