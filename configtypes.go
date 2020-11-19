@@ -53,9 +53,9 @@ type DsnetConfig struct {
 	// TODO Default subnets to route via VPN
 	ReportFile string  `validate:"required"`
 	PrivateKey JSONKey `validate:"required,len=44"`
-	PostUp   string
-	PostDown string
-	Peers    []PeerConfig `validate:"dive"`
+	PostUp     string
+	PostDown   string
+	Peers      []PeerConfig `validate:"dive"`
 }
 
 func MustLoadDsnetConfig() *DsnetConfig {
