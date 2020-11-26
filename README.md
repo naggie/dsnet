@@ -27,7 +27,7 @@ It works on AMD64 based linux and also ARMv5.
 
 Quick start (AMD64 linux) -- install wireguard, then, after making sure `/usr/local/bin` is in your path:
 
-    sudo wget https://github.com/naggie/dsnet/releases/download/v0.1/dsnet-linux-amd64 -O /usr/local/bin/dsnet
+    sudo wget https://github.com/naggie/dsnet/releases/latest/download/dsnet-linux-amd64 -O /usr/local/bin/dsnet
     sudo chmod +x /usr/local/bin/dsnet
     sudo dsnet init
     # edit /etc/dsnetconfig.json to taste
