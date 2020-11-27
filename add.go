@@ -65,6 +65,44 @@ set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.K
 commit; save
 `
 
+const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
+  {{ .Wgif }} = {{ "{" }}
+    ips = [
+      {{ if gt (.DsnetConfig.Network.IPNet.IP | len) 0 -}}
+      "{{ .Peer.IP }}/{{ .CidrSize }}"
+      {{ end -}}
+      {{ if gt (.DsnetConfig.Network6.IPNet.IP | len) 0 -}}
+      "{{ .Peer.IP6 }}/{{ .CidrSize6 }}"
+      {{ end -}}
+    ];
+    privateKey = "{{ .Peer.PrivateKey.Key }}";
+    {{- if .DsnetConfig.DNS }}
+    dns = [ "{{ .DsnetConfig.DNS }}" ];
+    {{ end }}
+    peers= [
+      {{ "{" }}
+        publicKey = "{{ .DsnetConfig.PrivateKey.PublicKey.Key }}";
+        presharedKey = "{{ .Peer.PresharedKey.Key }}";
+        allowedIPs = [
+          {{ if gt (.DsnetConfig.Network.IPNet.IP | len) 0 -}}
+          "{{ .DsnetConfig.Network }}"
+          {{ end -}}
+          {{ if gt (.DsnetConfig.Network6.IPNet.IP | len) 0 -}}
+          "{{ .DsnetConfig.Network6 }}"
+          {{ end -}}
+        ];
+        {{ if gt (.DsnetConfig.ExternalIP | len) 0 -}}
+        endpoint = "{{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}";
+        {{ else -}}
+         endpoint = "{{ .DsnetConfig.ExternalIP6 }}:{{ .DsnetConfig.ListenPort }}";
+        {{ end -}}
+        persistentKeepalive = {{ .Keepalive }};
+      {{ "}" }}
+    ];
+  {{ "};" }}
+{{ "};" }}
+`
+
 func Add() {
 	if len(os.Args) != 3 {
 		// TODO non-red
@@ -126,6 +164,9 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 	// https://github.com/WireGuard/wireguard-vyatta-ubnt/
 	case "vyatta":
 		peerConf = vyattaPeerConf
+	// https://nixos.wiki/wiki/Wireguard
+	case "nixos":
+		peerConf = nixosPeerConf
 	default:
 		ExitFail("Unrecognised DSNET_OUTPUT type")
 	}
