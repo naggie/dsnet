@@ -22,11 +22,7 @@ DNS={{ .DsnetConfig.DNS }}
 [Peer]
 PublicKey={{ .DsnetConfig.PrivateKey.PublicKey.Key }}
 PresharedKey={{ .Peer.PresharedKey.Key }}
-{{ if gt (.DsnetConfig.ExternalIP | len) 0 -}}
-Endpoint={{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
-{{ else -}}
-Endpoint={{ .DsnetConfig.ExternalIP6 }}:{{ .DsnetConfig.ListenPort }}
-{{ end -}}
+Endpoint={{ .Endpoint }}:{{ .DsnetConfig.ListenPort }}
 PersistentKeepalive={{ .Keepalive }}
 {{ if gt (.DsnetConfig.Network.IPNet.IP | len) 0 -}}
 AllowedIPs={{ .DsnetConfig.Network }}
@@ -54,11 +50,7 @@ set interfaces wireguard {{ .Wgif }} description {{ .DsnetConfig.InterfaceName }
 #set service dns forwarding name-server {{ .DsnetConfig.DNS }}
 {{ end }}
 
-{{ if gt (.DsnetConfig.ExternalIP | len) 0 -}}
-set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}
-{{ else -}}
-set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .DsnetConfig.ExternalIP6 }}:{{ .DsnetConfig.ListenPort }}
-{{ end -}}
+set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} endpoint {{ .Endpoint }}:{{ .DsnetConfig.ListenPort }}
 set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
 set interfaces wireguard {{ .Wgif }} peer {{ .DsnetConfig.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
 {{ if gt (.DsnetConfig.Network.IPNet.IP | len) 0 -}}
@@ -151,6 +143,19 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		wgifSeed += int(b)
 	}
 
+	// See DsnetConfig type for explanation
+	var endpoint string
+
+	if conf.ExternalHostname != "" {
+		endpoint = conf.ExternalHostname
+	} else if len(conf.ExternalIP) > 0 {
+		endpoint = conf.ExternalIP.String()
+	} else if len(conf.ExternalIP6) > 0 {
+		endpoint = conf.ExternalIP6.String()
+	} else {
+		ExitFail("Config does not contain ExternalIP, ExternalIP6 or ExternalHostname")
+	}
+
 	t := template.Must(template.New("peerConf").Parse(peerConf))
 	err := t.Execute(os.Stdout, map[string]interface{}{
 		"Peer":        peer,
@@ -161,7 +166,8 @@ func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
 		// vyatta requires an interface in range/format wg0-wg999
 		// deterministically choosing one in this range will probably allow use
 		// of the config without a colliding interface name
-		"Wgif": fmt.Sprintf("wg%d", wgifSeed%999),
+		"Wgif":     fmt.Sprintf("wg%d", wgifSeed%999),
+		"Endpoint": endpoint,
 	})
 	check(err)
 }

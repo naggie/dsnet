@@ -34,11 +34,18 @@ type PeerConfig struct {
 }
 
 type DsnetConfig struct {
+	// When generating configs, the ExternalHostname has precendence for the
+	// server Endpoint, followed by ExternalIP (IPv4) and ExternalIP6 (IPv6)
+	// The IPs are discovered automatically on init. Define an ExternalHostname
+	// if you're using dynamic DNS, want to change IPs without updating
+	// configs, or want wireguard to be able to choose between IPv4/IPv6. It is
+	// only possible to specify one Endpoint per peer entry in wireguard.
+	ExternalHostname string
+	ExternalIP       net.IP
+	ExternalIP6      net.IP
+	ListenPort       int `validate:"gte=1024,lte=65535"`
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
-	ExternalIP    net.IP
-	ExternalIP6   net.IP
-	ListenPort    int    `validate:"gte=1024,lte=65535"`
 	Domain        string `validate:"required,gte=1,lte=255"`
 	InterfaceName string `validate:"required,gte=1,lte=255"`
 	// IP network from which to allocate automatic sequential addresses
@@ -76,8 +83,8 @@ func MustLoadDsnetConfig() *DsnetConfig {
 	err = validator.New().Struct(conf)
 	check(err)
 
-	if len(conf.ExternalIP) == 0 && len(conf.ExternalIP6) == 0 {
-		ExitFail("Config does not contain ExternalIP or ExternalIP6")
+	if conf.ExternalHostname == "" && len(conf.ExternalIP) == 0 && len(conf.ExternalIP6) == 0 {
+		ExitFail("Config does not contain ExternalIP, ExternalIP6 or ExternalHostname")
 	}
 
 	return &conf

@@ -1,12 +1,26 @@
 Explanation of each field:
 
     {
+        "ExternalHostname": "",
+
+The `ExternalHostname` is used for the client config server `Endpoint` if
+defined. It has precedence over `ExternalIP` and `ExternalIP6`.
+
+
         "ExternalIP": "198.51.100.2",
         "ExternalIP6": "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
 
-This is the external IP that will be the value of Endpoint for the server peer
-in client configs. It is automatically detected by opening a socket or using an
-external IP discovery service -- the first to give a valid public IP will win.
+This is the external IPv4 and IPv6 that will be the value of Endpoint for the
+server peer in client configs. It is automatically detected by opening a socket
+or using an external IP discovery service -- the first to give a valid public
+IP will win.
+
+When generating configs, the `ExternalHostname` has precendence for the server
+`Endpoint`, followed by `ExternalIP` (IPv4) and `ExternalIP6` (IPv6) The IPs are
+discovered automatically on init. Define an `ExternalHostname` if you're using
+dynamic DNS, want to change IPs without updating configs, or want wireguard to
+be able to choose between IPv4/IPv6. It is only possible to specify one
+Endpoint per peer entry in wireguard.
 
 
         "ListenPort": 51820,
