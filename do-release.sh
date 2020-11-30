@@ -43,7 +43,6 @@ GOARCH=amd64 go build -ldflags="$LDFLAGS" cmd/dsnet.go
 mv dsnet dist/dsnet-linux-amd64
 
 hub release create \
-    --draft \
     -a dist/dsnet-linux-arm5#"dsnet linux-arm5" \
     -a dist/dsnet-linux-amd64#"dsnet linux-amd64" \
     -F $RELEASE_FILE \
