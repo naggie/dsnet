@@ -1,5 +1,6 @@
 dsnet is a simple configuration tool to manage a centralised wireguard VPN.
-Think wg-quick but quicker. From scratch:
+Think wg-quick but quicker. It can generate ready-to-go client configs for
+wg-quick, EdgeOS and NixOS. From scratch:
 
 ![dsnet add](https://raw.githubusercontent.com/naggie/dsnet/master/etc/init+add.png)
 
