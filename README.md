@@ -159,6 +159,7 @@ To change the config file format, set the following environment variables:
 
 * `DSNET_OUTPUT=vyatta`
 * `DSNET_OUTPUT=wg-quick`
+* `DSNET_OUTPUT=nixos`
 
 Example vyatta output:
 
