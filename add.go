@@ -66,7 +66,7 @@ commit; save
 `
 
 const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
-  {{ .Wgif }} = {{ "{" }}
+  dsnet = {{ "{" }}
     ips = [
       {{ if gt (.DsnetConfig.Network.IPNet.IP | len) 0 -}}
       "{{ .Peer.IP }}/{{ .CidrSize }}"
@@ -79,7 +79,7 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
     {{- if .DsnetConfig.DNS }}
     dns = [ "{{ .DsnetConfig.DNS }}" ];
     {{ end }}
-    peers= [
+    peers = [
       {{ "{" }}
         publicKey = "{{ .DsnetConfig.PrivateKey.PublicKey.Key }}";
         presharedKey = "{{ .Peer.PresharedKey.Key }}";
@@ -91,11 +91,7 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
           "{{ .DsnetConfig.Network6 }}"
           {{ end -}}
         ];
-        {{ if gt (.DsnetConfig.ExternalIP | len) 0 -}}
-        endpoint = "{{ .DsnetConfig.ExternalIP }}:{{ .DsnetConfig.ListenPort }}";
-        {{ else -}}
-         endpoint = "{{ .DsnetConfig.ExternalIP6 }}:{{ .DsnetConfig.ListenPort }}";
-        {{ end -}}
+        endpoint = "{{ .Endpoint }}:{{ .DsnetConfig.ListenPort }}";
         persistentKeepalive = {{ .Keepalive }};
       {{ "}" }}
     ];
