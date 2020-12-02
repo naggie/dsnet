@@ -38,8 +38,9 @@ Quick start (AMD64 linux) -- install wireguard, then, after making sure `/usr/lo
 
 Copy the generated configuration file to your device and connect!
 
-To send configurations, ffsend (with separately transferred password) or a
-local QR code generator may be used.
+To send configurations, [magic wormhole](https://magic-wormhole.readthedocs.io/)
+([-william](https://github.com/psanford/wormhole-william)) – with separately
+transferred password – or a local QR code generator may be used.
 
 The peer private key is generated on the server, which is technically not as
 secure as generating it on the client peer and then providing the server the
@@ -151,10 +152,12 @@ for hugo and PHP code for rendering a similar table.
 
 # Generating other config files
 
-dsnet currently supports the generation of `wg-quick` configuration by default.
-It can also generate VyOS/Vyatta configuration for EdgeOS/Unifi devices such as
-the Edgerouter 4 using the
-[wireguard-vyatta](https://github.com/WireGuard/wireguard-vyatta-ubnt) package.
+dsnet currently supports the generation of a `wg-quick` configuration by
+default. It can also generate VyOS/Vyatta configuration for EdgeOS/Unifi devices
+such as the Edgerouter 4 using the
+[wireguard-vyatta](https://github.com/WireGuard/wireguard-vyatta-ubnt) package,
+as well as configuration for [NixOS](https://nixos.org), ready to be added to
+`configuration.nix` environment definition.
 
 To change the config file format, set the following environment variables:
 
@@ -183,6 +186,31 @@ The interface (in this case `wg23`) is deterministically chosen in the range
 the interface numbers will (probably) be different. The interface number is
 arbitrary, so if it is already assigned replace it with a number of your
 choice.
+
+Example NixOS output:
+
+    networking.wireguard.interfaces = {
+      dsnet = {
+        ips = [
+          "10.9.8.2/22"
+          "fd00:80f8:af4a:4700:aaaa:bbbb:cccc:88ad/64"
+          ];
+        privateKey = "2PvML6bsmTCK+cBxpV9SfF261fsH6gICixtppfG6KFc=";
+        peers = [
+          {
+            publicKey = "zCDo5yn7Muy3mPBXtarwm5S7JjNKM0IdIdGqoreWmSA=";
+            presharedKey = "5Fa8Zc8gIkpfBPJUJn5OEVuE00iqmXnS34v4evv1MUM=";
+            allowedIPs = [
+              "10.56.72.0/22"
+              "fd00:80f8:af4a:4700::/64"
+              ];
+            endpoint = "123.123.123.123:51820";
+            persistentKeepalive = 25;
+          }
+        ];
+      };
+    };
+
 
 # FAQ
 
