@@ -38,9 +38,19 @@ Quick start (AMD64 linux) -- install wireguard, then, after making sure `/usr/lo
 
 Copy the generated configuration file to your device and connect!
 
-To send configurations, [magic wormhole](https://magic-wormhole.readthedocs.io/)
-([-william](https://github.com/psanford/wormhole-william)) – with separately
-transferred password – or a local QR code generator may be used.
+To send configurations, here are a few suggestions.
+- [ffsend](https://github.com/timvisee/ffsend), the most straightforward option;
+- [magic wormhole](https://magic-wormhole.readthedocs.io/), a more advanced
+  option, where the file never passes through another server;
+- [womroleh-william](https://github.com/psanford/wormhole-william), a Go
+  implementation of the above.
+
+For the above options, one should transfer the password separately.
+
+A local QR code generator, such as the popular
+[qrencode](https://fukuchi.org/works/qrencode/) may also be used to generate a
+QR code of the configuration. For instance, from the example above:
+`qrencode -t ansiutf8 < dsnet-banana.conf`
 
 The peer private key is generated on the server, which is technically not as
 secure as generating it on the client peer and then providing the server the
