@@ -49,8 +49,8 @@ For the above options, one should transfer the password separately.
 
 A local QR code generator, such as the popular
 [qrencode](https://fukuchi.org/works/qrencode/) may also be used to generate a
-QR code of the configuration. For instance, from the example above:
-`qrencode -t ansiutf8 < dsnet-banana.conf`
+QR code of the configuration. For instance: `dsnet add | qrencode -t ansiutf8`.
+This works because the dsnet prompts are on STDERR and not passed to qrencode.
 
 The peer private key is generated on the server, which is technically not as
 secure as generating it on the client peer and then providing the server the
