@@ -52,7 +52,7 @@ func CreateLink(conf *DsnetConfig) {
 
 	err = netlink.AddrAdd(link, addr6)
 	if err != nil {
-		ExitFail("Could not add ipv6 addr %s to interface %s", addr.IP, err)
+		ExitFail("Could not add ipv6 addr %s to interface %s", addr6.IP, err)
 	}
 
 	// bring up interface (UNKNOWN state instead of UP, a wireguard quirk)
