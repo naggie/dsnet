@@ -58,7 +58,15 @@ public key; there is provision to specify a public key in the code when adding
 a peer to avoid the server generating the private key. The feature will be
 added when requested.
 
+# GUI
+
+Dsnet does not include or require a GUI, however there is now a separate
+official monitoring GUI: <https://github.com/botto/dsnet-gui>.
+
 # Configuration overview
+
+The configuration is a single JSON file. Beyond possible initial
+customisations, the file is managed entirely by dsnet.
 
 dsnetconfig.json is the only file the server needs to run the VPN. It contains
 the server keys, peer public/shared keys and IP settings. **A working version is
