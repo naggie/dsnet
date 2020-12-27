@@ -33,7 +33,11 @@ func CreateLink(conf *DsnetConfig) {
 		ExitFail("Could not add interface '%s' (%v)", conf.InterfaceName, err)
 	}
 
-	if conf.IP != nil {
+	if len(conf.IP) == 0 && len(conf.IP6) == 0 {
+		ExitFail("No IPv4 or IPv6 network defined in config")
+	}
+
+	if len(conf.IP) != 0 {
 		addr := &netlink.Addr{
 			IPNet: &net.IPNet{
 				IP:   conf.IP,
@@ -47,7 +51,7 @@ func CreateLink(conf *DsnetConfig) {
 		}
 	}
 
-	if conf.IP6 != nil {
+	if len(conf.IP6) != 0 {
 		addr6 := &netlink.Addr{
 			IPNet: &net.IPNet{
 				IP:   conf.IP6,
