@@ -20,6 +20,10 @@ func RunPostUp(conf *DsnetConfig) {
 // CreateLink sets up the WG interface and link with the correct
 // address
 func CreateLink(conf *DsnetConfig) {
+	if len(conf.IP) == 0 && len(conf.IP6) == 0 {
+		ExitFail("No IPv4 or IPv6 network defined in config")
+	}
+
 	linkAttrs := netlink.NewLinkAttrs()
 	linkAttrs.Name = conf.InterfaceName
 
@@ -31,10 +35,6 @@ func CreateLink(conf *DsnetConfig) {
 	err := netlink.LinkAdd(link)
 	if err != nil {
 		ExitFail("Could not add interface '%s' (%v)", conf.InterfaceName, err)
-	}
-
-	if len(conf.IP) == 0 && len(conf.IP6) == 0 {
-		ExitFail("No IPv4 or IPv6 network defined in config")
 	}
 
 	if len(conf.IP) != 0 {
