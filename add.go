@@ -1,10 +1,27 @@
 package dsnet
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"text/template"
 	"time"
+)
+
+// PeerConfType is what configuration to use when generating
+// peer config files
+type PeerConfType int
+
+const (
+	// WGQuick is used by wg-quick to set up a peer
+	// https://manpages.debian.org/unstable/wireguard-tools/wg-quick.8.en.html
+	WGQuick PeerConfType = iota
+	// Vyatta is used by Ubiquiti routers
+	// https://github.com/WireGuard/wireguard-vyatta-ubnt/
+	Vyatta
+	// NixOS is a declartive linux distro
+	// https://nixos.wiki/wiki/Wireguard
+	NixOS
 )
 
 const wgQuickPeerConf = `[Interface]
@@ -99,6 +116,75 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
 {{ "};" }}
 `
 
+func getPeerConfTplString(peerType PeerConfType) string {
+	switch peerType {
+	case WGQuick:
+		return wgQuickPeerConf
+	case Vyatta:
+		return vyattaPeerConf
+	case NixOS:
+		return nixosPeerConf
+	default:
+		ExitFail("Unrecognised peer template type")
+		return ""
+	}
+}
+
+func getIfName(conf *DsnetConfig) string {
+	// derive deterministic interface name
+	wgifSeed := 0
+	for _, b := range conf.IP {
+		wgifSeed += int(b)
+	}
+
+	for _, b := range conf.IP6 {
+		wgifSeed += int(b)
+	}
+	return fmt.Sprintf("wg%d", wgifSeed%999)
+}
+
+// GetWGPeerTemplate returns a template string to be used when
+// configuring a peer
+func GetWGPeerTemplate(peerConfType PeerConfType, peer *PeerConfig, conf *DsnetConfig) (*bytes.Buffer, error) {
+	peerConf := getPeerConfTplString(peerConfType)
+
+	// See DsnetConfig type for explanation
+	var endpoint string
+
+	if conf.ExternalHostname != "" {
+		endpoint = conf.ExternalHostname
+	} else if len(conf.ExternalIP) > 0 {
+		endpoint = conf.ExternalIP.String()
+	} else if len(conf.ExternalIP6) > 0 {
+		endpoint = conf.ExternalIP6.String()
+	} else {
+		ExitFail("Config does not contain ExternalIP, ExternalIP6 or ExternalHostname")
+	}
+
+	t := template.Must(template.New("peerConf").Parse(peerConf))
+	cidrSize, _ := conf.Network.IPNet.Mask.Size()
+	cidrSize6, _ := conf.Network6.IPNet.Mask.Size()
+
+	var templateBuff bytes.Buffer
+	err := t.Execute(&templateBuff, map[string]interface{}{
+		"Peer":        peer,
+		"DsnetConfig": conf,
+		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
+		"CidrSize":    cidrSize,
+		"CidrSize6":   cidrSize6,
+		// vyatta requires an interface in range/format wg0-wg999
+		// deterministically choosing one in this range will probably allow use
+		// of the config without a colliding interface name
+		"Wgif":     getIfName(conf),
+		"Endpoint": endpoint,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &templateBuff, nil
+}
+
+// Add prompts for the required information and creates a new peer
 func Add() {
 	if len(os.Args) != 3 {
 		// TODO non-red
@@ -144,67 +230,34 @@ func Add() {
 		ExitFail("No IPv4 or IPv6 network defined in config")
 	}
 
+	// TODO Some kind of recovery here would be nice, to avoid
+	// leaving things in a potential broken state
 	conf.MustAddPeer(peer)
-	PrintPeerCfg(peer, conf)
+	PrintPeerCfg(&peer, conf)
 	conf.MustSave()
 	ConfigureDevice(conf)
 }
 
-func PrintPeerCfg(peer PeerConfig, conf *DsnetConfig) {
-	var peerConf string
-
+// PrintPeerCfg outputs a config that can be used by a peer
+// to connect, DSNET_OUTPUT is the target peer type
+// (i.e. vyatta, wg-quick)
+func PrintPeerCfg(peer *PeerConfig, conf *DsnetConfig) {
+	var peerType PeerConfType
+	// Translate DSNET_OUTPUT string to enum
 	switch os.Getenv("DSNET_OUTPUT") {
-	// https://manpages.debian.org/unstable/wireguard-tools/wg-quick.8.en.html
 	case "", "wg-quick":
-		peerConf = wgQuickPeerConf
-	// https://github.com/WireGuard/wireguard-vyatta-ubnt/
+		peerType = WGQuick
 	case "vyatta":
-		peerConf = vyattaPeerConf
-	// https://nixos.wiki/wiki/Wireguard
+		peerType = Vyatta
 	case "nixos":
-		peerConf = nixosPeerConf
+		peerType = NixOS
 	default:
 		ExitFail("Unrecognised DSNET_OUTPUT type")
 	}
-
-	cidrSize, _ := conf.Network.IPNet.Mask.Size()
-	cidrSize6, _ := conf.Network6.IPNet.Mask.Size()
-
-	// derive deterministic interface name
-	wgifSeed := 0
-	for _, b := range conf.IP {
-		wgifSeed += int(b)
-	}
-
-	for _, b := range conf.IP6 {
-		wgifSeed += int(b)
-	}
-
-	// See DsnetConfig type for explanation
-	var endpoint string
-
-	if conf.ExternalHostname != "" {
-		endpoint = conf.ExternalHostname
-	} else if len(conf.ExternalIP) > 0 {
-		endpoint = conf.ExternalIP.String()
-	} else if len(conf.ExternalIP6) > 0 {
-		endpoint = conf.ExternalIP6.String()
-	} else {
-		ExitFail("Config does not contain ExternalIP, ExternalIP6 or ExternalHostname")
-	}
-
-	t := template.Must(template.New("peerConf").Parse(peerConf))
-	err := t.Execute(os.Stdout, map[string]interface{}{
-		"Peer":        peer,
-		"DsnetConfig": conf,
-		"Keepalive":   time.Duration(KEEPALIVE).Seconds(),
-		"CidrSize":    cidrSize,
-		"CidrSize6":   cidrSize6,
-		// vyatta requires an interface in range/format wg0-wg999
-		// deterministically choosing one in this range will probably allow use
-		// of the config without a colliding interface name
-		"Wgif":     fmt.Sprintf("wg%d", wgifSeed%999),
-		"Endpoint": endpoint,
-	})
+	// Grab a template writer
+	t, err := GetWGPeerTemplate(peerType, peer, conf)
 	check(err)
+
+	// Pump out the conf to the stdout
+	os.Stdout.Write(t.Bytes())
 }
