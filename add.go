@@ -143,7 +143,8 @@ func getIfName(conf *DsnetConfig) string {
 	return fmt.Sprintf("wg%d", wgifSeed%999)
 }
 
-// GetWGPeerTemplate returns a template file
+// GetWGPeerTemplate returns a template string to be used when
+// configuring a peer
 func GetWGPeerTemplate(peerConfType PeerConfType, peer *PeerConfig, conf *DsnetConfig) (*bytes.Buffer, error) {
 	peerConf := getPeerConfTplString(peerConfType)
 
