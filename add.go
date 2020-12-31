@@ -6,6 +6,8 @@ import (
 	"os"
 	"text/template"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 // PeerConfType is what configuration to use when generating
@@ -198,7 +200,7 @@ func Add() {
 	hostname := os.Args[2]
 	owner := MustPromptString("owner", true)
 	description := MustPromptString("Description", true)
-	//publicKey := MustPromptString("PublicKey (optional)", false)
+	// publicKey := MustPromptString("PublicKey (optional)", false)
 	ConfirmOrAbort("\nDo you want to add the above configuration?")
 
 	// newline (not on stdout) to separate config
@@ -244,15 +246,15 @@ func Add() {
 func PrintPeerCfg(peer *PeerConfig, conf *DsnetConfig) {
 	var peerType PeerConfType
 	// Translate DSNET_OUTPUT string to enum
-	switch os.Getenv("DSNET_OUTPUT") {
-	case "", "wg-quick":
+	switch viper.GetString("output") {
+	case "wg-quick":
 		peerType = WGQuick
 	case "vyatta":
 		peerType = Vyatta
 	case "nixos":
 		peerType = NixOS
 	default:
-		ExitFail("Unrecognised DSNET_OUTPUT type")
+		ExitFail("Unrecognised OUTPUT type")
 	}
 	// Grab a template writer
 	t, err := GetWGPeerTemplate(peerType, peer, conf)

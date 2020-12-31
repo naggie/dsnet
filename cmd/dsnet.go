@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/naggie/dsnet"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -84,7 +86,15 @@ var (
 )
 
 func main() {
-	rootCmd.PersistentFlags().StringVar(&outputType, "output", "wg-quick", "config file format: vyatta/wg-quick/nixos")
+	rootCmd.PersistentFlags().String("output", "wg-quick", "config file format: vyatta/wg-quick/nixos")
+
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("DSNET")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	if err := viper.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output")); err != nil {
+		log.Fatal(err)
+	}
 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(addCmd)
