@@ -187,17 +187,16 @@ func GetWGPeerTemplate(peerConfType PeerConfType, peer *PeerConfig, conf *DsnetC
 }
 
 // Add prompts for the required information and creates a new peer
-func Add() {
-	if len(os.Args) != 3 {
+func Add(hostname string) {
+	if hostname == "" {
 		// TODO non-red
-		ExitFail("Hostname argument required: dsnet add <hostname>")
+		ExitFail("Hostname required: dsnet add --hostname <hostname>")
 	}
 
 	// TODO maybe accept flags to avoid prompt and allow programmatic use?
 	// TODO accept existing pubkey
 	conf := MustLoadDsnetConfig()
 
-	hostname := os.Args[2]
 	owner := MustPromptString("owner", true)
 	description := MustPromptString("Description", true)
 	// publicKey := MustPromptString("PublicKey (optional)", false)

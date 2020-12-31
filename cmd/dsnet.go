@@ -12,7 +12,7 @@ import (
 
 var (
 	// Flags.
-	outputType string
+	hostname string
 
 	// Commands.
 	rootCmd = &cobra.Command{}
@@ -30,7 +30,7 @@ var (
 
 	addCmd = &cobra.Command{
 		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Add()
+			dsnet.Add(hostname)
 		},
 		Use:   "add",
 		Short: "Add a new peer + sync",
@@ -86,8 +86,11 @@ var (
 )
 
 func main() {
-	rootCmd.PersistentFlags().String("output", "wg-quick", "config file format: vyatta/wg-quick/nixos")
+	// Flags.
+	rootCmd.PersistentFlags().StringP("output", "o", "wg-quick", "config file format: vyatta/wg-quick/nixos")
+	addCmd.Flags().StringVarP(&hostname, "hostname", "n", "", "hostname of new peer")
 
+	// Environment variable handling.
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("DSNET")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -96,6 +99,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Adds subcommands.
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(upCmd)
