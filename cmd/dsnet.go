@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/naggie/dsnet"
@@ -12,7 +11,10 @@ import (
 
 var (
 	// Flags.
-	hostname string
+	hostname    string
+	owner       string
+	description string
+	confirm     bool
 
 	// Commands.
 	rootCmd = &cobra.Command{}
@@ -30,7 +32,7 @@ var (
 
 	addCmd = &cobra.Command{
 		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Add(hostname)
+			dsnet.Add(hostname, owner, description, confirm)
 		},
 		Use:   "add",
 		Short: "Add a new peer + sync",
@@ -87,8 +89,15 @@ var (
 
 func main() {
 	// Flags.
-	rootCmd.PersistentFlags().StringP("output", "o", "wg-quick", "config file format: vyatta/wg-quick/nixos")
-	addCmd.Flags().StringVarP(&hostname, "hostname", "n", "", "hostname of new peer")
+	rootCmd.PersistentFlags().String("output", "wg-quick", "config file format: vyatta/wg-quick/nixos")
+	addCmd.Flags().StringVar(&hostname, "hostname", "", "hostname of new peer")
+	addCmd.Flags().StringVar(&owner, "owner", "", "owner of the new peer")
+	addCmd.Flags().StringVar(&description, "description", "", "description of the new peer")
+	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
+
+	if err := addCmd.MarkFlagRequired("hostname"); err != nil {
+		dsnet.ExitFail(err.Error())
+	}
 
 	// Environment variable handling.
 	viper.AutomaticEnv()
@@ -96,7 +105,7 @@ func main() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if err := viper.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output")); err != nil {
-		log.Fatal(err)
+		dsnet.ExitFail(err.Error())
 	}
 
 	// Adds subcommands.
@@ -110,6 +119,6 @@ func main() {
 	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatal(err)
+		dsnet.ExitFail(err.Error())
 	}
 }
