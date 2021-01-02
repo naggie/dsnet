@@ -9,7 +9,7 @@ import (
 func Up() {
 	conf := MustLoadDsnetConfig()
 	CreateLink(conf)
-	ConfigureDevice(conf)
+	MustConfigureDevice(conf)
 	RunPostUp(conf)
 }
 

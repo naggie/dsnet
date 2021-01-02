@@ -1,6 +1,8 @@
 package dsnet
 
 import (
+	"fmt"
+
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -8,18 +10,28 @@ import (
 func Sync() {
 	// TODO check device settings first
 	conf := MustLoadDsnetConfig()
-	ConfigureDevice(conf)
+	MustConfigureDevice(conf)
 }
 
-func ConfigureDevice(conf *DsnetConfig) {
-	wg, err := wgctrl.New()
+// MustConfigureDevice is like ConfigureDevice, except it exits on
+// error
+func MustConfigureDevice(conf *DsnetConfig) {
+	err := ConfigureDevice(conf)
 	check(err)
+}
+
+// ConfigureDevice sets up the WG interface
+func ConfigureDevice(conf *DsnetConfig) error {
+	wg, err := wgctrl.New()
+	if err != nil {
+		return err
+	}
 	defer wg.Close()
 
 	dev, err := wg.Device(conf.InterfaceName)
 
 	if err != nil {
-		ExitFail("Could not retrieve device '%s' (%v)", conf.InterfaceName, err)
+		return fmt.Errorf("Could not retrieve device '%s' (%v)", conf.InterfaceName, err)
 	}
 
 	peers := conf.GetWgPeerConfigs()
@@ -57,6 +69,7 @@ func ConfigureDevice(conf *DsnetConfig) {
 	err = wg.ConfigureDevice(conf.InterfaceName, wgConfig)
 
 	if err != nil {
-		ExitFail("Could not configure device '%s' (%v)", conf.InterfaceName, err)
+		return fmt.Errorf("Could not configure device '%s' (%v)", conf.InterfaceName, err)
 	}
+	return nil
 }

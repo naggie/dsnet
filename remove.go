@@ -15,5 +15,5 @@ func Remove() {
 	conf.MustRemovePeer(hostname)
 	ConfirmOrAbort("Do you really want to remove %s?", os.Args[2])
 	conf.MustSave()
-	ConfigureDevice(conf)
+	MustConfigureDevice(conf)
 }
