@@ -7,6 +7,7 @@ import (
 const (
 	// could be overridden in future via env
 	CONFIG_FILE = "/etc/dsnetconfig.json"
+	WG_USERSPACE_IMPLEMENTATION = "wireguard-go"
 
 	// these end up in the config file
 	DEFAULT_INTERFACE_NAME = "dsnet"
