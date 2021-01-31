@@ -12,7 +12,6 @@ import (
 
 var (
 	// Flags.
-	hostname    string
 	owner       string
 	description string
 	confirm     bool
@@ -37,12 +36,10 @@ var (
 			if len(args) != 1 {
 				return errors.New("Missing hostname argument")
 			}
-			viper.Set("hostname", args[0])
-
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Add(hostname, owner, description, confirm)
+			dsnet.Add(args[0], owner, description, confirm)
 		},
 		Use:   "add [hostname]",
 		Short: "Add a new peer + sync",
@@ -73,10 +70,19 @@ var (
 	}
 
 	removeCmd = &cobra.Command{
-		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Remove()
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Make sure we have the hostname
+			if len(args) != 1 {
+				return errors.New("Missing hostname argument")
+			}
+			viper.Set("hostname", args[0])
+
+			return nil
 		},
-		Use:   "remove",
+		Run: func(cmd *cobra.Command, args []string) {
+			dsnet.Remove(args[0], confirm)
+		},
+		Use:   "remove [hostname]",
 		Short: "Remove a peer by hostname provided as argument + sync",
 	}
 
@@ -103,6 +109,7 @@ func main() {
 	addCmd.Flags().StringVar(&owner, "owner", "", "owner of the new peer")
 	addCmd.Flags().StringVar(&description, "description", "", "description of the new peer")
 	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
+	removeCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 
 	// Environment variable handling.
 	viper.AutomaticEnv()
