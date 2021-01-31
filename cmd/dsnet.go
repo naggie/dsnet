@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -31,10 +32,19 @@ var (
 	}
 
 	addCmd = &cobra.Command{
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Make sure we have the hostname
+			if len(args) != 1 {
+				return errors.New("Missing hostname argument")
+			}
+			viper.Set("hostname", args[0])
+
+			return nil
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			dsnet.Add(hostname, owner, description, confirm)
 		},
-		Use:   "add",
+		Use:   "add [hostname]",
 		Short: "Add a new peer + sync",
 	}
 
@@ -90,14 +100,9 @@ var (
 func main() {
 	// Flags.
 	rootCmd.PersistentFlags().String("output", "wg-quick", "config file format: vyatta/wg-quick/nixos")
-	addCmd.Flags().StringVar(&hostname, "hostname", "", "hostname of new peer")
 	addCmd.Flags().StringVar(&owner, "owner", "", "owner of the new peer")
 	addCmd.Flags().StringVar(&description, "description", "", "description of the new peer")
 	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
-
-	if err := addCmd.MarkFlagRequired("hostname"); err != nil {
-		dsnet.ExitFail(err.Error())
-	}
 
 	// Environment variable handling.
 	viper.AutomaticEnv()
