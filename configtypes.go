@@ -2,6 +2,7 @@ package dsnet
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -65,72 +66,104 @@ type DsnetConfig struct {
 	Peers      []PeerConfig `validate:"dive"`
 }
 
+// MustLoadDsnetConfig is like LoadDsnetConfig, except it exits on error
 func MustLoadDsnetConfig() *DsnetConfig {
+	conf, err := LoadDsnetConfig()
+	check(err)
+	return conf
+}
+
+// LoadDsnetConfig parses the json config file, validates and stuffs
+// it in to a struct
+func LoadDsnetConfig() (*DsnetConfig, error) {
 	raw, err := ioutil.ReadFile(CONFIG_FILE)
 
 	if os.IsNotExist(err) {
-		ExitFail("%s does not exist. `dsnet init` may be required.", CONFIG_FILE)
+		return nil, fmt.Errorf("%s does not exist. `dsnet init` may be required.", CONFIG_FILE)
 	} else if os.IsPermission(err) {
-		ExitFail("%s cannot be accessed. Sudo may be required.", CONFIG_FILE)
-	} else {
-		check(err)
+		return nil, fmt.Errorf("%s cannot be accessed. Sudo may be required.", CONFIG_FILE)
+	} else if err != nil {
+		return nil, err
 	}
 
 	conf := DsnetConfig{}
 	err = json.Unmarshal(raw, &conf)
-	check(err)
-
-	err = validator.New().Struct(conf)
-	check(err)
-
-	if conf.ExternalHostname == "" && len(conf.ExternalIP) == 0 && len(conf.ExternalIP6) == 0 {
-		ExitFail("Config does not contain ExternalIP, ExternalIP6 or ExternalHostname")
+	if err != nil {
+		return nil, err
 	}
 
-	return &conf
+	err = validator.New().Struct(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	if conf.ExternalHostname == "" && len(conf.ExternalIP) == 0 && len(conf.ExternalIP6) == 0 {
+		return nil, fmt.Errorf("Config does not contain ExternalIP, ExternalIP6 or ExternalHostname")
+	}
+
+	return &conf, nil
 }
 
-func (conf *DsnetConfig) MustSave() {
+// Save writes the configuration to disk
+func (conf *DsnetConfig) Save() error {
 	_json, _ := json.MarshalIndent(conf, "", "    ")
 	err := ioutil.WriteFile(CONFIG_FILE, _json, 0600)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// MustSave is like Save except it exits on error
+func (conf *DsnetConfig) MustSave() {
+	err := conf.Save()
 	check(err)
 }
 
-func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
+// AddPeer adds a provided peer to the Peers list in the conf
+func (conf *DsnetConfig) AddPeer(peer PeerConfig) error {
 	// TODO validate all PeerConfig (keys etc)
 
 	for _, p := range conf.Peers {
 		if peer.Hostname == p.Hostname {
-			ExitFail("%s is not an unique hostname", peer.Hostname)
+			return fmt.Errorf("%s is not an unique hostname", peer.Hostname)
 		}
 	}
 
 	for _, p := range conf.Peers {
 		if peer.PublicKey.Key == p.PublicKey.Key {
-			ExitFail("%s is not an unique public key", peer.Hostname)
+			return fmt.Errorf("%s is not an unique public key", peer.Hostname)
 		}
 	}
 
 	for _, p := range conf.Peers {
 		if peer.PresharedKey.Key == p.PresharedKey.Key {
-			ExitFail("%s is not an unique preshared key", peer.Hostname)
+			return fmt.Errorf("%s is not an unique preshared key", peer.Hostname)
 		}
 	}
 
 	if conf.IPAllocated(peer.IP) {
-		ExitFail("%s is already allocated", peer.IP)
+		return fmt.Errorf("%s is already allocated", peer.IP)
 	}
 
 	for _, peerIPNet := range peer.Networks {
 		if conf.IPAllocated(peerIPNet.IPNet.IP) {
-			ExitFail("%s is already allocated", peerIPNet)
+			return fmt.Errorf("%s is already allocated", peerIPNet)
 		}
 	}
 
 	conf.Peers = append(conf.Peers, peer)
+	return nil
 }
 
-func (conf *DsnetConfig) MustRemovePeer(hostname string) {
+// MustAddPeer is like AddPeer, except it exist on error
+func (conf *DsnetConfig) MustAddPeer(peer PeerConfig) {
+	err := conf.AddPeer(peer)
+	check(err)
+}
+
+// RemovePeer removes a peer from the peer list based on hostname
+func (conf *DsnetConfig) RemovePeer(hostname string) error {
 	peerIndex := -1
 
 	for i, peer := range conf.Peers {
@@ -140,14 +173,23 @@ func (conf *DsnetConfig) MustRemovePeer(hostname string) {
 	}
 
 	if peerIndex == -1 {
-		ExitFail("Could not find peer with hostname %s", hostname)
+		return fmt.Errorf("Could not find peer with hostname %s", hostname)
 	}
 
 	// remove peer from slice, retaining order
 	copy(conf.Peers[peerIndex:], conf.Peers[peerIndex+1:]) // shift left
 	conf.Peers = conf.Peers[:len(conf.Peers)-1]            // truncate
+	return nil
 }
 
+// MustRemovePeer is like RemovePeer, except it exits on error
+func (conf *DsnetConfig) MustRemovePeer(hostname string) {
+	err := conf.RemovePeer(hostname)
+	check(err)
+}
+
+// IPAllocated checks the existing used ips and returns bool
+// depending on if the IP is in use
 func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
 	if IP.Equal(conf.IP) || IP.Equal(conf.IP6) {
 		return true
@@ -168,8 +210,8 @@ func (conf DsnetConfig) IPAllocated(IP net.IP) bool {
 	return false
 }
 
-// choose a free IPv4 for a new Peer (sequential allocation)
-func (conf DsnetConfig) MustAllocateIP() net.IP {
+// AllocateIP finds a free IPv4 for a new Peer (sequential allocation)
+func (conf DsnetConfig) AllocateIP() (net.IP, error) {
 	network := conf.Network.IPNet
 	ones, bits := network.Mask.Size()
 	zeros := bits - ones
@@ -192,17 +234,22 @@ func (conf DsnetConfig) MustAllocateIP() net.IP {
 		}
 
 		if !conf.IPAllocated(IP) {
-			return IP
+			return IP, nil
 		}
 	}
 
-	ExitFail("IP range exhausted")
-
-	return net.IP{}
+	return nil, fmt.Errorf("IP range exhausted")
 }
 
-// choose a free IPv6 for a new Peer (pseudorandom allocation)
-func (conf DsnetConfig) MustAllocateIP6() net.IP {
+// MustAllocateIP is like AllocateIP, except it exits on error
+func (conf DsnetConfig) MustAllocateIP() net.IP {
+	ip, err := conf.AllocateIP()
+	check(err)
+	return ip
+}
+
+// AllocateIP6 finds a free IPv6 for a new Peer (pseudorandom allocation)
+func (conf DsnetConfig) AllocateIP6() (net.IP, error) {
 	network := conf.Network6.IPNet
 	ones, bits := network.Mask.Size()
 	zeros := bits - ones
@@ -223,13 +270,18 @@ func (conf DsnetConfig) MustAllocateIP6() net.IP {
 		}
 
 		if !conf.IPAllocated(IP) {
-			return IP
+			return IP, nil
 		}
 	}
 
-	ExitFail("Could not allocate random IPv6 after 10000 tries. This was highly unlikely!")
+	return nil, fmt.Errorf("Could not allocate random IPv6 after 10000 tries. This was highly unlikely!")
+}
 
-	return net.IP{}
+// MustAllocateIP6 is like AllocateIP6, except it exits on error
+func (conf DsnetConfig) MustAllocateIP6() net.IP {
+	ip, err := conf.AllocateIP6()
+	check(err)
+	return ip
 }
 
 func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {

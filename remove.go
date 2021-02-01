@@ -9,7 +9,7 @@ func Remove(hostname string, confirm bool) {
 		ConfirmOrAbort("Do you really want to remove %s?", hostname)
 	}
 	conf.MustSave()
-	ConfigureDevice(conf)
+	MustConfigureDevice(conf)
 	if confirm {
 		fmt.Printf("Removed %s\n", hostname)
 	}

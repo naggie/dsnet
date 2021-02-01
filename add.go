@@ -235,7 +235,7 @@ func Add(hostname, owner, description string, confirm bool) {
 	conf.MustAddPeer(peer)
 	PrintPeerCfg(&peer, conf)
 	conf.MustSave()
-	ConfigureDevice(conf)
+	MustConfigureDevice(conf)
 }
 
 // PrintPeerCfg outputs a config that can be used by a peer
