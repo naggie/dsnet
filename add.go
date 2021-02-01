@@ -6,6 +6,8 @@ import (
 	"os"
 	"text/template"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 // PeerConfType is what configuration to use when generating
@@ -185,22 +187,20 @@ func GetWGPeerTemplate(peerConfType PeerConfType, peer *PeerConfig, conf *DsnetC
 }
 
 // Add prompts for the required information and creates a new peer
-func Add() {
-	if len(os.Args) != 3 {
-		// TODO non-red
-		ExitFail("Hostname argument required: dsnet add <hostname>")
-	}
-
-	// TODO maybe accept flags to avoid prompt and allow programmatic use?
+func Add(hostname, owner, description string, confirm bool) {
 	// TODO accept existing pubkey
 	conf := MustLoadDsnetConfig()
 
-	hostname := os.Args[2]
-	owner := MustPromptString("owner", true)
-	description := MustPromptString("Description", true)
-	//publicKey := MustPromptString("PublicKey (optional)", false)
-	ConfirmOrAbort("\nDo you want to add the above configuration?")
-
+	if owner == "" {
+		owner = MustPromptString("owner", true)
+	}
+	if description == "" {
+		description = MustPromptString("Description", true)
+	}
+	// publicKey := MustPromptString("PublicKey (optional)", false)
+	if !confirm {
+		ConfirmOrAbort("\nDo you want to add the above configuration?")
+	}
 	// newline (not on stdout) to separate config
 	fmt.Fprintln(os.Stderr)
 
@@ -244,15 +244,15 @@ func Add() {
 func PrintPeerCfg(peer *PeerConfig, conf *DsnetConfig) {
 	var peerType PeerConfType
 	// Translate DSNET_OUTPUT string to enum
-	switch os.Getenv("DSNET_OUTPUT") {
-	case "", "wg-quick":
+	switch viper.GetString("output") {
+	case "wg-quick":
 		peerType = WGQuick
 	case "vyatta":
 		peerType = Vyatta
 	case "nixos":
 		peerType = NixOS
 	default:
-		ExitFail("Unrecognised DSNET_OUTPUT type")
+		ExitFail("Unrecognised OUTPUT type")
 	}
 	// Grab a template writer
 	t, err := GetWGPeerTemplate(peerType, peer, conf)

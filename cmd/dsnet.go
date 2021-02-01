@@ -1,72 +1,136 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"os"
+	"strings"
 
 	"github.com/naggie/dsnet"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+var (
+	// Flags.
+	owner       string
+	description string
+	confirm     bool
+
+	// Commands.
+	rootCmd = &cobra.Command{}
+
+	initCmd = &cobra.Command{
+		Run: func(cmd *cobra.Command, args []string) {
+			dsnet.Init()
+		},
+		Use: "init",
+		Short: fmt.Sprintf(
+			"Create %s containing default configuration + new keys without loading. Edit to taste.",
+			dsnet.CONFIG_FILE,
+		),
+	}
+
+	addCmd = &cobra.Command{
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Make sure we have the hostname
+			if len(args) != 1 {
+				return errors.New("Missing hostname argument")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			dsnet.Add(args[0], owner, description, confirm)
+		},
+		Use:   "add [hostname]",
+		Short: "Add a new peer + sync",
+	}
+
+	upCmd = &cobra.Command{
+		Run: func(cmd *cobra.Command, args []string) {
+			dsnet.Up()
+		},
+		Use:   "up",
+		Short: "Create the interface, run pre/post up, sync",
+	}
+
+	syncCmd = &cobra.Command{
+		Run: func(cmd *cobra.Command, args []string) {
+			dsnet.Sync()
+		},
+		Use:   "sync",
+		Short: fmt.Sprintf("Update wireguard configuration from %s after validating", dsnet.CONFIG_FILE),
+	}
+
+	reportCmd = &cobra.Command{
+		Run: func(cmd *cobra.Command, args []string) {
+			dsnet.Report()
+		},
+		Use:   "report",
+		Short: fmt.Sprintf("Generate a JSON status report to the location configured in %s.", dsnet.CONFIG_FILE),
+	}
+
+	removeCmd = &cobra.Command{
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Make sure we have the hostname
+			if len(args) != 1 {
+				return errors.New("Missing hostname argument")
+			}
+			viper.Set("hostname", args[0])
+
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			dsnet.Remove(args[0], confirm)
+		},
+		Use:   "remove [hostname]",
+		Short: "Remove a peer by hostname provided as argument + sync",
+	}
+
+	downCmd = &cobra.Command{
+		Run: func(cmd *cobra.Command, args []string) {
+			dsnet.Down()
+		},
+		Use:   "down",
+		Short: "Destroy the interface, run pre/post down",
+	}
+
+	versionCmd = &cobra.Command{
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("dsnet version %s\ncommit %s\nbuilt %s", dsnet.VERSION, dsnet.GIT_COMMIT, dsnet.BUILD_DATE)
+		},
+		Use:   "version",
+		Short: "Print version",
+	}
 )
 
 func main() {
-	var cmd string
+	// Flags.
+	rootCmd.PersistentFlags().String("output", "wg-quick", "config file format: vyatta/wg-quick/nixos")
+	addCmd.Flags().StringVar(&owner, "owner", "", "owner of the new peer")
+	addCmd.Flags().StringVar(&description, "description", "", "description of the new peer")
+	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
+	removeCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 
-	if len(os.Args) == 1 {
-		cmd = "help"
-	} else {
-		cmd = os.Args[1]
+	// Environment variable handling.
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("DSNET")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	if err := viper.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output")); err != nil {
+		dsnet.ExitFail(err.Error())
 	}
 
-	switch cmd {
-	case "init":
-		dsnet.Init()
+	// Adds subcommands.
+	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(upCmd)
+	rootCmd.AddCommand(syncCmd)
+	rootCmd.AddCommand(reportCmd)
+	rootCmd.AddCommand(removeCmd)
+	rootCmd.AddCommand(downCmd)
+	rootCmd.AddCommand(versionCmd)
 
-	case "add":
-		dsnet.Add()
-
-	case "up":
-		dsnet.Up()
-
-	case "sync":
-		dsnet.Sync()
-
-	case "report":
-		dsnet.Report()
-
-	case "remove":
-		dsnet.Remove()
-
-	case "down":
-		dsnet.Down()
-
-	default:
-		help()
+	if err := rootCmd.Execute(); err != nil {
+		dsnet.ExitFail(err.Error())
 	}
-}
-
-func help() {
-	fmt.Printf(`dsnet is a simple tool to manage a centralised wireguard VPN.
-
-Usage: dsnet <cmd>
-
-Available commands:
-
-	init   : Create %[1]s containing default configuration + new keys without loading. Edit to taste.
-	add    : Add a new peer + sync
-	up     : Create the interface, run pre/post up, sync
-	report : Generate a JSON status report to the location configured in %[1]s.
-	remove : Remove a peer by hostname provided as argument + sync
-	down   : Destroy the interface, run pre/post down
-	sync   : Update wireguard configuration from %[1]s after validating
-
-Environment variables:
-
-	DSNET_OUTPUT=wg-quick : The add command will generate a wg-quick config (default)
-	DSNET_OUTPUT=vyatta   : The add command will generate a vyatta (edgeos) config
-	DSNET_OUTPUT=nixos    : The add command will generate a NixOS config
-
-dsnet version %[2]s
-commit %[3]s
-built %[4]s
-
-`, dsnet.CONFIG_FILE, dsnet.VERSION, dsnet.GIT_COMMIT, dsnet.BUILD_DATE)
 }
