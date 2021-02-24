@@ -332,3 +332,14 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 
 	return wgPeers
 }
+
+// GetOwnerPeerCount returns how many peers this owner has
+func (conf DsnetConfig) GetOwnerPeerCount(owner string) int {
+	peerCount := 0
+	for _, p := range conf.Peers {
+		if p.Owner == owner {
+			peerCount++
+		}
+	}
+	return peerCount
+}
