@@ -45,6 +45,20 @@ var (
 		Short: "Add a new peer + sync",
 	}
 
+	configCmd = &cobra.Command{
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return errors.New("Missing hostname argument")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			dsnet.Config(args[0])
+		},
+		Use:   "config [hostname]",
+		Short: "Show config for peer",
+	}
+
 	upCmd = &cobra.Command{
 		Run: func(cmd *cobra.Command, args []string) {
 			dsnet.Up()
@@ -123,6 +137,7 @@ func main() {
 	// Adds subcommands.
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(upCmd)
 	rootCmd.AddCommand(syncCmd)
 	rootCmd.AddCommand(reportCmd)
