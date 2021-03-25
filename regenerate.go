@@ -4,12 +4,17 @@ import (
 	"fmt"
 )
 
-func Config(hostname string) {
+func Regenerate(hostname string) {
 	conf := MustLoadDsnetConfig()
 	found := false
 
+	privateKey := GenerateJSONPrivateKey()
+
 	for _, peer := range conf.Peers {
 		if peer.Hostname == hostname {
+			peer.PrivateKey = privateKey
+			peer.PublicKey = privateKey.PublicKey()
+			peer.PresharedKey = GenerateJSONKey()
 			PrintPeerCfg(&peer, conf)
 			found = true
 		}
@@ -18,4 +23,7 @@ func Config(hostname string) {
 	if !found {
 		ExitFail(fmt.Sprintf("unknown hostname: %s", hostname))
 	}
+
+	conf.MustSave()
+	MustConfigureDevice(conf)
 }
