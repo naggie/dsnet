@@ -53,7 +53,7 @@ var (
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Regenerate(args[0])
+			dsnet.Regenerate(args[0], confirm)
 		},
 		Use:   "regenerate [hostname]",
 		Short: "Regenerate keys and config for peer",
