@@ -9,7 +9,10 @@ added to the server peer:
 
 ![wg](https://raw.githubusercontent.com/naggie/dsnet/master/etc/wg2.png)
 
-More client peers can be added with `dsnet add`. They can connect immediately after!
+More client peers can be added with `dsnet add`. They can connect immediately
+after! Don't forget to [enable IP
+forwarding](https://askubuntu.com/questions/311053/how-to-make-ip-forwarding-permanent]
+to allow peers to talk to one another.
 
 It works on AMD64 based linux and also ARMv5.
 
@@ -35,6 +38,8 @@ Quick start (AMD64 linux) -- install wireguard, then, after making sure `/usr/lo
     sudo dsnet up
 	sudo dsnet add banana > dsnet-banana.conf
 	sudo dsnet add apple > dsnet-apple.conf
+    # enable IP forwarding to allow peers to talk to one another
+    sudo sysctl -w net.ipv4.ip_forward=1   # edit /etc/sysctl.conf to make this persistent across reboots
 
 Copy the generated configuration file to your device and connect!
 
@@ -256,13 +261,6 @@ dsnet after adding peers. I use it in production at 2 companies so far.
 
 Note that before version 1.0, the config file schema may change. Changes will
 be made clear in release notes.
-
-> Why are there very few issues?
-
-I'm tracking development elsewhere using
-[dstask](https://github.com/naggie/dstask). I keep public initiated issues on
-github though, and will probably migrate issues over if this gains use outside
-of what I'm doing.
 
 > Client private keys are generated on the server. Can I avoid this?
 
