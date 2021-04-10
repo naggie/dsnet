@@ -1,11 +1,16 @@
 <h1 align="center">dsnet</h1>
 
-<p align="center">
+<a href="https://repology.org/project/dsnet/versions">
+    <br />
+    <img src="https://repology.org/badge/vertical-allrepos/dsnet.svg" alt="Packaging status" align="right">
+</a>
+
+<p>
 <i>Simple command to manage a centralised wireguard VPN. Think wg-quick but quicker: key generation + address allocation.  It can generate ready-to-go client configs for
 wg-quick, EdgeOS and NixOS.</i>
 </p>
 
-<p align="center">
+<p>
 <a href="https://goreportcard.com/report/github.com/naggie/dsnet"><img src="https://goreportcard.com/badge/github.com/naggie/dsnet" /></a>
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
 <a href="http://godoc.org/github.com/naggie/dsnet"><img src="https://img.shields.io/badge/godoc-reference-blue.svg"/></a>
@@ -19,9 +24,6 @@ wg-quick, EdgeOS and NixOS.</i>
 
 Set up a VPN in one minute:
 
-<a href="https://repology.org/project/dsnet/versions">
-    <img src="https://repology.org/badge/vertical-allrepos/dsnet.svg" alt="Packaging status" align="right">
-</a>
 
 ![dsnet add](https://raw.githubusercontent.com/naggie/dsnet/master/etc/init+add.png)
 
