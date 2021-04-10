@@ -1,7 +1,8 @@
 <h1 align="center">dsnet</h1>
 
 <p align="center">
-<i>Simple command to manage a centralised wireguard VPN. Think wg-quick but quicker: key generation + address allocation. </i>
+<i>Simple command to manage a centralised wireguard VPN. Think wg-quick but quicker: key generation + address allocation.  It can generate ready-to-go client configs for
+wg-quick, EdgeOS and NixOS.</i>
 </p>
 
 <p align="center">
@@ -10,13 +11,13 @@
 <a href="http://godoc.org/github.com/naggie/dsnet"><img src="https://img.shields.io/badge/godoc-reference-blue.svg"/></a>
 </p>
 
+
+
 <br>
 <br>
 <br>
 
-dsnet is a simple configuration tool to manage a centralised wireguard VPN.
-Think wg-quick but quicker. It can generate ready-to-go client configs for
-wg-quick, EdgeOS and NixOS. From scratch:
+Set up a VPN in one minute:
 
 <a href="https://repology.org/project/dsnet/versions">
     <img src="https://repology.org/badge/vertical-allrepos/dsnet.svg" alt="Packaging status" align="right">
