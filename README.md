@@ -33,8 +33,7 @@ added to the server peer:
 ![wg](https://raw.githubusercontent.com/naggie/dsnet/master/etc/wg2.png)
 
 More client peers can be added with `dsnet add`. They can connect immediately
-after! Don't forget to [enable IP
-forwarding](https://askubuntu.com/questions/311053/how-to-make-ip-forwarding-permanent]
+after! Don't forget to [enable IP forwarding](https://askubuntu.com/questions/311053/how-to-make-ip-forwarding-permanent)
 to allow peers to talk to one another.
 
 It works on AMD64 based linux and also ARMv5.
