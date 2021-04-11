@@ -16,7 +16,7 @@ wg-quick, EdgeOS and NixOS.</i>
 <a href="http://godoc.org/github.com/naggie/dsnet"><img src="https://img.shields.io/badge/godoc-reference-blue.svg"/></a>
 </p>
 
-
+<!-- fine line --><h1 align="center"></h1>
 
 <br>
 <br>
