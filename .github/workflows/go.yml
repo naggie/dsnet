@@ -15,7 +15,9 @@ jobs:
         go: [ "1.15", "1.16" ]
         arch:
           - "GOARCH=amd64"
-          - "GOARCH=arm"
+          - "GOARCH=arm GOARM=5"
+          - "GOARCH=arm GOARM=6"
+          - "GOARCH=arm GOARM=7"
           - "GOARCH=arm64"
     steps:
     - uses: actions/checkout@v2
