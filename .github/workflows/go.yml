@@ -13,6 +13,10 @@ jobs:
     strategy:
       matrix:
         go: [ "1.15", "1.16" ]
+        arch:
+          - "GOARCH=amd64"
+          - "GOARCH=arm"
+          - "GOARCH=arm64"
     steps:
     - uses: actions/checkout@v2
 
@@ -22,7 +26,7 @@ jobs:
         go-version: ${{ matrix.go }}
 
     - name: Build
-      run: go build -v ./cmd/dsnet.go
+      run: GOARCH=${{ matrix.arch }} go build -v ./cmd/dsnet.go
 
     - name: Test
       run: go test -v ./...
