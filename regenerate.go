@@ -18,8 +18,13 @@ func Regenerate(hostname string, confirm bool) {
 			peer.PrivateKey = privateKey
 			peer.PublicKey = privateKey.PublicKey()
 			peer.PresharedKey = GenerateJSONKey()
+
+			conf.MustRemovePeer(hostname)
 			PrintPeerCfg(&peer, conf)
 			found = true
+			conf.MustAddPeer(peer)
+
+			break
 		}
 	}
 
