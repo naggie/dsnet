@@ -38,12 +38,17 @@ GOARCH=arm GOARM=5 go build -ldflags="$LDFLAGS" cmd/dsnet.go
 # upx -q dsnet
 mv dsnet dist/dsnet-linux-arm5
 
+GOARCH=arm64 go build -ldflags="$LDFLAGS" cmd/dsnet.go
+# upx -q dsnet
+mv dsnet dist/dsnet-linux-arm64
+
 GOARCH=amd64 go build -ldflags="$LDFLAGS" cmd/dsnet.go
 # upx -q dsnet
 mv dsnet dist/dsnet-linux-amd64
 
 hub release create \
     -a dist/dsnet-linux-arm5#"dsnet linux-arm5" \
+    -a dist/dsnet-linux-arm64#"dsnet linux-arm64" \
     -a dist/dsnet-linux-amd64#"dsnet linux-amd64" \
     -F $RELEASE_FILE \
     $1
