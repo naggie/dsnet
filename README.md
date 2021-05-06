@@ -94,6 +94,9 @@ public key; there is provision to specify a public key in the code when adding
 a peer to avoid the server generating the private key. The feature will be
 added when requested.
 
+Note that named arguments can be specified on the command line as well as
+entered by prompt; this allows for unattended usage.
+
 # GUI
 
 Dsnet does not include or require a GUI, however there is now a separate
