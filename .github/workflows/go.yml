@@ -1,0 +1,34 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: [ "1.15", "1.16" ]
+        arch:
+          - "GOARCH=amd64"
+          - "GOARCH=arm GOARM=5"
+          - "GOARCH=arm GOARM=6"
+          - "GOARCH=arm GOARM=7"
+          - "GOARCH=arm64"
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
+    - name: Build
+      run: GOOS=linux CGO_ENABLED=0 ${{ matrix.arch }} go build -v ./cmd/dsnet.go
+
+    - name: Test
+      run: go test -v ./...
