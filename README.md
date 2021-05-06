@@ -38,17 +38,26 @@ to allow peers to talk to one another.
 
 It works on AMD64 based linux and also ARMv5.
 
-    Usage: dsnet <cmd>
+    Usage:
+        dsnet [command]
 
-    Available commands:
+    Available Commands:
+      add         Add a new peer + sync
+      down        Destroy the interface, run pre/post down
+      help        Help about any command
+      init        Create /etc/dsnetconfig.json containing default configuration + new keys without loading. Edit to taste.
+      regenerate  Regenerate keys and config for peer
+      remove      Remove a peer by hostname provided as argument + sync
+      report      Generate a JSON status report to the location configured in /etc/dsnetconfig.json.
+      sync        Update wireguard configuration from /etc/dsnetconfig.json after validating
+      up          Create the interface, run pre/post up, sync
+      version     Print version
 
-    	init   : Create /etc/dsnetconfig.json containing default configuration + new keys without loading. Edit to taste.
-    	add    : Add a new peer + sync
-    	up     : Create the interface, run pre/post up, sync
-    	report : Generate a JSON status report to the location configured in /etc/dsnetconfig.json.
-    	remove : Remove a peer by hostname provided as argument + sync
-    	down   : Destroy the interface, run pre/post down
-    	sync   : Update wireguard configuration from /etc/dsnetconfig.json after validating
+    Flags:
+      -h, --help            help for this command
+          --output string   config file format: vyatta/wg-quick/nixos (default "wg-quick")
+
+    Use "dsnet [command] --help" for more information about a command.
 
 
 Quick start (AMD64 linux) -- install wireguard, then, after making sure `/usr/local/bin` is in your path:
