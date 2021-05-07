@@ -31,6 +31,10 @@ func MustPromptString(prompt string, required bool) string {
 	return text
 }
 
+func FailWithoutExit(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, "\033[31m"+format+"\033[0m\n", a...)
+}
+
 func ExitFail(format string, a ...interface{}) {
 	fmt.Fprintf(os.Stderr, "\033[31m"+format+"\033[0m\n", a...)
 	os.Exit(1)
