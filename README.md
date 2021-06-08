@@ -78,7 +78,7 @@ To send configurations, here are a few suggestions.
 - [ffsend](https://github.com/timvisee/ffsend), the most straightforward option;
 - [magic wormhole](https://magic-wormhole.readthedocs.io/), a more advanced
   option, where the file never passes through another server;
-- [womroleh-william](https://github.com/psanford/wormhole-william), a Go
+- [wormhole-william](https://github.com/psanford/wormhole-william), a Go
   implementation of the above.
 
 For the above options, one should transfer the password separately.
