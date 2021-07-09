@@ -44,7 +44,7 @@ type DsnetConfig struct {
 	ExternalHostname string
 	ExternalIP       net.IP
 	ExternalIP6      net.IP
-	ListenPort       int `validate:"gte=1024,lte=65535"`
+	ListenPort       int `validate:"gte=1,lte=65535"`
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
 	Domain        string `validate:"required,gte=1,lte=255"`
