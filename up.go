@@ -35,7 +35,7 @@ func CreateLink(conf *DsnetConfig) {
 	err := netlink.LinkAdd(link)
 	if err != nil {
 		FailWithoutExit("Could not add interface '%s' (%v), falling back to the userspace implementation", conf.InterfaceName, err)
-		ShellOut(WG_USERSPACE_IMPLEMENTATION + " " + conf.InterfaceName, "Userspace implementation")
+		ShellOut(WG_USERSPACE_IMPLEMENTATION+" "+conf.InterfaceName, "Userspace implementation")
 	}
 
 	if len(conf.IP) != 0 {
