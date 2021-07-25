@@ -1,17 +1,16 @@
 package dsnet
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net"
-	"os"
 	"time"
 
-	"github.com/go-playground/validator/v10"
+	"github.com/spf13/viper"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
+
+var activeStore Store
 
 // see https://github.com/WireGuard/wgctrl-go/blob/master/wgtypes/types.go for definitions
 type PeerConfig struct {
@@ -76,38 +75,25 @@ func MustLoadDsnetConfig() *DsnetConfig {
 // LoadDsnetConfig parses the json config file, validates and stuffs
 // it in to a struct
 func LoadDsnetConfig() (*DsnetConfig, error) {
-	raw, err := ioutil.ReadFile(CONFIG_FILE)
-
-	if os.IsNotExist(err) {
-		return nil, fmt.Errorf("%s does not exist. `dsnet init` may be required.", CONFIG_FILE)
-	} else if os.IsPermission(err) {
-		return nil, fmt.Errorf("%s cannot be accessed. Sudo may be required.", CONFIG_FILE)
-	} else if err != nil {
+	store, err := getOrInitStore()
+	if err != nil {
 		return nil, err
 	}
-
-	conf := DsnetConfig{}
-	err = json.Unmarshal(raw, &conf)
+	conf, err := store.LoadDsnetConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	err = validator.New().Struct(conf)
-	if err != nil {
-		return nil, err
-	}
-
-	if conf.ExternalHostname == "" && len(conf.ExternalIP) == 0 && len(conf.ExternalIP6) == 0 {
-		return nil, fmt.Errorf("Config does not contain ExternalIP, ExternalIP6 or ExternalHostname")
-	}
-
-	return &conf, nil
+	return conf, nil
 }
 
 // Save writes the configuration to disk
 func (conf *DsnetConfig) Save() error {
-	_json, _ := json.MarshalIndent(conf, "", "    ")
-	err := ioutil.WriteFile(CONFIG_FILE, _json, 0600)
+	store, err := getOrInitStore()
+	if err != nil {
+		return err
+	}
+	err = store.StoreDsnetConfig(conf)
 	if err != nil {
 		return err
 	}
@@ -331,4 +317,17 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 	}
 
 	return wgPeers
+}
+
+func getOrInitStore() (Store, error) {
+	var err error
+	if activeStore != nil {
+		return activeStore, nil
+	}
+
+	storeType := viper.GetString("store")
+	storeArgs := viper.GetStringMapString("store_options")
+	activeStore, err := NewStore(storeType, storeArgs)
+	check(err)
+	return activeStore, nil
 }
