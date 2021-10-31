@@ -1,6 +1,9 @@
-.PHONY: all build compile quick
+.PHONY: all build compile quick clean
 
 all: build
+
+clean:
+	@rm -r dist
 
 compile:
 	CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags="-s -w" -o dist/dsnet ./cmd/dsnet.go
@@ -15,3 +18,4 @@ update_deps:
 	go get
 	go mod vendor
 	git add -f vendor
+
