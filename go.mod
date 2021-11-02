@@ -1,9 +1,13 @@
 module github.com/naggie/dsnet
 
-go 1.13
+go 1.16
 
 require (
-	github.com/go-playground/validator/v10 v10.2.0
+	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/go-playground/validator/v10 v10.7.0
+	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/mdlayher/netlink v1.4.1 // indirect
+	github.com/mdlayher/socket v0.0.0-20210624160740-9dbe287ded84 // indirect
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.0
 	github.com/vishvananda/netlink v1.0.0

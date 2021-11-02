@@ -125,6 +125,11 @@ func main() {
 	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 	removeCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 
+	viper.SetDefault("store", "json_file")
+	viper.SetDefault("store_options", map[string]string{
+		"path": "/etc/dsnetconfig.json",
+	})
+
 	// Environment variable handling.
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("DSNET")
