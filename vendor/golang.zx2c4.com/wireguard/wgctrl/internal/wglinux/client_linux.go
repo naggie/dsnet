@@ -1,8 +1,10 @@
-//+build linux
+//go:build linux
+// +build linux
 
 package wglinux
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"syscall"
@@ -12,7 +14,6 @@ import (
 	"github.com/mdlayher/netlink/nlenc"
 	"golang.org/x/sys/unix"
 	"golang.zx2c4.com/wireguard/wgctrl/internal/wginternal"
-	"golang.zx2c4.com/wireguard/wgctrl/internal/wglinux/internal/wgh"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -39,14 +40,11 @@ func New() (*Client, bool, error) {
 
 // initClient is the internal Client constructor used in some tests.
 func initClient(c *genetlink.Conn) (*Client, bool, error) {
-	f, err := c.GetFamily(wgh.GenlName)
+	f, err := c.GetFamily(unix.WG_GENL_NAME)
 	if err != nil {
 		_ = c.Close()
 
-		//lint:ignore SA1019 maintain compatibility with old versions of Go
-		// by using netlink.IsNotExist for now. We can switch to errors.Is at
-		// a later time.
-		if netlink.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			// The generic netlink interface is not available.
 			return nil, false, nil
 		}
@@ -100,19 +98,17 @@ func (c *Client) Device(name string) (*wgtypes.Device, error) {
 		return nil, os.ErrNotExist
 	}
 
-	flags := netlink.Request | netlink.Dump
-
 	// Fetching a device by interface index is possible as well, but we only
 	// support fetching by name as it seems to be more convenient in general.
 	b, err := netlink.MarshalAttributes([]netlink.Attribute{{
-		Type: wgh.DeviceAIfname,
+		Type: unix.WGDEVICE_A_IFNAME,
 		Data: nlenc.Bytes(name),
 	}})
 	if err != nil {
 		return nil, err
 	}
 
-	msgs, err := c.execute(wgh.CmdGetDevice, flags, b)
+	msgs, err := c.execute(unix.WG_CMD_GET_DEVICE, netlink.Request|netlink.Dump, b)
 	if err != nil {
 		return nil, err
 	}
@@ -132,8 +128,7 @@ func (c *Client) ConfigureDevice(name string, cfg wgtypes.Config) error {
 		// Request acknowledgement of our request from netlink, even though the
 		// output messages are unused.  The netlink package checks and trims the
 		// status code value.
-		flags := netlink.Request | netlink.Acknowledge
-		if _, err := c.execute(wgh.CmdSetDevice, flags, attrs); err != nil {
+		if _, err := c.execute(unix.WG_CMD_SET_DEVICE, netlink.Request|netlink.Acknowledge, attrs); err != nil {
 			return err
 		}
 	}
@@ -147,7 +142,7 @@ func (c *Client) execute(command uint8, flags netlink.HeaderFlags, attrb []byte)
 	msg := genetlink.Message{
 		Header: genetlink.Header{
 			Command: command,
-			Version: wgh.GenlVersion,
+			Version: unix.WG_GENL_VERSION,
 		},
 		Data: attrb,
 	}
@@ -157,8 +152,8 @@ func (c *Client) execute(command uint8, flags netlink.HeaderFlags, attrb []byte)
 		return msgs, nil
 	}
 
-	// We don't want to expose netlink errors directly to callers, so unpack
-	// the error for use with os.IsNotExist and similar.
+	// We don't want to expose netlink errors directly to callers so unpack to
+	// something more generic.
 	oerr, ok := err.(*netlink.OpError)
 	if !ok {
 		// Expect all errors to conform to netlink.OpError.
@@ -167,7 +162,7 @@ func (c *Client) execute(command uint8, flags netlink.HeaderFlags, attrb []byte)
 
 	switch oerr.Err {
 	// Convert "no such device" and "not a wireguard device" to an error
-	// compatible with os.IsNotExist for easy checking.
+	// compatible with os.ErrNotExist for easy checking.
 	case unix.ENODEV, unix.ENOTSUP:
 		return nil, os.ErrNotExist
 	default:
