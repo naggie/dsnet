@@ -1,4 +1,5 @@
-//+build openbsd
+//go:build openbsd
+// +build openbsd
 
 package wgopenbsd
 
@@ -18,10 +19,8 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-var (
-	// ifGroupWG is the WireGuard interface group name passed to the kernel.
-	ifGroupWG = [16]byte{0: 'w', 1: 'g'}
-)
+// ifGroupWG is the WireGuard interface group name passed to the kernel.
+var ifGroupWG = [16]byte{0: 'w', 1: 'g'}
 
 var _ wginternal.Client = &Client{}
 
@@ -31,8 +30,7 @@ type Client struct {
 	// during tests.
 	close           func() error
 	ioctlIfgroupreq func(ifg *wgh.Ifgroupreq) error
-	ioctlWGGetServ  func(wgs *wgh.WGGetServ) error
-	ioctlWGGetPeer  func(wgp *wgh.WGGetPeer) error
+	ioctlWGDataIO   func(data *wgh.WGDataIO) error
 }
 
 // New creates a new Client and returns whether or not the ioctl interface
@@ -53,8 +51,7 @@ func New() (*Client, bool, error) {
 	return &Client{
 		close:           func() error { return unix.Close(fd) },
 		ioctlIfgroupreq: ioctlIfgroupreq(fd),
-		ioctlWGGetServ:  ioctlWGGetServ(fd),
-		ioctlWGGetPeer:  ioctlWGGetPeer(fd),
+		ioctlWGDataIO:   ioctlWGDataIO(fd),
 	}, true, nil
 }
 
@@ -111,19 +108,114 @@ func (c *Client) Devices() ([]*wgtypes.Device, error) {
 
 // Device implements wginternal.Client.
 func (c *Client) Device(name string) (*wgtypes.Device, error) {
-	d, pkeys, err := c.getServ(name)
+	dname, err := deviceName(name)
 	if err != nil {
 		return nil, err
 	}
 
-	d.Peers = make([]wgtypes.Peer, 0, len(pkeys))
-	for _, pk := range pkeys {
-		p, err := c.getPeer(d.Name, pk)
-		if err != nil {
-			return nil, err
+	// First, specify the name of the device and determine how much memory
+	// must be allocated in order to store the WGInterfaceIO structure and
+	// any trailing WGPeerIO/WGAIPIOs.
+	data := wgh.WGDataIO{Name: dname}
+
+	// TODO: consider preallocating some memory to avoid a second system call
+	// if it proves to be a concern.
+	var mem []byte
+	for {
+		if err := c.ioctlWGDataIO(&data); err != nil {
+			// ioctl functions always return a wrapped unix.Errno value.
+			// Conform to the wgctrl contract by unwrapping some values:
+			//   ENXIO: "no such device": (no such WireGuard device)
+			//   ENOTTY: "inappropriate ioctl for device" (device is not a
+			//	   WireGuard device)
+			switch err.(*os.SyscallError).Err {
+			case unix.ENXIO, unix.ENOTTY:
+				return nil, os.ErrNotExist
+			default:
+				return nil, err
+			}
 		}
 
-		d.Peers = append(d.Peers, *p)
+		if len(mem) >= int(data.Size) {
+			// Allocated enough memory!
+			break
+		}
+
+		// Ensure we don't unsafe cast into uninitialized memory. We need at very
+		// least a single WGInterfaceIO with no peers.
+		if data.Size < wgh.SizeofWGInterfaceIO {
+			return nil, fmt.Errorf("wgopenbsd: kernel returned unexpected number of bytes for WGInterfaceIO: %d", data.Size)
+		}
+
+		// Allocate the appropriate amount of memory and point the kernel at
+		// the first byte of our slice's backing array. When the loop continues,
+		// we will check if we've allocated enough memory.
+		mem = make([]byte, data.Size)
+		data.Interface = (*wgh.WGInterfaceIO)(unsafe.Pointer(&mem[0]))
+	}
+
+	return parseDevice(name, data.Interface)
+}
+
+// parseDevice unpacks a Device from ifio, along with its associated peers
+// and their allowed IPs.
+func parseDevice(name string, ifio *wgh.WGInterfaceIO) (*wgtypes.Device, error) {
+	d := &wgtypes.Device{
+		Name: name,
+		Type: wgtypes.OpenBSDKernel,
+	}
+
+	// The kernel populates ifio.Flags to indicate which fields are present.
+
+	if ifio.Flags&wgh.WG_INTERFACE_HAS_PRIVATE != 0 {
+		d.PrivateKey = wgtypes.Key(ifio.Private)
+	}
+
+	if ifio.Flags&wgh.WG_INTERFACE_HAS_PUBLIC != 0 {
+		d.PublicKey = wgtypes.Key(ifio.Public)
+	}
+
+	if ifio.Flags&wgh.WG_INTERFACE_HAS_PORT != 0 {
+		d.ListenPort = int(ifio.Port)
+	}
+
+	if ifio.Flags&wgh.WG_INTERFACE_HAS_RTABLE != 0 {
+		d.FirewallMark = int(ifio.Rtable)
+	}
+
+	d.Peers = make([]wgtypes.Peer, 0, ifio.Peers_count)
+
+	// If there were no peers, exit early so we do not advance the pointer
+	// beyond the end of the WGInterfaceIO structure.
+	if ifio.Peers_count == 0 {
+		return d, nil
+	}
+
+	// Set our pointer to the beginning of the first peer's location in memory.
+	peer := (*wgh.WGPeerIO)(unsafe.Pointer(
+		uintptr(unsafe.Pointer(ifio)) + wgh.SizeofWGInterfaceIO,
+	))
+
+	for i := 0; i < int(ifio.Peers_count); i++ {
+		p := parsePeer(peer)
+
+		// Same idea, we know how many allowed IPs we need to account for, so
+		// reserve the space and advance the pointer through each WGAIP structure.
+		p.AllowedIPs = make([]net.IPNet, 0, peer.Aips_count)
+		for j := uintptr(0); j < uintptr(peer.Aips_count); j++ {
+			aip := (*wgh.WGAIPIO)(unsafe.Pointer(
+				uintptr(unsafe.Pointer(peer)) + wgh.SizeofWGPeerIO + j*wgh.SizeofWGAIPIO,
+			))
+
+			p.AllowedIPs = append(p.AllowedIPs, parseAllowedIP(aip))
+		}
+
+		// Prepare for the next iteration.
+		d.Peers = append(d.Peers, p)
+		peer = (*wgh.WGPeerIO)(unsafe.Pointer(
+			uintptr(unsafe.Pointer(peer)) + wgh.SizeofWGPeerIO +
+				uintptr(peer.Aips_count)*wgh.SizeofWGAIPIO,
+		))
 	}
 
 	return d, nil
@@ -141,145 +233,6 @@ func (c *Client) ConfigureDevice(name string, cfg wgtypes.Config) error {
 	return wginternal.ErrReadOnly
 }
 
-// getServ fetches a device and the public keys of its peers using an ioctl.
-func (c *Client) getServ(name string) (*wgtypes.Device, []wgtypes.Key, error) {
-	nb, err := deviceName(name)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Fetch information for the specified device, and indicate that we have
-	// pre-allocated room for peer public keys. 8 is the initial array size
-	// value used by ncon's wg fork.
-	wgs := wgh.WGGetServ{
-		Name:      nb,
-		Num_peers: 8,
-	}
-
-	var (
-		// The number of peer public keys we should allocate space for, and
-		// the slice where keys are allocated.
-		n     int
-		bkeys [][wgtypes.KeyLen]byte // []wgtypes.Key equivalent
-	)
-
-	for {
-		// Updated on each loop iteration to provide enough space in case the
-		// kernel tells us we need to provide more space.
-		n = int(wgs.Num_peers)
-
-		// See the comment in Devices about passing Go pointers within a
-		// structure to ioctl.
-		bkeys = make([][wgtypes.KeyLen]byte, n)
-		wgs.Peers = &bkeys[0]
-
-		// Query for a device by its name.
-		if err := c.ioctlWGGetServ(&wgs); err != nil {
-
-			// ioctl functions always return a wrapped unix.Errno value.
-			// Conform to the wgctrl contract by converting "no such device" and
-			// "inappropriate ioctl" to "not exist".
-			switch err.(*os.SyscallError).Err {
-			case unix.ENXIO, unix.ENOTTY:
-				return nil, nil, os.ErrNotExist
-			default:
-				return nil, nil, err
-			}
-		}
-
-		// Did the kernel tell us there are more peers than can fit in our
-		// current memory? If not, we're done.
-		if int(wgs.Num_peers) <= n {
-			// Re-slice to the exact size needed.
-			bkeys = bkeys[:wgs.Num_peers:wgs.Num_peers]
-			break
-		}
-	}
-
-	// wgtypes.Key has an identical memory layout with [wgtypes.KeyLen]byte, so
-	// cast the slice directly.
-	keys := *(*[]wgtypes.Key)(unsafe.Pointer(&bkeys))
-
-	return &wgtypes.Device{
-		Name:       name,
-		Type:       wgtypes.OpenBSDKernel,
-		PrivateKey: wgs.Privkey,
-		PublicKey:  wgs.Pubkey,
-		ListenPort: int(wgs.Port),
-	}, keys, nil
-}
-
-// getPeer fetches a peer associated with a device and a public key.
-func (c *Client) getPeer(device string, pubkey wgtypes.Key) (*wgtypes.Peer, error) {
-	nb, err := deviceName(device)
-	if err != nil {
-		return nil, err
-	}
-
-	// The algorithm implemented here is the same as the one documented in
-	// getServ, but we are fetching WGIP allowed IP arrays instead of peer
-	// public keys. See the more in-depth documentation there.
-
-	// 16 is the initial array size value used by ncon's wg fork.
-	wgp := wgh.WGGetPeer{
-		Name:    nb,
-		Pubkey:  pubkey,
-		Num_aip: 16,
-	}
-
-	var (
-		n    int
-		aips []wgh.WGCIDR
-	)
-
-	for {
-		n = int(wgp.Num_aip)
-
-		// See the comment in Devices about passing Go pointers within a
-		// structure to ioctl.
-		aips = make([]wgh.WGCIDR, n)
-		wgp.Aip = &aips[0]
-
-		// Query for a peer by its associated device and public key.
-		if err := c.ioctlWGGetPeer(&wgp); err != nil {
-			return nil, err
-		}
-
-		// Did the kernel tell us there are more allowed IPs than can fit in our
-		// current memory? If not, we're done.
-		if int(wgp.Num_aip) <= n {
-			// Re-slice to the exact size needed.
-			aips = aips[:wgp.Num_aip:wgp.Num_aip]
-			break
-		}
-	}
-
-	endpoint, err := parseEndpoint(wgp.Ip)
-	if err != nil {
-		return nil, err
-	}
-
-	allowedIPs, err := parseAllowedIPs(aips)
-	if err != nil {
-		return nil, err
-	}
-
-	return &wgtypes.Peer{
-		PublicKey:                   pubkey,
-		PresharedKey:                wgp.Psk,
-		Endpoint:                    endpoint,
-		PersistentKeepaliveInterval: time.Duration(wgp.Pka) * time.Second,
-		LastHandshakeTime: time.Unix(
-			wgp.Last_handshake.Sec,
-			// Conversion required on openbsd/386.
-			int64(wgp.Last_handshake.Nsec),
-		),
-		ReceiveBytes:  int64(wgp.Rx_bytes),
-		TransmitBytes: int64(wgp.Tx_bytes),
-		AllowedIPs:    allowedIPs,
-	}, nil
-}
-
 // deviceName converts an interface name string to the format required to pass
 // with wgh.WGGetServ.
 func deviceName(name string) ([16]byte, error) {
@@ -292,12 +245,68 @@ func deviceName(name string) ([16]byte, error) {
 	return out, nil
 }
 
-// parseEndpoint parses a peer endpoint from a wgh.WGIP structure.
-func parseEndpoint(ip wgh.WGIP) (*net.UDPAddr, error) {
-	// sockaddr* structures have family at index 1.
-	switch ip[1] {
+// parsePeer unpacks a wgtypes.Peer from a WGPeerIO structure.
+func parsePeer(pio *wgh.WGPeerIO) wgtypes.Peer {
+	p := wgtypes.Peer{
+		ReceiveBytes:    int64(pio.Rxbytes),
+		TransmitBytes:   int64(pio.Txbytes),
+		ProtocolVersion: int(pio.Protocol_version),
+	}
+
+	// Only set last handshake if a non-zero timespec was provided, matching
+	// the time.Time.IsZero() behavior of internal/wglinux.
+	if pio.Last_handshake.Sec > 0 && pio.Last_handshake.Nsec > 0 {
+		p.LastHandshakeTime = time.Unix(
+			pio.Last_handshake.Sec,
+			// Conversion required for GOARCH=386.
+			int64(pio.Last_handshake.Nsec),
+		)
+	}
+
+	if pio.Flags&wgh.WG_PEER_HAS_PUBLIC != 0 {
+		p.PublicKey = wgtypes.Key(pio.Public)
+	}
+
+	if pio.Flags&wgh.WG_PEER_HAS_PSK != 0 {
+		p.PresharedKey = wgtypes.Key(pio.Psk)
+	}
+
+	if pio.Flags&wgh.WG_PEER_HAS_PKA != 0 {
+		p.PersistentKeepaliveInterval = time.Duration(pio.Pka) * time.Second
+	}
+
+	if pio.Flags&wgh.WG_PEER_HAS_ENDPOINT != 0 {
+		p.Endpoint = parseEndpoint(pio.Endpoint)
+	}
+
+	return p
+}
+
+// parseAllowedIP unpacks a net.IPNet from a WGAIP structure.
+func parseAllowedIP(aip *wgh.WGAIPIO) net.IPNet {
+	switch aip.Af {
 	case unix.AF_INET:
-		sa := *(*unix.RawSockaddrInet4)(unsafe.Pointer(&ip[0]))
+		return net.IPNet{
+			IP:   net.IP(aip.Addr[:net.IPv4len]),
+			Mask: net.CIDRMask(int(aip.Cidr), 32),
+		}
+	case unix.AF_INET6:
+		return net.IPNet{
+			IP:   net.IP(aip.Addr[:]),
+			Mask: net.CIDRMask(int(aip.Cidr), 128),
+		}
+	default:
+		panicf("wgopenbsd: invalid address family for allowed IP: %+v", aip)
+		return net.IPNet{}
+	}
+}
+
+// parseEndpoint parses a peer endpoint from a wgh.WGIP structure.
+func parseEndpoint(ep [28]byte) *net.UDPAddr {
+	// sockaddr* structures have family at index 1.
+	switch ep[1] {
+	case unix.AF_INET:
+		sa := *(*unix.RawSockaddrInet4)(unsafe.Pointer(&ep[0]))
 
 		ep := &net.UDPAddr{
 			IP:   make(net.IP, net.IPv4len),
@@ -305,9 +314,9 @@ func parseEndpoint(ip wgh.WGIP) (*net.UDPAddr, error) {
 		}
 		copy(ep.IP, sa.Addr[:])
 
-		return ep, nil
+		return ep
 	case unix.AF_INET6:
-		sa := *(*unix.RawSockaddrInet6)(unsafe.Pointer(&ip[0]))
+		sa := *(*unix.RawSockaddrInet6)(unsafe.Pointer(&ep[0]))
 
 		// TODO(mdlayher): IPv6 zone?
 		ep := &net.UDPAddr{
@@ -316,10 +325,10 @@ func parseEndpoint(ip wgh.WGIP) (*net.UDPAddr, error) {
 		}
 		copy(ep.IP, sa.Addr[:])
 
-		return ep, nil
+		return ep
 	default:
 		// No endpoint configured.
-		return nil, nil
+		return nil
 	}
 }
 
@@ -331,33 +340,6 @@ func bePort(port uint16) int {
 	return int(binary.BigEndian.Uint16(b[:]))
 }
 
-// parseAllowedIPs parses allowed IPs from a slice of wgh.WGCIDR structures.
-func parseAllowedIPs(aips []wgh.WGCIDR) ([]net.IPNet, error) {
-	ipns := make([]net.IPNet, 0, len(aips))
-	for _, aip := range aips {
-		var size, masklen int
-		switch aip.Af {
-		case unix.AF_INET:
-			size, masklen = net.IPv4len, 32
-		case unix.AF_INET6:
-			size, masklen = net.IPv6len, 128
-		default:
-			return nil, fmt.Errorf("wgopenbsd: unrecognized allowed IP address family: %d", aip.Af)
-		}
-
-		// Copy the array from aip to retain it.
-		ip := make(net.IP, size)
-		copy(ip, aip.Ip[:size])
-
-		ipns = append(ipns, net.IPNet{
-			IP:   ip,
-			Mask: net.CIDRMask(int(aip.Mask), masklen),
-		})
-	}
-
-	return ipns, nil
-}
-
 // ioctlIfgroupreq returns a function which performs the appropriate ioctl on
 // fd to retrieve members of an interface group.
 func ioctlIfgroupreq(fd int) func(*wgh.Ifgroupreq) error {
@@ -366,19 +348,11 @@ func ioctlIfgroupreq(fd int) func(*wgh.Ifgroupreq) error {
 	}
 }
 
-// ioctlWGGetServ returns a function which performs the appropriate ioctl on
-// fd to fetch information about a WireGuard device.
-func ioctlWGGetServ(fd int) func(*wgh.WGGetServ) error {
-	return func(wgs *wgh.WGGetServ) error {
-		return ioctl(fd, wgh.SIOCGWGSERV, unsafe.Pointer(wgs))
-	}
-}
-
-// ioctlWGGetPeer returns a function which performs the appropriate ioctl on
-// fd to fetch information about a peer associated with a WireGuard device.
-func ioctlWGGetPeer(fd int) func(*wgh.WGGetPeer) error {
-	return func(wgp *wgh.WGGetPeer) error {
-		return ioctl(fd, wgh.SIOCGWGPEER, unsafe.Pointer(wgp))
+// ioctlWGDataIO returns a function which performs the appropriate ioctl on
+// fd to issue a WireGuard data I/O.
+func ioctlWGDataIO(fd int) func(*wgh.WGDataIO) error {
+	return func(data *wgh.WGDataIO) error {
+		return ioctl(fd, wgh.SIOCGWG, unsafe.Pointer(data))
 	}
 }
 
@@ -390,4 +364,8 @@ func ioctl(fd int, req uint, arg unsafe.Pointer) error {
 	}
 
 	return nil
+}
+
+func panicf(format string, a ...interface{}) {
+	panic(fmt.Sprintf(format, a...))
 }

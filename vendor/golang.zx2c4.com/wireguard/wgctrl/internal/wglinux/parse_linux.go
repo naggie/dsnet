@@ -1,4 +1,5 @@
-//+build linux
+//go:build linux
+// +build linux
 
 package wglinux
 
@@ -11,7 +12,6 @@ import (
 	"github.com/mdlayher/genetlink"
 	"github.com/mdlayher/netlink"
 	"golang.org/x/sys/unix"
-	"golang.zx2c4.com/wireguard/wgctrl/internal/wglinux/internal/wgh"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -56,26 +56,23 @@ func parseDeviceLoop(m genetlink.Message) (*wgtypes.Device, error) {
 		return nil, err
 	}
 
-	d := wgtypes.Device{
-		Type: wgtypes.LinuxKernel,
-	}
-
+	d := wgtypes.Device{Type: wgtypes.LinuxKernel}
 	for ad.Next() {
 		switch ad.Type() {
-		case wgh.DeviceAIfindex:
+		case unix.WGDEVICE_A_IFINDEX:
 			// Ignored; interface index isn't exposed at all in the userspace
 			// configuration protocol, and name is more friendly anyway.
-		case wgh.DeviceAIfname:
+		case unix.WGDEVICE_A_IFNAME:
 			d.Name = ad.String()
-		case wgh.DeviceAPrivateKey:
+		case unix.WGDEVICE_A_PRIVATE_KEY:
 			ad.Do(parseKey(&d.PrivateKey))
-		case wgh.DeviceAPublicKey:
+		case unix.WGDEVICE_A_PUBLIC_KEY:
 			ad.Do(parseKey(&d.PublicKey))
-		case wgh.DeviceAListenPort:
+		case unix.WGDEVICE_A_LISTEN_PORT:
 			d.ListenPort = int(ad.Uint16())
-		case wgh.DeviceAFwmark:
+		case unix.WGDEVICE_A_FWMARK:
 			d.FirewallMark = int(ad.Uint32())
-		case wgh.DeviceAPeers:
+		case unix.WGDEVICE_A_PEERS:
 			// Netlink array of peers.
 			//
 			// Errors while parsing are propagated up to top-level ad.Err check.
@@ -107,27 +104,24 @@ func parsePeer(ad *netlink.AttributeDecoder) wgtypes.Peer {
 	var p wgtypes.Peer
 	for ad.Next() {
 		switch ad.Type() {
-		case wgh.PeerAPublicKey:
+		case unix.WGPEER_A_PUBLIC_KEY:
 			ad.Do(parseKey(&p.PublicKey))
-		case wgh.PeerAPresharedKey:
+		case unix.WGPEER_A_PRESHARED_KEY:
 			ad.Do(parseKey(&p.PresharedKey))
-		case wgh.PeerAEndpoint:
+		case unix.WGPEER_A_ENDPOINT:
 			p.Endpoint = &net.UDPAddr{}
 			ad.Do(parseSockaddr(p.Endpoint))
-		case wgh.PeerAPersistentKeepaliveInterval:
+		case unix.WGPEER_A_PERSISTENT_KEEPALIVE_INTERVAL:
 			p.PersistentKeepaliveInterval = time.Duration(ad.Uint16()) * time.Second
-		case wgh.PeerALastHandshakeTime:
+		case unix.WGPEER_A_LAST_HANDSHAKE_TIME:
 			ad.Do(parseTimespec(&p.LastHandshakeTime))
-		case wgh.PeerARxBytes:
+		case unix.WGPEER_A_RX_BYTES:
 			p.ReceiveBytes = int64(ad.Uint64())
-		case wgh.PeerATxBytes:
+		case unix.WGPEER_A_TX_BYTES:
 			p.TransmitBytes = int64(ad.Uint64())
-		case wgh.PeerAAllowedips:
-			ad.Nested(func(nad *netlink.AttributeDecoder) error {
-				p.AllowedIPs = parseAllowedIPs(nad)
-				return nil
-			})
-		case wgh.PeerAProtocolVersion:
+		case unix.WGPEER_A_ALLOWEDIPS:
+			ad.Nested(parseAllowedIPs(&p.AllowedIPs))
+		case unix.WGPEER_A_PROTOCOL_VERSION:
 			p.ProtocolVersion = int(ad.Uint32())
 		}
 	}
@@ -136,45 +130,51 @@ func parsePeer(ad *netlink.AttributeDecoder) wgtypes.Peer {
 }
 
 // parseAllowedIPs parses a slice of net.IPNet from a netlink attribute payload.
-func parseAllowedIPs(ad *netlink.AttributeDecoder) []net.IPNet {
-	// Initialize to the number of allowed IPs and begin iterating through
-	// the netlink array to decode each one.
-	ipns := make([]net.IPNet, 0, ad.Len())
-	for ad.Next() {
-		// Allowed IP nested attributes.
-		ad.Nested(func(nad *netlink.AttributeDecoder) error {
-			var (
-				ipn    net.IPNet
-				mask   int
-				family int
-			)
+func parseAllowedIPs(ipns *[]net.IPNet) func(ad *netlink.AttributeDecoder) error {
+	return func(ad *netlink.AttributeDecoder) error {
+		// Initialize to the number of allowed IPs and begin iterating through
+		// the netlink array to decode each one.
+		*ipns = make([]net.IPNet, 0, ad.Len())
+		for ad.Next() {
+			// Allowed IP nested attributes.
+			ad.Nested(func(nad *netlink.AttributeDecoder) error {
+				var (
+					ipn    net.IPNet
+					mask   int
+					family int
+				)
 
-			for nad.Next() {
-				switch nad.Type() {
-				case wgh.AllowedipAIpaddr:
-					nad.Do(parseAddr(&ipn.IP))
-				case wgh.AllowedipACidrMask:
-					mask = int(nad.Uint8())
-				case wgh.AllowedipAFamily:
-					family = int(nad.Uint16())
+				for nad.Next() {
+					switch nad.Type() {
+					case unix.WGALLOWEDIP_A_IPADDR:
+						nad.Do(parseAddr(&ipn.IP))
+					case unix.WGALLOWEDIP_A_CIDR_MASK:
+						mask = int(nad.Uint8())
+					case unix.WGALLOWEDIP_A_FAMILY:
+						family = int(nad.Uint16())
+					}
 				}
-			}
 
-			// The address family determines the correct number of bits in
-			// the mask.
-			switch family {
-			case unix.AF_INET:
-				ipn.Mask = net.CIDRMask(mask, 32)
-			case unix.AF_INET6:
-				ipn.Mask = net.CIDRMask(mask, 128)
-			}
+				if err := nad.Err(); err != nil {
+					return err
+				}
 
-			ipns = append(ipns, ipn)
-			return nil
-		})
+				// The address family determines the correct number of bits in
+				// the mask.
+				switch family {
+				case unix.AF_INET:
+					ipn.Mask = net.CIDRMask(mask, 32)
+				case unix.AF_INET6:
+					ipn.Mask = net.CIDRMask(mask, 128)
+				}
+
+				*ipns = append(*ipns, ipn)
+				return nil
+			})
+		}
+
+		return nil
 	}
-
-	return ipns
 }
 
 // parseKey parses a wgtypes.Key from a byte slice.
@@ -280,7 +280,7 @@ func parseTimespec(t *time.Time) func(b []byte) error {
 
 		// Only set fields if UNIX timestamp value is greater than 0, so the
 		// caller will see a zero-value time.Time otherwise.
-		if sec > 0 && nsec > 0 {
+		if sec > 0 || nsec > 0 {
 			*t = time.Unix(sec, nsec)
 		}
 

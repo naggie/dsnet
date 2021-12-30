@@ -1,8 +1,10 @@
-//+build !windows
+//go:build !windows
+// +build !windows
 
 package wguser
 
 import (
+	"errors"
 	"io/ioutil"
 	"net"
 	"os"
@@ -29,7 +31,7 @@ func findUNIXSockets(dirs []string) ([]string, error) {
 	for _, d := range dirs {
 		files, err := ioutil.ReadDir(d)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, os.ErrNotExist) {
 				continue
 			}
 

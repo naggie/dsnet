@@ -1,4 +1,5 @@
-# wgctrl [![builds.sr.ht status](https://builds.sr.ht/~mdlayher/wgctrl-go.svg)](https://builds.sr.ht/~mdlayher/wgctrl-go?) [![GoDoc](https://godoc.org/golang.zx2c4.com/wireguard/wgctrl?status.svg)](https://godoc.org/golang.zx2c4.com/wireguard/wgctrl) [![Go Report Card](https://goreportcard.com/badge/golang.zx2c4.com/wireguard/wgctrl)](https://goreportcard.com/report/golang.zx2c4.com/wireguard/wgctrl)
+# wgctrl [![Test Status](https://github.com/WireGuard/wgctrl-go/workflows/Linux%20Test/badge.svg)](https://github.com/WireGuard/wgctrl-go/actions) [![Go Reference](https://pkg.go.dev/badge/golang.zx2c4.com/wireguard/wgctrl.svg)](https://pkg.go.dev/golang.zx2c4.com/wireguard/wgctrl) [![Go Report Card](https://goreportcard.com/badge/golang.zx2c4.com/wireguard/wgctrl)](https://goreportcard.com/report/golang.zx2c4.com/wireguard/wgctrl)
+
 
 Package `wgctrl` enables control of WireGuard devices on multiple platforms.
 
@@ -17,9 +18,8 @@ go get golang.zx2c4.com/wireguard/wgctrl
 - Linux kernel module devices, via generic netlink
 - userspace devices (e.g. wireguard-go), via the userspace configuration protocol
   - both UNIX-like and Windows operating systems are supported
-- **Experimental:** OpenBSD kernel module devices, via ioctl interface
-  - See <https://git.zx2c4.com/wireguard-openbsd/about/> for details. Specify
-  environment variable `WGCTRL_OPENBSD_KERNEL=1` to enable this interface.
+- **Experimental:** OpenBSD kernel module devices (read-only), via ioctl interface
+  - See <https://git.zx2c4.com/wireguard-openbsd/about/> for details.
 
 As new operating systems add support for in-kernel WireGuard implementations,
 this package should also be extended to support those native implementations.
