@@ -12,6 +12,9 @@ github.com/go-playground/locales/currency
 # github.com/go-playground/universal-translator v0.18.0
 ## explicit; go 1.13
 github.com/go-playground/universal-translator
+# github.com/go-playground/validator v9.31.0+incompatible
+## explicit
+github.com/go-playground/validator
 # github.com/go-playground/validator/v10 v10.9.0
 ## explicit; go 1.13
 github.com/go-playground/validator/v10
@@ -168,6 +171,8 @@ golang.zx2c4.com/wireguard/wgctrl/internal/wguser
 golang.zx2c4.com/wireguard/wgctrl/internal/wgwindows
 golang.zx2c4.com/wireguard/wgctrl/internal/wgwindows/internal/ioctl
 golang.zx2c4.com/wireguard/wgctrl/wgtypes
+# gopkg.in/go-playground/assert.v1 v1.2.1
+## explicit
 # gopkg.in/ini.v1 v1.66.2
 ## explicit
 gopkg.in/ini.v1
