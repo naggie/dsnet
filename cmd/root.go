@@ -36,7 +36,7 @@ var (
 		Use:   "up",
 		Short: "Create the interface, run pre/post up, sync",
 		Run: func(cmd *cobra.Command, args []string) {
-			config := cli.MustLoadDsnetConfig()
+			config := cli.MustLoadConfigFile()
 			server := cli.GetServer(config)
 			server.Up()
 			utils.ShellOut(config.PostUp, "PostUp")
@@ -47,7 +47,7 @@ var (
 		Use:   "down",
 		Short: "Destroy the interface, run pre/post down",
 		Run: func(cmd *cobra.Command, args []string) {
-			config := cli.MustLoadDsnetConfig()
+			config := cli.MustLoadConfigFile()
 			server := cli.GetServer(config)
 			server.DeleteLink()
 			utils.ShellOut(config.PostDown, "PostDown")
@@ -55,6 +55,8 @@ var (
 	}
 
 	addCmd = &cobra.Command{
+		Use:   "add [hostname]",
+		Short: "Add a new peer + sync",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Make sure we have the hostname
 			if len(args) != 1 {
@@ -63,10 +65,8 @@ var (
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Add(args[0], owner, description, confirm)
+			cli.Add(args[0], owner, description, confirm)
 		},
-		Use:   "add [hostname]",
-		Short: "Add a new peer + sync",
 	}
 
 	regenerateCmd = &cobra.Command{
@@ -85,7 +85,7 @@ var (
 
 	syncCmd = &cobra.Command{
 		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Sync()
+			cli.Sync()
 		},
 		Use:   "sync",
 		Short: fmt.Sprintf("Update wireguard configuration from %s after validating", dsnet.CONFIG_FILE),

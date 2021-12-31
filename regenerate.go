@@ -5,33 +5,34 @@ import (
 )
 
 func Regenerate(hostname string, confirm bool) {
-	conf := MustLoadDsnetConfig()
-	found := false
+	// conf := MustLoadDsnetConfig()
+	// found := false
 
-	if !confirm {
-		ConfirmOrAbort("This will invalidate current configuration. Regenerate config for %s?", hostname)
-	}
+	// if !confirm {
+	// 	ConfirmOrAbort("This will invalidate current configuration. Regenerate config for %s?", hostname)
+	// }
 
-	for _, peer := range conf.Peers {
-		if peer.Hostname == hostname {
-			privateKey := GenerateJSONPrivateKey()
-			peer.PrivateKey = privateKey
-			peer.PublicKey = privateKey.PublicKey()
-			peer.PresharedKey = GenerateJSONKey()
+	// for _, peer := range conf.Peers {
+	// 	if peer.Hostname == hostname {
+	// 		privateKey := GenerateJSONPrivateKey()
+	// 		peer.PrivateKey = privateKey
+	// 		peer.PublicKey = privateKey.PublicKey()
+	// 		peer.PresharedKey = GenerateJSONKey()
 
-			conf.MustRemovePeer(hostname)
-			PrintPeerCfg(&peer, conf)
-			found = true
-			conf.MustAddPeer(peer)
+	// 		conf.MustRemovePeer(hostname)
+	// 		PrintPeerCfg(&peer, conf)
+	// 		found = true
+	// 		conf.MustAddPeer(peer)
 
-			break
-		}
-	}
+	// 		break
+	// 	}
+	// }
 
-	if !found {
-		ExitFail(fmt.Sprintf("unknown hostname: %s", hostname))
-	}
+	// if !found {
+	// 	ExitFail(fmt.Sprintf("unknown hostname: %s", hostname))
+	// }
 
-	conf.MustSave()
-	MustConfigureDevice(conf)
+	// conf.MustSave()
+	// MustConfigureDevice(conf)
+	fmt.Println("Refactor Todo")
 }

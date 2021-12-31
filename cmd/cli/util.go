@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -62,4 +63,44 @@ func GetServer(config *DsnetConfig) *lib.Server {
 		FallbackWGBin:    fallbackWGBin,
 		Peers:            jsonPeerToDsnetPeer(config.Peers),
 	}
+}
+
+func MustPromptString(prompt string, required bool) string {
+	reader := bufio.NewReader(os.Stdin)
+	var text string
+	var err error
+
+	for text == "" {
+		fmt.Fprintf(os.Stderr, "%s: ", prompt)
+		text, err = reader.ReadString('\n')
+		check(err)
+		text = strings.TrimSpace(text)
+	}
+	return text
+}
+
+func ConfirmOrAbort(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, format+" [y/n] ", a...)
+
+	reader := bufio.NewReader(os.Stdin)
+
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		panic(err)
+	}
+
+	if input == "y\n" {
+		return
+	} else {
+		ExitFail("Aborted.")
+	}
+}
+
+func Sync() {
+	// TODO check device settings first
+	conf, err := LoadConfigFile()
+	check(err, fmt.Sprintf("failed to load configuration file: %s", err))
+	server := GetServer(conf)
+	err = server.ConfigureDevice()
+	check(err, fmt.Sprintf("failed to sync device configuration: %s", err))
 }
