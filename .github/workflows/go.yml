@@ -28,7 +28,7 @@ jobs:
         go-version: ${{ matrix.go }}
 
     - name: Build
-      run: GOOS=linux CGO_ENABLED=0 ${{ matrix.arch }} go build -v ./cmd/dsnet.go
+      run: GOOS=linux CGO_ENABLED=0 ${{ matrix.arch }} go build -v ./cmd/root.go
 
     - name: Test
       run: go test -v ./...
