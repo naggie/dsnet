@@ -70,6 +70,8 @@ var (
 	}
 
 	regenerateCmd = &cobra.Command{
+		Use:   "regenerate [hostname]",
+		Short: "Regenerate keys and config for peer",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return errors.New("Missing hostname argument")
@@ -77,10 +79,8 @@ var (
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Regenerate(args[0], confirm)
+			cli.Regenerate(args[0], confirm)
 		},
-		Use:   "regenerate [hostname]",
-		Short: "Regenerate keys and config for peer",
 	}
 
 	syncCmd = &cobra.Command{

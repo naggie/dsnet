@@ -46,6 +46,7 @@ func Add(hostname, owner, description string, confirm bool) {
 
 	config.MustSave()
 
+	server = GetServer(config)
 	err = server.ConfigureDevice()
 	check(err, fmt.Sprintf("failed to configure device: %s", err))
 }

@@ -101,7 +101,7 @@ func LoadConfigFile() (*DsnetConfig, error) {
 
 func MustLoadConfigFile() *DsnetConfig {
 	config, err := LoadConfigFile()
-	check(err)
+	check(err, fmt.Sprintf("failed to load configuration file: %s", err))
 	return config
 }
 
