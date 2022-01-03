@@ -22,14 +22,14 @@ var (
 	rootCmd = &cobra.Command{}
 
 	initCmd = &cobra.Command{
-		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Init()
-		},
 		Use: "init",
 		Short: fmt.Sprintf(
 			"Create %s containing default configuration + new keys without loading. Edit to taste.",
 			dsnet.CONFIG_FILE,
 		),
+		Run: func(cmd *cobra.Command, args []string) {
+			cli.Init()
+		},
 	}
 
 	upCmd = &cobra.Command{
@@ -144,6 +144,9 @@ func init() {
 
 	viper.SetDefault("config_file", "/etc/dsnetconfig.json")
 	viper.SetDefault("fallback_wg_bing", "wireguard-go")
+	viper.SetDefault("listen_port", 51820)
+	viper.SetDefault("report_file", "/var/lib/dsnetreport.json")
+	viper.SetDefault("interface_name", "dsnet")
 
 	// Adds subcommands.
 	rootCmd.AddCommand(initCmd)
@@ -155,7 +158,6 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(upCmd)
 	rootCmd.AddCommand(downCmd)
-
 }
 
 func main() {

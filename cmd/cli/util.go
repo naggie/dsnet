@@ -25,7 +25,7 @@ func ExitFail(format string, a ...interface{}) {
 }
 
 func jsonPeerToDsnetPeer(peers []PeerConfig) []lib.Peer {
-	libPeers := make([]lib.Peer, len(peers))
+	libPeers := make([]lib.Peer, 0, len(peers))
 	for _, p := range peers {
 		libPeers = append(libPeers, lib.Peer{
 			Hostname:     p.Hostname,
@@ -44,7 +44,7 @@ func jsonPeerToDsnetPeer(peers []PeerConfig) []lib.Peer {
 }
 
 func GetServer(config *DsnetConfig) *lib.Server {
-	fallbackWGBin := viper.GetString("fallback_wg_bing")
+	fallbackWGBin := viper.GetString("fallback_wg_bin")
 	return &lib.Server{
 		ExternalHostname: config.ExternalHostname,
 		ExternalIP:       config.ExternalIP,

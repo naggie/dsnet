@@ -53,7 +53,7 @@ func NewPeer(server *Server, owner string, hostname string, description string) 
 
 	presharedKey, err := GenerateJSONKey()
 	if err != nil {
-		return Peer{}, fmt.Errorf("failed to generate private key: %s")
+		return Peer{}, fmt.Errorf("failed to generate private key: %s", err)
 	}
 
 	newPeer := Peer{

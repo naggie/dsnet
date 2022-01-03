@@ -109,6 +109,7 @@ func MustLoadConfigFile() *DsnetConfig {
 func (conf *DsnetConfig) Save() error {
 	configFile := viper.GetString("config_file")
 	_json, _ := json.MarshalIndent(conf, "", "    ")
+	_json = append(_json, '\n')
 	err := ioutil.WriteFile(configFile, _json, 0600)
 	if err != nil {
 		return err
@@ -143,16 +144,6 @@ func (conf *DsnetConfig) AddPeer(peer lib.Peer) error {
 			return fmt.Errorf("%s is not an unique preshared key", peer.Hostname)
 		}
 	}
-
-	// if conf.IPAllocated(peer.IP) {
-	// 	return fmt.Errorf("%s is already allocated", peer.IP)
-	// }
-
-	// for _, peerIPNet := range peer.Networks {
-	// 	if conf.IPAllocated(peerIPNet.IPNet.IP) {
-	// 		return fmt.Errorf("%s is already allocated", peerIPNet)
-	// 	}
-	// }
 
 	newPeerConfig := PeerConfig{
 		Hostname:     peer.Hostname,
