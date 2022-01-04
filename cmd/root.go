@@ -25,7 +25,7 @@ var (
 		Use: "init",
 		Short: fmt.Sprintf(
 			"Create %s containing default configuration + new keys without loading. Edit to taste.",
-			dsnet.CONFIG_FILE,
+			viper.GetString("config_file"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
 			cli.Init()
@@ -84,11 +84,11 @@ var (
 	}
 
 	syncCmd = &cobra.Command{
+		Use:   "sync",
+		Short: fmt.Sprintf("Update wireguard configuration from %s after validating", viper.GetString("config_file")),
 		Run: func(cmd *cobra.Command, args []string) {
 			cli.Sync()
 		},
-		Use:   "sync",
-		Short: fmt.Sprintf("Update wireguard configuration from %s after validating", dsnet.CONFIG_FILE),
 	}
 
 	reportCmd = &cobra.Command{
@@ -96,7 +96,7 @@ var (
 			dsnet.Report()
 		},
 		Use:   "report",
-		Short: fmt.Sprintf("Generate a JSON status report to the location configured in %s.", dsnet.CONFIG_FILE),
+		Short: fmt.Sprintf("Generate a JSON status report to the location configured in %s.", viper.GetString("config_file")),
 	}
 
 	removeCmd = &cobra.Command{
