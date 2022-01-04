@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/naggie/dsnet/lib"
-	"github.com/spf13/viper"
 )
 
 func check(e error, optMsg ...string) {
@@ -17,11 +16,6 @@ func check(e error, optMsg ...string) {
 		}
 		ExitFail("%s", e)
 	}
-}
-
-func ExitFail(format string, a ...interface{}) {
-	fmt.Fprintf(os.Stderr, "\033[31m"+format+"\033[0m\n", a...)
-	os.Exit(1)
 }
 
 func jsonPeerToDsnetPeer(peers []PeerConfig) []lib.Peer {
@@ -43,26 +37,9 @@ func jsonPeerToDsnetPeer(peers []PeerConfig) []lib.Peer {
 	return libPeers
 }
 
-func GetServer(config *DsnetConfig) *lib.Server {
-	fallbackWGBin := viper.GetString("fallback_wg_bin")
-	return &lib.Server{
-		ExternalHostname: config.ExternalHostname,
-		ExternalIP:       config.ExternalIP,
-		ExternalIP6:      config.ExternalIP6,
-		ListenPort:       config.ListenPort,
-		Domain:           config.Domain,
-		InterfaceName:    config.InterfaceName,
-		Network:          config.Network,
-		Network6:         config.Network6,
-		IP:               config.IP,
-		IP6:              config.IP6,
-		DNS:              config.DNS,
-		PrivateKey:       config.PrivateKey,
-		PostUp:           config.PostUp,
-		PostDown:         config.PostDown,
-		FallbackWGBin:    fallbackWGBin,
-		Peers:            jsonPeerToDsnetPeer(config.Peers),
-	}
+func ExitFail(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, "\033[31m"+format+"\033[0m\n", a...)
+	os.Exit(1)
 }
 
 func MustPromptString(prompt string, required bool) string {
@@ -94,13 +71,4 @@ func ConfirmOrAbort(format string, a ...interface{}) {
 	} else {
 		ExitFail("Aborted.")
 	}
-}
-
-func Sync() {
-	// TODO check device settings first
-	conf, err := LoadConfigFile()
-	check(err, fmt.Sprintf("failed to load configuration file: %s", err))
-	server := GetServer(conf)
-	err = server.ConfigureDevice()
-	check(err, fmt.Sprintf("failed to sync device configuration: %s", err))
 }
