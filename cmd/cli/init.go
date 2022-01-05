@@ -28,7 +28,7 @@ func Init() {
 	}
 
 	privateKey, err := lib.GenerateJSONPrivateKey()
-	check(err, fmt.Sprintf("failed to generate private key: %s", err))
+	check(err, "failed to generate private key")
 
 	externalIPV4, err := getExternalIP()
 	check(err)
@@ -50,10 +50,10 @@ func Init() {
 	server := GetServer(conf)
 
 	ipv4, err := server.AllocateIP()
-	check(err, fmt.Sprintf("failed to allocate ipv4 address: %s", err))
+	check(err, "failed to allocate ipv4 address")
 
 	ipv6, err := server.AllocateIP6()
-	check(err, fmt.Sprintf("failed to allocate ipv6 address: %s", err))
+	check(err, "failed to allocate ipv6 address")
 
 	conf.IP = ipv4
 	conf.IP6 = ipv6

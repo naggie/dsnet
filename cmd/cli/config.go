@@ -101,7 +101,7 @@ func LoadConfigFile() (*DsnetConfig, error) {
 
 func MustLoadConfigFile() *DsnetConfig {
 	config, err := LoadConfigFile()
-	check(err, fmt.Sprintf("failed to load configuration file: %s", err))
+	check(err, "failed to load configuration file")
 	return config
 }
 
@@ -179,7 +179,7 @@ func (conf *DsnetConfig) RemovePeer(hostname string) error {
 	}
 
 	if peerIndex == -1 {
-		return fmt.Errorf("Could not find peer with hostname %s", hostname)
+		return fmt.Errorf("failed to find peer with hostname %s", hostname)
 	}
 
 	// remove peer from slice, retaining order

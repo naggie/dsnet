@@ -21,22 +21,22 @@ func Regenerate(hostname string, confirm bool) {
 	for _, peer := range server.Peers {
 		if peer.Hostname == hostname {
 			privateKey, err := lib.GenerateJSONPrivateKey()
-			check(err, fmt.Sprintf("failed to generate private key: %s", err))
+			check(err, "failed to generate private key")
 
 			preshareKey, err := lib.GenerateJSONKey()
-			check(err, fmt.Sprintf("failed to generate preshared key: %s", err))
+			check(err, "failed to generate preshared key")
 
 			peer.PrivateKey = privateKey
 			peer.PublicKey = privateKey.PublicKey()
 			peer.PresharedKey = preshareKey
 
 			err = config.RemovePeer(hostname)
-			check(err, fmt.Sprintf("failed to regenerate peer: %s", err))
+			check(err, "failed to regenerate peer")
 
 			peerType := viper.GetString("output")
 
 			peerConfigBytes, err := lib.AsciiPeerConfig(peer, peerType, *server)
-			check(err, fmt.Sprintf("failed to get peer configuration: %s", err))
+			check(err, "failed to get peer configuration")
 			os.Stdout.Write(peerConfigBytes.Bytes())
 			found = true
 			config.MustAddPeer(peer)
