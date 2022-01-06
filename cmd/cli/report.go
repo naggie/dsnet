@@ -1,4 +1,4 @@
-package dsnet
+package cli
 
 import (
 	"encoding/json"
@@ -7,8 +7,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator"
+	"github.com/naggie/dsnet/lib"
+	"github.com/spf13/viper"
 	"github.com/vishvananda/netlink"
+	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -23,8 +26,8 @@ type DsnetReport struct {
 	IP6    net.IP
 	// IP network from which to allocate automatic sequential addresses
 	// Network is chosen randomly when not specified
-	Network         JSONIPNet
-	Network6        JSONIPNet
+	Network         lib.JSONIPNet
+	Network6        lib.JSONIPNet
 	DNS             net.IP
 	PeersOnline     int
 	PeersTotal      int
@@ -37,7 +40,56 @@ type DsnetReport struct {
 	Timestamp time.Time
 }
 
-func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
+type PeerReport struct {
+	// Used to update DNS
+	Hostname string
+	// username of person running this host/router
+	Owner string
+	// Description of what the host is and/or does
+	Description string
+	// Has a handshake occurred in the last 3 mins?
+	Online bool
+	// No handshake for 28 days
+	Dormant bool
+	// date peer was added to dsnet config
+	Added time.Time
+	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
+	IP  net.IP
+	IP6 net.IP
+	// Last known external IP
+	ExternalIP net.IP
+	// TODO ExternalIP support (Endpoint)
+	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
+	// TODO support routing additional networks (AllowedIPs)
+	Networks          []lib.JSONIPNet
+	LastHandshakeTime time.Time
+	ReceiveBytes      uint64
+	TransmitBytes     uint64
+	ReceiveBytesSI    string
+	TransmitBytesSI   string
+}
+
+func GenerateReport() {
+	conf := MustLoadConfigFile()
+
+	wg, err := wgctrl.New()
+	check(err)
+	defer wg.Close()
+
+	dev, err := wg.Device(conf.InterfaceName)
+
+	if err != nil {
+		ExitFail("Could not retrieve device '%s' (%v)", conf.InterfaceName, err)
+	}
+
+	oldReport := MustLoadDsnetReport()
+	report := GetReport(dev, conf, oldReport)
+	report.MustSave()
+}
+
+func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
+	peerTimeout := viper.GetDuration("peer_timeout")
+	peerExpiry := viper.GetDuration("peer_expiry")
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
 	peerReports := make([]PeerReport, len(conf.Peers))
 	oldPeerReportIndex := make(map[string]PeerReport)
@@ -67,8 +119,8 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 			continue
 		}
 
-		online := time.Since(wgPeer.LastHandshakeTime) < TIMEOUT
-		dormant := !wgPeer.LastHandshakeTime.IsZero() && time.Since(wgPeer.LastHandshakeTime) > EXPIRY
+		online := time.Since(wgPeer.LastHandshakeTime) < peerTimeout
+		dormant := !wgPeer.LastHandshakeTime.IsZero() && time.Since(wgPeer.LastHandshakeTime) > peerExpiry
 
 		if online {
 			peersOnline++
@@ -122,19 +174,24 @@ func GenerateReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetRepo
 	}
 }
 
-func (report *DsnetReport) MustSave(filename string) {
+func (report *DsnetReport) MustSave() {
+	reportFilePath := viper.GetString("report_file")
+
 	_json, _ := json.MarshalIndent(report, "", "    ")
-	err := ioutil.WriteFile(filename, _json, 0644)
+	_json = append(_json, '\n')
+
+	err := ioutil.WriteFile(reportFilePath, _json, 0644)
 	check(err)
 }
 
 func MustLoadDsnetReport() *DsnetReport {
-	raw, err := ioutil.ReadFile(CONFIG_FILE)
+	reportFilePath := viper.GetString("report_file_path")
+	raw, err := ioutil.ReadFile(reportFilePath)
 
 	if os.IsNotExist(err) {
 		return nil
 	} else if os.IsPermission(err) {
-		ExitFail("%s cannot be accessed. Check read permissions.", CONFIG_FILE)
+		ExitFail("%s cannot be accessed. Check read permissions.", reportFilePath)
 	} else {
 		check(err)
 	}
@@ -147,33 +204,4 @@ func MustLoadDsnetReport() *DsnetReport {
 	check(err)
 
 	return &report
-}
-
-type PeerReport struct {
-	// Used to update DNS
-	Hostname string
-	// username of person running this host/router
-	Owner string
-	// Description of what the host is and/or does
-	Description string
-	// Has a handshake occurred in the last 3 mins?
-	Online bool
-	// No handshake for 28 days
-	Dormant bool
-	// date peer was added to dsnet config
-	Added time.Time
-	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
-	IP  net.IP
-	IP6 net.IP
-	// Last known external IP
-	ExternalIP net.IP
-	// TODO ExternalIP support (Endpoint)
-	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
-	// TODO support routing additional networks (AllowedIPs)
-	Networks          []JSONIPNet
-	LastHandshakeTime time.Time
-	ReceiveBytes      uint64
-	TransmitBytes     uint64
-	ReceiveBytesSI    string
-	TransmitBytesSI   string
 }
