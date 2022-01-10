@@ -100,6 +100,8 @@ var (
 	}
 
 	removeCmd = &cobra.Command{
+		Use:   "remove [hostname]",
+		Short: "Remove a peer by hostname provided as argument + sync",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Make sure we have the hostname
 			if len(args) != 1 {
@@ -110,10 +112,8 @@ var (
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Remove(args[0], confirm)
+			cli.Remove(args[0], confirm)
 		},
-		Use:   "remove [hostname]",
-		Short: "Remove a peer by hostname provided as argument + sync",
 	}
 
 	versionCmd = &cobra.Command{
