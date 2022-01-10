@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ "1.15", "1.16" ]
+        go: [ "1.16", "1.17" ]
         arch:
           - "GOARCH=amd64"
           - "GOARCH=arm GOARM=5"
@@ -28,7 +28,7 @@ jobs:
         go-version: ${{ matrix.go }}
 
     - name: Build
-      run: GOOS=linux CGO_ENABLED=0 ${{ matrix.arch }} go build -v ./cmd/dsnet.go
+      run: GOOS=linux CGO_ENABLED=0 ${{ matrix.arch }} go build -v ./cmd/root.go
 
     - name: Test
       run: go test -v ./...

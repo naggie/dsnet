@@ -6,7 +6,7 @@ clean:
 	@rm -r dist
 
 compile:
-	CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags="-s -w" -o dist/dsnet ./cmd/dsnet.go
+	CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags="-s -w" -o dist/dsnet ./cmd/root.go
 
 build: compile
 	upx dist/dsnet

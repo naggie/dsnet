@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/naggie/dsnet"
+	"github.com/naggie/dsnet/cmd/cli"
+	"github.com/naggie/dsnet/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -20,17 +22,41 @@ var (
 	rootCmd = &cobra.Command{}
 
 	initCmd = &cobra.Command{
-		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Init()
-		},
 		Use: "init",
 		Short: fmt.Sprintf(
 			"Create %s containing default configuration + new keys without loading. Edit to taste.",
-			dsnet.CONFIG_FILE,
+			viper.GetString("config_file"),
 		),
+		Run: func(cmd *cobra.Command, args []string) {
+			cli.Init()
+		},
+	}
+
+	upCmd = &cobra.Command{
+		Use:   "up",
+		Short: "Create the interface, run pre/post up, sync",
+		Run: func(cmd *cobra.Command, args []string) {
+			config := cli.MustLoadConfigFile()
+			server := cli.GetServer(config)
+			server.Up()
+			utils.ShellOut(config.PostUp, "PostUp")
+		},
+	}
+
+	downCmd = &cobra.Command{
+		Use:   "down",
+		Short: "Destroy the interface, run pre/post down",
+		Run: func(cmd *cobra.Command, args []string) {
+			config := cli.MustLoadConfigFile()
+			server := cli.GetServer(config)
+			server.DeleteLink()
+			utils.ShellOut(config.PostDown, "PostDown")
+		},
 	}
 
 	addCmd = &cobra.Command{
+		Use:   "add [hostname]",
+		Short: "Add a new peer + sync",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Make sure we have the hostname
 			if len(args) != 1 {
@@ -39,13 +65,13 @@ var (
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Add(args[0], owner, description, confirm)
+			cli.Add(args[0], owner, description, confirm)
 		},
-		Use:   "add [hostname]",
-		Short: "Add a new peer + sync",
 	}
 
 	regenerateCmd = &cobra.Command{
+		Use:   "regenerate [hostname]",
+		Short: "Regenerate keys and config for peer",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return errors.New("Missing hostname argument")
@@ -53,26 +79,16 @@ var (
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Regenerate(args[0], confirm)
+			cli.Regenerate(args[0], confirm)
 		},
-		Use:   "regenerate [hostname]",
-		Short: "Regenerate keys and config for peer",
-	}
-
-	upCmd = &cobra.Command{
-		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Up()
-		},
-		Use:   "up",
-		Short: "Create the interface, run pre/post up, sync",
 	}
 
 	syncCmd = &cobra.Command{
-		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Sync()
-		},
 		Use:   "sync",
-		Short: fmt.Sprintf("Update wireguard configuration from %s after validating", dsnet.CONFIG_FILE),
+		Short: fmt.Sprintf("Update wireguard configuration from %s after validating", viper.GetString("config_file")),
+		Run: func(cmd *cobra.Command, args []string) {
+			cli.Sync()
+		},
 	}
 
 	reportCmd = &cobra.Command{
@@ -80,7 +96,7 @@ var (
 			dsnet.Report()
 		},
 		Use:   "report",
-		Short: fmt.Sprintf("Generate a JSON status report to the location configured in %s.", dsnet.CONFIG_FILE),
+		Short: fmt.Sprintf("Generate a JSON status report to the location configured in %s.", viper.GetString("config_file")),
 	}
 
 	removeCmd = &cobra.Command{
@@ -100,14 +116,6 @@ var (
 		Short: "Remove a peer by hostname provided as argument + sync",
 	}
 
-	downCmd = &cobra.Command{
-		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Down()
-		},
-		Use:   "down",
-		Short: "Destroy the interface, run pre/post down",
-	}
-
 	versionCmd = &cobra.Command{
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("dsnet version %s\ncommit %s\nbuilt %s", dsnet.VERSION, dsnet.GIT_COMMIT, dsnet.BUILD_DATE)
@@ -117,7 +125,7 @@ var (
 	}
 )
 
-func main() {
+func init() {
 	// Flags.
 	rootCmd.PersistentFlags().String("output", "wg-quick", "config file format: vyatta/wg-quick/nixos")
 	addCmd.Flags().StringVar(&owner, "owner", "", "owner of the new peer")
@@ -134,18 +142,26 @@ func main() {
 		dsnet.ExitFail(err.Error())
 	}
 
+	viper.SetDefault("config_file", "/etc/dsnetconfig.json")
+	viper.SetDefault("fallback_wg_bing", "wireguard-go")
+	viper.SetDefault("listen_port", 51820)
+	viper.SetDefault("report_file", "/var/lib/dsnetreport.json")
+	viper.SetDefault("interface_name", "dsnet")
+
 	// Adds subcommands.
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(regenerateCmd)
-	rootCmd.AddCommand(upCmd)
 	rootCmd.AddCommand(syncCmd)
 	rootCmd.AddCommand(reportCmd)
 	rootCmd.AddCommand(removeCmd)
-	rootCmd.AddCommand(downCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(upCmd)
+	rootCmd.AddCommand(downCmd)
+}
 
+func main() {
 	if err := rootCmd.Execute(); err != nil {
-		dsnet.ExitFail(err.Error())
+		cli.ExitFail(err.Error())
 	}
 }
