@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/naggie/dsnet"
 	"github.com/naggie/dsnet/cmd/cli"
@@ -92,11 +93,11 @@ var (
 	}
 
 	reportCmd = &cobra.Command{
-		Run: func(cmd *cobra.Command, args []string) {
-			dsnet.Report()
-		},
 		Use:   "report",
 		Short: fmt.Sprintf("Generate a JSON status report to the location configured in %s.", viper.GetString("config_file")),
+		Run: func(cmd *cobra.Command, args []string) {
+			cli.GenerateReport()
+		},
 	}
 
 	removeCmd = &cobra.Command{
@@ -107,7 +108,6 @@ var (
 			if len(args) != 1 {
 				return errors.New("Missing hostname argument")
 			}
-			viper.Set("hostname", args[0])
 
 			return nil
 		},
@@ -139,7 +139,7 @@ func init() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if err := viper.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output")); err != nil {
-		dsnet.ExitFail(err.Error())
+		cli.ExitFail(err.Error())
 	}
 
 	viper.SetDefault("config_file", "/etc/dsnetconfig.json")
@@ -147,6 +147,12 @@ func init() {
 	viper.SetDefault("listen_port", 51820)
 	viper.SetDefault("report_file", "/var/lib/dsnetreport.json")
 	viper.SetDefault("interface_name", "dsnet")
+
+	// if last handshake (different from keepalive, see https://www.wireguard.com/protocol/)
+	viper.SetDefault("peer_timeout", 3*time.Minute)
+
+	// when is a peer considered gone forever? (could remove)
+	viper.SetDefault("peer_expiry", 28*time.Hour*24)
 
 	// Adds subcommands.
 	rootCmd.AddCommand(initCmd)
