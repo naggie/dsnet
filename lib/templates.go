@@ -18,10 +18,10 @@ PresharedKey={{ .Peer.PresharedKey.Key }}
 Endpoint={{ .Endpoint }}:{{ .Server.ListenPort }}
 PersistentKeepalive={{ .Keepalive }}
 {{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
-AllowedIPs={{ .Server.Network }}
+AllowedIPs={{ .Server.Network.IPNet.IP }}/{{ .CidrSize }}
 {{ end -}}
 {{ if gt (.Server.Network6.IPNet.IP | len) 0 -}}
-AllowedIPs={{ .Server.Network6 }}
+AllowedIPs={{ .Server.Network6.IPNet.IP }}/{{ .CidrSize6  }}
 {{ end -}}
 {{ range .Server.Networks -}}
 AllowedIPs={{ . }}

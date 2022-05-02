@@ -80,7 +80,7 @@ func NewPeer(server *Server, owner string, hostname string, description string) 
 		if err != nil {
 			return Peer{}, fmt.Errorf("failed to allocate ipv6 address: %s", err)
 		}
-		newPeer.IP = newIPV6
+		newPeer.IP6 = newIPV6
 	}
 
 	if len(server.IP) == 0 && len(server.IP6) == 0 {
