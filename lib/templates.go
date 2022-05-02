@@ -47,10 +47,10 @@ set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }}
 set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
 set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
 {{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
-set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ .Server.Network }}
+set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ .Server.Network.IPNet.IP }}/{{ .CidrSize }}
 {{ end -}}
 {{ if gt (.Server.Network6.IPNet.IP | len) 0 -}}
-set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ .Server.Network6 }}
+set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ .Server.Network6.IPNet.IP }}/{{ .CidrSize6  }}
 {{ end -}}
 {{ range .Server.Networks -}}
 set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
@@ -78,10 +78,10 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
         presharedKey = "{{ .Peer.PresharedKey.Key }}";
         allowedIPs = [
           {{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
-          "{{ .Server.Network }}"
+          "{{ .Server.Network.IPNet.IP }}/{{ .CidrSize }}"
           {{ end -}}
           {{ if gt (.Server.Network6.IPNet.IP | len) 0 -}}
-          "{{ .Server.Network6 }}"
+          "{{ .Server.Network6.IPNet.IP }}/{{ .CidrSize6  }}"
           {{ end -}}
         ];
         endpoint = "{{ .Endpoint }}:{{ .Server.ListenPort }}";
