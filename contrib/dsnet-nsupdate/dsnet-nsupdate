@@ -439,12 +439,20 @@ def main():
             # Check reverse IPv4 record
             if new_peers[peer]['reverse_ptr'] != current_peers[peer]['reverse_ptr']:
                 # Update if the PTR records don't match
-                update_ptr_peers.append(peer)
+                # Check if it's in our IPv4 reverse zone
+                if new_peers[peer]['reverse'].endswith(dsnet_reverse_zone):
+                    update_ptr_peers.append(peer)
+                else:
+                    logger.warn(peer + " internal IPv4 not in our reverse zone!")
 
             # Check reverse IPv6 record
             if new_peers[peer]['reverse6_ptr'] != current_peers[peer]['reverse6_ptr']:
                 # Update if the PTR records don't match
-                update_ptr6_peers.append(peer)
+                # Check if it's in our IPv6 reverse zone
+                if new_peers[peer]['reverse6'].endswith(dsnet_reverse6_zone):
+                    update_ptr6_peers.append(peer)
+                else:
+                   logger.warn(peer + " internal IPv6 not in our reverse zone!")
 
     # List peers we're adding
     if add_peers:
