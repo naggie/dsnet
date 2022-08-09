@@ -36,7 +36,7 @@ func (p *Peer) getIfName() string {
 
 // GetWGPeerTemplate returns a template string to be used when
 // configuring a peer
-func getWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buffer, error) {
+func GetWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buffer, error) {
 	peerConf, err := getPeerConfTplString(peerType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get wg template: %s", err)
@@ -81,11 +81,11 @@ func getWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buff
 func AsciiPeerConfig(peer Peer, peerType string, server Server) (*bytes.Buffer, error) {
 	switch peerType {
 	case "wg-quick":
-		return getWGPeerTemplate(peer, WGQuick, server)
+		return GetWGPeerTemplate(peer, WGQuick, server)
 	case "vyatta":
-		return getWGPeerTemplate(peer, Vyatta, server)
+		return GetWGPeerTemplate(peer, Vyatta, server)
 	case "nixos":
-		return getWGPeerTemplate(peer, NixOS, server)
+		return GetWGPeerTemplate(peer, NixOS, server)
 	default:
 		return nil, errors.New("unrecognised OUTPUT type")
 	}
