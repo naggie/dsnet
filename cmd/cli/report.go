@@ -91,7 +91,7 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) D
 	peerTimeout := viper.GetDuration("peer_timeout")
 	peerExpiry := viper.GetDuration("peer_expiry")
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
-	peerReports := make([]PeerReport, len(conf.Peers))
+	peerReports := make([]PeerReport, 0)
 	oldPeerReportIndex := make(map[string]PeerReport)
 	peersOnline := 0
 
@@ -110,7 +110,7 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) D
 		}
 	}
 
-	for i, peer := range conf.Peers {
+	for _, peer := range conf.Peers {
 		wgPeer, known := wgPeerIndex[peer.PublicKey.Key]
 
 		if !known {
@@ -134,7 +134,7 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) D
 		uReceiveBytes := uint64(wgPeer.ReceiveBytes)
 		uTransmitBytes := uint64(wgPeer.TransmitBytes)
 
-		peerReports[i] = PeerReport{
+		peerReports = append(peerReports, PeerReport{
 			Hostname:          peer.Hostname,
 			Online:            online,
 			Dormant:           dormant,
@@ -150,7 +150,7 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) D
 			TransmitBytes:     uTransmitBytes,
 			ReceiveBytesSI:    BytesToSI(uReceiveBytes),
 			TransmitBytesSI:   BytesToSI(uTransmitBytes),
-		}
+		})
 	}
 
 	return DsnetReport{
