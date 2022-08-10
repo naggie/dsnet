@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -15,9 +16,10 @@ import (
 
 var (
 	// Flags.
-	owner       string
-	description string
-	confirm     bool
+	owner             string
+	description       string
+	confirm           bool
+	error_encountered bool
 
 	// Commands.
 	rootCmd = &cobra.Command{}
@@ -39,8 +41,14 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			config := cli.MustLoadConfigFile()
 			server := cli.GetServer(config)
-			server.Up()
-			utils.ShellOut(config.PostUp, "PostUp")
+			if e := server.Up(); e != nil {
+				fmt.Printf("error bringing up the network: %s\n", e)
+				error_encountered = true
+			}
+			if e := utils.ShellOut(config.PostUp, "PostUp"); e != nil {
+				fmt.Printf("error bringing up the network: %s\n", e)
+				error_encountered = true
+			}
 		},
 	}
 
@@ -50,8 +58,14 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			config := cli.MustLoadConfigFile()
 			server := cli.GetServer(config)
-			server.DeleteLink()
-			utils.ShellOut(config.PostDown, "PostDown")
+			if e := server.DeleteLink(); e != nil {
+				fmt.Printf("error bringing up the network: %s\n", e)
+				error_encountered = true
+			}
+			if e := utils.ShellOut(config.PostDown, "PostDown"); e != nil {
+				fmt.Printf("error bringing up the network: %s\n", e)
+				error_encountered = true
+			}
 		},
 	}
 
@@ -169,4 +183,8 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		cli.ExitFail(err.Error())
 	}
+	if error_encountered {
+		os.Exit(1)
+	}
+	os.Exit(0)
 }
