@@ -9,10 +9,12 @@ import (
 )
 
 // Add prompts for the required information and creates a new peer
-func Add(hostname, owner, description string, confirm bool) {
+func Add(hostname, owner, description string, confirm bool) error {
 	// TODO accept existing pubkey
 	config, err := LoadConfigFile()
-	check(err, "failed to load configuration file")
+	if err != nil {
+		return wrapError(err, "failed to load configuration file")
+	}
 	server := GetServer(config)
 
 	if owner == "" {
@@ -31,7 +33,9 @@ func Add(hostname, owner, description string, confirm bool) {
 	fmt.Fprintln(os.Stderr)
 
 	peer, err := lib.NewPeer(server, owner, hostname, description)
-	check(err, "failed to get new peer")
+	if err != nil {
+		return wrapError(err, "failed to get new peer")
+	}
 
 	// TODO Some kind of recovery here would be nice, to avoid
 	// leaving things in a potential broken state
@@ -41,12 +45,17 @@ func Add(hostname, owner, description string, confirm bool) {
 	peerType := viper.GetString("output")
 
 	peerConfigBytes, err := lib.AsciiPeerConfig(peer, peerType, *server)
-	check(err, "failed to get peer configuration")
+	if err != nil {
+		return wrapError(err, "failed to get peer configuration")
+	}
 	os.Stdout.Write(peerConfigBytes.Bytes())
 
 	config.MustSave()
 
 	server = GetServer(config)
 	err = server.ConfigureDevice()
-	check(err, "failed to configure device")
+	if err != nil {
+		return wrapError(err, "failed to configure device")
+	}
+	return nil
 }

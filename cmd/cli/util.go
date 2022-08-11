@@ -42,6 +42,10 @@ func ExitFail(format string, a ...interface{}) {
 	os.Exit(1)
 }
 
+func wrapError(err error, s string) error {
+	return fmt.Errorf("\033[31m%s - %s\033[0m\n", err, s)
+}
+
 func MustPromptString(prompt string, required bool) string {
 	reader := bufio.NewReader(os.Stdin)
 	var text string

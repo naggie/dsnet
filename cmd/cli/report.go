@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -69,7 +70,7 @@ type PeerReport struct {
 	TransmitBytesSI   string
 }
 
-func GenerateReport() {
+func GenerateReport() error {
 	conf := MustLoadConfigFile()
 
 	wg, err := wgctrl.New()
@@ -79,12 +80,13 @@ func GenerateReport() {
 	dev, err := wg.Device(conf.InterfaceName)
 
 	if err != nil {
-		ExitFail("Could not retrieve device '%s' (%v)", conf.InterfaceName, err)
+		return wrapError(err, fmt.Sprintf("Could not retrieve device '%s'", conf.InterfaceName))
 	}
 
 	oldReport := MustLoadDsnetReport()
 	report := GetReport(dev, conf, oldReport)
 	report.MustSave()
+	return nil
 }
 
 func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
