@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Init() {
+func Init() error {
 	reportFile := viper.GetString("report_file")
 	listenPort := viper.GetInt("listen_port")
 	configFile := viper.GetString("config_file")
@@ -24,14 +24,23 @@ func Init() {
 	_, err := os.Stat(configFile)
 
 	if !os.IsNotExist(err) {
-		ExitFail("Refusing to overwrite existing %s", configFile)
+		return wrapError(err, fmt.Sprintf("Refusing to overwrite existing %s", configFile))
 	}
 
 	privateKey, err := lib.GenerateJSONPrivateKey()
-	check(err, "failed to generate private key")
+	if err != nil {
+		return wrapError(err, "failed to generate private key")
+	}
 
 	externalIPV4, err := getExternalIP()
-	check(err)
+	if err != nil {
+		return err
+	}
+
+	externalIPV6, err := getExternalIP6()
+	if err != nil {
+		return err
+	}
 
 	conf := &DsnetConfig{
 		PrivateKey:    privateKey,
@@ -42,7 +51,7 @@ func Init() {
 		Domain:        "dsnet",
 		ReportFile:    reportFile,
 		ExternalIP:    externalIPV4,
-		ExternalIP6:   getExternalIP6(),
+		ExternalIP6:   externalIPV6,
 		InterfaceName: interfaceName,
 		Networks:      []lib.JSONIPNet{},
 	}
@@ -50,21 +59,26 @@ func Init() {
 	server := GetServer(conf)
 
 	ipv4, err := server.AllocateIP()
-	check(err, "failed to allocate ipv4 address")
+	if err != nil {
+		return wrapError(err, "failed to allocate ipv4 address")
+	}
 
 	ipv6, err := server.AllocateIP6()
-	check(err, "failed to allocate ipv6 address")
+	if err != nil {
+		return wrapError(err, "failed to allocate ipv6 address")
+	}
 
 	conf.IP = ipv4
 	conf.IP6 = ipv6
 
 	if len(conf.ExternalIP) == 0 && len(conf.ExternalIP6) == 0 {
-		ExitFail("Could not determine any external IP, v4 or v6")
+		return fmt.Errorf("Could not determine any external IP, v4 or v6")
 	}
 
 	conf.MustSave()
 
 	fmt.Printf("Config written to %s. Please check/edit.\n", configFile)
+	return nil
 }
 
 // get a random IPv4  /22 subnet on 10.0.0.0 (1023 hosts) (or /24?)
@@ -120,12 +134,16 @@ func getExternalIP() (net.IP, error) {
 		Timeout: 5 * time.Second,
 	}
 	resp, err := client.Get("https://ipv4.icanhazip.com/")
-	check(err)
+	if err != nil {
+		return nil, err
+	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
 		body, err := ioutil.ReadAll(resp.Body)
-		check(err)
+		if err != nil {
+			return nil, err
+		}
 		IP = net.ParseIP(strings.TrimSpace(string(body)))
 		return IP.To4(), nil
 	}
@@ -133,7 +151,7 @@ func getExternalIP() (net.IP, error) {
 	return nil, errors.New("failed to determine external ip")
 }
 
-func getExternalIP6() net.IP {
+func getExternalIP6() (net.IP, error) {
 	var IP net.IP
 	conn, err := net.Dial("udp", "2001:4860:4860::8888:53")
 	if err == nil {
@@ -144,7 +162,7 @@ func getExternalIP6() net.IP {
 
 		// check is not a ULA
 		if IP[0] != 0xfd && IP[0] != 0xfc {
-			return IP
+			return IP, nil
 		}
 	}
 
@@ -157,11 +175,13 @@ func getExternalIP6() net.IP {
 
 		if resp.StatusCode == http.StatusOK {
 			body, err := ioutil.ReadAll(resp.Body)
-			check(err)
+			if err != nil {
+				return nil, err
+			}
 			IP = net.ParseIP(strings.TrimSpace(string(body)))
-			return IP
+			return IP, nil
 		}
 	}
 
-	return net.IP{}
+	return net.IP{}, nil
 }

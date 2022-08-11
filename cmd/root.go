@@ -29,8 +29,8 @@ var (
 			"Create %s containing default configuration + new keys without loading. Edit to taste.",
 			viper.GetString("config_file"),
 		),
-		Run: func(cmd *cobra.Command, args []string) {
-			cli.Init()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cli.Init()
 		},
 	}
 
