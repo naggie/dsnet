@@ -16,10 +16,9 @@ import (
 
 var (
 	// Flags.
-	owner             string
-	description       string
-	confirm           bool
-	error_encountered bool
+	owner       string
+	description string
+	confirm     bool
 
 	// Commands.
 	rootCmd = &cobra.Command{}
@@ -38,34 +37,32 @@ var (
 	upCmd = &cobra.Command{
 		Use:   "up",
 		Short: "Create the interface, run pre/post up, sync",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			config := cli.MustLoadConfigFile()
 			server := cli.GetServer(config)
 			if e := server.Up(); e != nil {
-				fmt.Printf("error bringing up the network: %s\n", e)
-				error_encountered = true
+				return e
 			}
 			if e := utils.ShellOut(config.PostUp, "PostUp"); e != nil {
-				fmt.Printf("error bringing up the network: %s\n", e)
-				error_encountered = true
+				return e
 			}
+			return nil
 		},
 	}
 
 	downCmd = &cobra.Command{
 		Use:   "down",
 		Short: "Destroy the interface, run pre/post down",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			config := cli.MustLoadConfigFile()
 			server := cli.GetServer(config)
 			if e := server.DeleteLink(); e != nil {
-				fmt.Printf("error bringing up the network: %s\n", e)
-				error_encountered = true
+				return e
 			}
 			if e := utils.ShellOut(config.PostDown, "PostDown"); e != nil {
-				fmt.Printf("error bringing up the network: %s\n", e)
-				error_encountered = true
+				return e
 			}
+			return nil
 		},
 	}
 
