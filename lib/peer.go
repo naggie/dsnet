@@ -37,7 +37,7 @@ type Peer struct {
 	KeepAlive    time.Duration
 }
 
-func NewPeer(server *Server, owner string, hostname string, description string) (Peer, error) {
+func NewPeer(server *Server, key, owner, hostname, description string) (Peer, error) {
 	if owner == "" {
 		return Peer{}, errors.New("missing owner")
 	}
@@ -45,9 +45,17 @@ func NewPeer(server *Server, owner string, hostname string, description string) 
 		return Peer{}, errors.New("missing hostname")
 	}
 
-	privateKey, err := GenerateJSONPrivateKey()
-	if err != nil {
-		return Peer{}, fmt.Errorf("failed to generate private key: %s", err)
+	var privateKey JSONKey
+	if key != "" {
+		userKey := &JSONKey{}
+		userKey.UnmarshalJSON([]byte(key))
+		privateKey = *userKey
+	} else {
+		var err error
+		privateKey, err = GenerateJSONPrivateKey()
+		if err != nil {
+			return Peer{}, fmt.Errorf("failed to generate private key: %s", err)
+		}
 	}
 	publicKey := privateKey.PublicKey()
 
