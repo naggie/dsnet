@@ -27,22 +27,25 @@ func (k *JSONKey) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-func GenerateJSONPrivateKey() JSONKey {
+func GenerateJSONPrivateKey() (JSONKey, error) {
 	privateKey, err := wgtypes.GeneratePrivateKey()
-
-	check(err)
+	if err != nil {
+		return JSONKey{}, err
+	}
 
 	return JSONKey{
 		Key: privateKey,
-	}
+	}, nil
 }
 
-func GenerateJSONKey() JSONKey {
+func GenerateJSONKey() (JSONKey, error) {
 	privateKey, err := wgtypes.GenerateKey()
 
-	check(err)
+	if err != nil {
+		return JSONKey{}, err
+	}
 
 	return JSONKey{
 		Key: privateKey,
-	}
+	}, err
 }

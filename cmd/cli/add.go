@@ -13,15 +13,21 @@ func Add(hostname, owner, description string, confirm bool) error {
 	// TODO accept existing pubkey
 	config, err := LoadConfigFile()
 	if err != nil {
-		return wrapError(err, "failed to load configuration file")
+		return fmt.Errorf("%w - failed to load configuration file", err)
 	}
 	server := GetServer(config)
 
 	if owner == "" {
-		owner = MustPromptString("owner", true)
+		owner, err = PromptString("owner", true)
+		if err != nil {
+			return fmt.Errorf("%w - invalid input for owner", err)
+		}
 	}
 	if description == "" {
-		description = MustPromptString("Description", true)
+		description, err = PromptString("Description", true)
+		if err != nil {
+			return fmt.Errorf("%w - invalid input for Description", err)
+		}
 	}
 
 	// publicKey := MustPromptString("PublicKey (optional)", false)
@@ -34,28 +40,31 @@ func Add(hostname, owner, description string, confirm bool) error {
 
 	peer, err := lib.NewPeer(server, owner, hostname, description)
 	if err != nil {
-		return wrapError(err, "failed to get new peer")
+		return fmt.Errorf("%w - failed to get new peer", err)
 	}
 
 	// TODO Some kind of recovery here would be nice, to avoid
 	// leaving things in a potential broken state
 
-	config.MustAddPeer(peer)
+	if err = config.AddPeer(peer); err != nil {
+		return fmt.Errorf("%w - failed to add new peer", err)
+	}
 
 	peerType := viper.GetString("output")
 
 	peerConfigBytes, err := lib.AsciiPeerConfig(peer, peerType, *server)
 	if err != nil {
-		return wrapError(err, "failed to get peer configuration")
+		return fmt.Errorf("%w - failed to get peer configuration", err)
 	}
 	os.Stdout.Write(peerConfigBytes.Bytes())
 
-	config.MustSave()
+	if err = config.Save(); err != nil {
+		return fmt.Errorf("%w - failed to save config file", err)
+	}
 
 	server = GetServer(config)
-	err = server.ConfigureDevice()
-	if err != nil {
-		return wrapError(err, "failed to configure device")
+	if err = server.ConfigureDevice(); err != nil {
+		return fmt.Errorf("%w - failed to configure device", err)
 	}
 	return nil
 }

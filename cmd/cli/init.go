@@ -24,12 +24,12 @@ func Init() error {
 	_, err := os.Stat(configFile)
 
 	if !os.IsNotExist(err) {
-		return wrapError(err, fmt.Sprintf("Refusing to overwrite existing %s", configFile))
+		return fmt.Errorf("%w - Refusing to overwrite existing %s", err, configFile)
 	}
 
 	privateKey, err := lib.GenerateJSONPrivateKey()
 	if err != nil {
-		return wrapError(err, "failed to generate private key")
+		return fmt.Errorf("%w - failed to generate private key", err)
 	}
 
 	externalIPV4, err := getExternalIP()
@@ -60,12 +60,12 @@ func Init() error {
 
 	ipv4, err := server.AllocateIP()
 	if err != nil {
-		return wrapError(err, "failed to allocate ipv4 address")
+		return fmt.Errorf("%w - failed to allocate ipv4 address", err)
 	}
 
 	ipv6, err := server.AllocateIP6()
 	if err != nil {
-		return wrapError(err, "failed to allocate ipv6 address")
+		return fmt.Errorf("%w - failed to allocate ipv6 address", err)
 	}
 
 	conf.IP = ipv4
@@ -75,7 +75,9 @@ func Init() error {
 		return fmt.Errorf("Could not determine any external IP, v4 or v6")
 	}
 
-	conf.MustSave()
+	if err := conf.Save(); err != nil {
+		return fmt.Errorf("%w - failed to save config file", err)
+	}
 
 	fmt.Printf("Config written to %s. Please check/edit.\n", configFile)
 	return nil

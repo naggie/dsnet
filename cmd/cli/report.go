@@ -71,25 +71,35 @@ type PeerReport struct {
 }
 
 func GenerateReport() error {
-	conf := MustLoadConfigFile()
+	conf, err := LoadConfigFile()
+	if err != nil {
+		return fmt.Errorf("%w - failure to load config", err)
+	}
 
 	wg, err := wgctrl.New()
-	check(err)
+	if err != nil {
+		return fmt.Errorf("%w - failure to create new client", err)
+	}
 	defer wg.Close()
 
 	dev, err := wg.Device(conf.InterfaceName)
 
 	if err != nil {
-		return wrapError(err, fmt.Sprintf("Could not retrieve device '%s'", conf.InterfaceName))
+		return fmt.Errorf("%w - Could not retrieve device '%s'", err, conf.InterfaceName)
 	}
 
-	oldReport := MustLoadDsnetReport()
-	report := GetReport(dev, conf, oldReport)
-	report.MustSave()
-	return nil
+	oldReport, err := LoadDsnetReport()
+	if err != nil {
+		return err
+	}
+	report, err := GetReport(dev, conf, oldReport)
+	if err != nil {
+		return err
+	}
+	return report.Save()
 }
 
-func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
+func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) (DsnetReport, error) {
 	peerTimeout := viper.GetDuration("peer_timeout")
 	peerExpiry := viper.GetDuration("peer_expiry")
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
@@ -98,7 +108,9 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) D
 	peersOnline := 0
 
 	linkDev, err := netlink.LinkByName(conf.InterfaceName)
-	check(err)
+	if err != nil {
+		return DsnetReport{}, fmt.Errorf("%w - error getting link", err)
+	}
 
 	stats := linkDev.Attrs().Statistics
 
@@ -173,37 +185,37 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) D
 		ReceiveBytesSI:  BytesToSI(stats.RxBytes),
 		TransmitBytesSI: BytesToSI(stats.TxBytes),
 		Timestamp:       time.Now(),
-	}
+	}, nil
 }
 
-func (report *DsnetReport) MustSave() {
+func (report *DsnetReport) Save() error {
 	reportFilePath := viper.GetString("report_file")
 
 	_json, _ := json.MarshalIndent(report, "", "    ")
 	_json = append(_json, '\n')
 
 	err := ioutil.WriteFile(reportFilePath, _json, 0644)
-	check(err)
+	return err
 }
 
-func MustLoadDsnetReport() *DsnetReport {
+func LoadDsnetReport() (*DsnetReport, error) {
 	reportFilePath := viper.GetString("report_file_path")
 	raw, err := ioutil.ReadFile(reportFilePath)
 
 	if os.IsNotExist(err) {
-		return nil
+		return nil, err
 	} else if os.IsPermission(err) {
-		ExitFail("%s cannot be accessed. Check read permissions.", reportFilePath)
+		return nil, fmt.Errorf("%s cannot be accessed. Check read permissions.", reportFilePath)
 	} else {
-		check(err)
+		return nil, err
 	}
 
 	report := DsnetReport{}
 	err = json.Unmarshal(raw, &report)
-	check(err)
+	return nil, err
 
 	err = validator.New().Struct(report)
-	check(err)
+	return nil, err
 
-	return &report
+	return &report, nil
 }

@@ -9,7 +9,10 @@ import (
 )
 
 func Regenerate(hostname string, confirm bool) error {
-	config := MustLoadConfigFile()
+	config, err := LoadConfigFile()
+	if err != nil {
+		return fmt.Errorf("%w - failure to load config file", err)
+	}
 	server := GetServer(config)
 
 	found := false
@@ -22,12 +25,12 @@ func Regenerate(hostname string, confirm bool) error {
 		if peer.Hostname == hostname {
 			privateKey, err := lib.GenerateJSONPrivateKey()
 			if err != nil {
-				return wrapError(err, "failed to generate private key")
+				return fmt.Errorf("%w - failed to generate private key", err)
 			}
 
 			preshareKey, err := lib.GenerateJSONKey()
 			if err != nil {
-				return wrapError(err, "failed to generate preshared key")
+				return fmt.Errorf("%w - failed to generate preshared key", err)
 			}
 
 			peer.PrivateKey = privateKey
@@ -36,18 +39,20 @@ func Regenerate(hostname string, confirm bool) error {
 
 			err = config.RemovePeer(hostname)
 			if err != nil {
-				return wrapError(err, "failed to regenerate peer")
+				return fmt.Errorf("%w - failed to regenerate peer", err)
 			}
 
 			peerType := viper.GetString("output")
 
 			peerConfigBytes, err := lib.AsciiPeerConfig(peer, peerType, *server)
 			if err != nil {
-				return wrapError(err, "failed to get peer configuration")
+				return fmt.Errorf("%w - failed to get peer configuration", err)
 			}
 			os.Stdout.Write(peerConfigBytes.Bytes())
 			found = true
-			config.MustAddPeer(peer)
+			if err = config.AddPeer(peer); err != nil {
+				return fmt.Errorf("%w - failure to add peer", err)
+			}
 
 			break
 		}
@@ -59,7 +64,9 @@ func Regenerate(hostname string, confirm bool) error {
 
 	// Get a new server configuration so we can update the wg interface with the new peer details
 	server = GetServer(config)
-	config.MustSave()
+	if err = config.Save(); err != nil {
+		return fmt.Errorf("%w - failure saving config", err)
+	}
 	server.ConfigureDevice()
 	return nil
 }
