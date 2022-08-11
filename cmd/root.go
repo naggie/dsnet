@@ -73,8 +73,8 @@ var (
 	}
 
 	addCmd = &cobra.Command{
-		Use:   "add [hostname]",
-		Short: "Add a new peer + sync",
+		Use:   "add <hostname>",
+		Short: "Add a new peer + sync, optionally using a provided WireGuard private key",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Make sure we have the hostname
 			if len(args) != 1 {
@@ -83,7 +83,7 @@ var (
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return cli.Add(args[0], owner, description, confirm)
+			return cli.Add(args[0], userKey, owner, description, confirm)
 		},
 	}
 
@@ -140,6 +140,8 @@ var (
 		Use:   "version",
 		Short: "Print version",
 	}
+
+	userKey bool
 )
 
 func init() {
@@ -148,6 +150,7 @@ func init() {
 	addCmd.Flags().StringVar(&owner, "owner", "", "owner of the new peer")
 	addCmd.Flags().StringVar(&description, "description", "", "description of the new peer")
 	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
+	addCmd.Flags().BoolVarP(&userKey, "key", "k", false, "User-supplied key on stdin")
 	removeCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 
 	// Environment variable handling.
