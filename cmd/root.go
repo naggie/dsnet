@@ -66,11 +66,12 @@ var (
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			userKey, err := cmd.PersistentFlags().GetBool("key")
+			privKey, err := cmd.PersistentFlags().GetBool("private-key")
+			pubKey, err := cmd.PersistentFlags().GetBool("public-key")
 			if err != nil {
 				cli.ExitFail("%w - error processing key flag", err)
 			}
-			cli.Add(args[0], userKey, owner, description, confirm)
+			cli.Add(args[0], privKey, pubKey, owner, description, confirm)
 		},
 	}
 
@@ -135,7 +136,8 @@ func init() {
 	addCmd.Flags().StringVar(&owner, "owner", "", "owner of the new peer")
 	addCmd.Flags().StringVar(&description, "description", "", "description of the new peer")
 	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
-	addCmd.PersistentFlags().BoolP("key", "k", false, "User-supplied key on stdin")
+	addCmd.PersistentFlags().BoolP("private-key", "r", false, "Accept user-supplied private key. If supplied, dsnet will generate a public key.")
+	addCmd.PersistentFlags().BoolP("public-key", "u", false, "Accept user-supplied public key. If supplied, the user must add the private key to the generated config (or provide it with --private-key).")
 	removeCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 
 	// Environment variable handling.
