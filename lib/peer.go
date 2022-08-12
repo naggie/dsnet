@@ -80,6 +80,12 @@ func NewPeer(server *Server, private, public, owner, hostname, description strin
 		publicKey = JSONKey { Key: key }
 		if private == "" {
 			privateKey = JSONKey { Key: wgtypes.Key([wgtypes.KeyLen]byte{}) }
+		} else {
+			pubK := privateKey.PublicKey()
+			ascK := pubK.Key.String()
+			if ascK != public {
+				return Peer{}, fmt.Errorf("user-supplied private and public keys are not related")
+			}
 		}
 	} else {
 		publicKey = privateKey.PublicKey()
