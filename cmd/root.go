@@ -96,6 +96,13 @@ var (
 		Use:   "report",
 		Short: fmt.Sprintf("Generate a JSON status report to the location configured in %s.", viper.GetString("config_file")),
 		Run: func(cmd *cobra.Command, args []string) {
+			v, err := cmd.PersistentFlags().GetBool("stdout")
+			if err != nil {
+				cli.ExitFail("%w - error processing report arguments", err)
+			}
+			if v {
+				viper.Set("report_file", "-")
+			}
 			cli.GenerateReport()
 		},
 	}
@@ -132,6 +139,7 @@ func init() {
 	addCmd.Flags().StringVar(&description, "description", "", "description of the new peer")
 	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 	removeCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
+	reportCmd.PersistentFlags().BoolP("stdout", "s", false, "write reports to stdout instead of /var/lib/dsnetreport.json")
 
 	// Environment variable handling.
 	viper.AutomaticEnv()

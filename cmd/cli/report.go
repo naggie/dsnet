@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -180,8 +181,16 @@ func (report *DsnetReport) MustSave() {
 	_json, _ := json.MarshalIndent(report, "", "    ")
 	_json = append(_json, '\n')
 
-	err := ioutil.WriteFile(reportFilePath, _json, 0644)
-	check(err)
+	if reportFilePath == "-" {
+		c, err := os.Stdout.Write(_json)
+		check(err)
+		if c != len(_json) {
+			fmt.Fprintf(os.Stderr, "output was %d bytes, but only %d were written.\nNo error was reported by the system call; sorry, that's all I can tell you.", c, len(_json))
+		}
+	} else {
+		err := ioutil.WriteFile(reportFilePath, _json, 0644)
+		check(err)
+	}
 }
 
 func MustLoadDsnetReport() *DsnetReport {
