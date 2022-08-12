@@ -127,7 +127,6 @@ var (
 		Use:   "version",
 		Short: "Print version",
 	}
-
 )
 
 func init() {
