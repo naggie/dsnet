@@ -1,4 +1,5 @@
-<h1 align="center">dsnet</h1>
+
+<img src="/etc/logo/banner.svg" alt="Dsnet banner" width="100%">
 
 <a href="https://repology.org/project/dsnet/versions">
     <br />
@@ -329,3 +330,7 @@ user. Combined with a periodic `dsnet sync` like above, it's possible to build
 a secure web interface that does not require root. A web interface is currently
 being created by a friend; it will not be part of dstask, rather a separate
 project.
+
+----
+
+The dsnet logo was kindly designed by [@mirorauhala](https://github.com/mirorauhala).
