@@ -42,13 +42,13 @@ type Peer struct {
 }
 
 // NewPeer generates a peer from the supplied arguments and generates keys if needed.
-// - server is required and provides network information
-// - private is a base64-encoded private key; if the empty string, a new key will be generated
-// - public is a base64-encoded public key. If empty, it will be generated from the private key.
-//   If **not** empty, the private key will be included IFF a private key was provided.
-// - owner is the owner name (required)
-// - hostname is the name of the peer (required)
-// - description is the annotation for the peer
+//   - server is required and provides network information
+//   - private is a base64-encoded private key; if the empty string, a new key will be generated
+//   - public is a base64-encoded public key. If empty, it will be generated from the private key.
+//     If **not** empty, the private key will be included IFF a private key was provided.
+//   - owner is the owner name (required)
+//   - hostname is the name of the peer (required)
+//   - description is the annotation for the peer
 func NewPeer(server *Server, private, public, owner, hostname, description string) (Peer, error) {
 	if owner == "" {
 		return Peer{}, errors.New("missing owner")
@@ -77,9 +77,9 @@ func NewPeer(server *Server, private, public, owner, hostname, description strin
 		if err != nil {
 			return Peer{}, err
 		}
-		publicKey = JSONKey { Key: key }
+		publicKey = JSONKey{Key: key}
 		if private == "" {
-			privateKey = JSONKey { Key: wgtypes.Key([wgtypes.KeyLen]byte{}) }
+			privateKey = JSONKey{Key: wgtypes.Key([wgtypes.KeyLen]byte{})}
 		} else {
 			pubK := privateKey.PublicKey()
 			ascK := pubK.Key.String()
@@ -106,8 +106,6 @@ func NewPeer(server *Server, private, public, owner, hostname, description strin
 		PresharedKey: presharedKey,
 		Networks:     []JSONIPNet{},
 	}
-fmt.Fprintf(os.Stderr, "peer public key => %s\n", newPeer.PublicKey)
-fmt.Fprintf(os.Stderr, "peer Private key => %s\n", newPeer.PrivateKey)
 
 	if len(server.Network.IPNet.Mask) > 0 {
 		newIP, err := server.AllocateIP()
