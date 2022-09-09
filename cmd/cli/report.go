@@ -2,12 +2,10 @@ package cli
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"net"
-	"os"
 	"time"
 
-	"github.com/go-playground/validator"
 	"github.com/naggie/dsnet/lib"
 	"github.com/spf13/viper"
 	"github.com/vishvananda/netlink"
@@ -82,11 +80,11 @@ func GenerateReport() {
 		ExitFail("Could not retrieve device '%s' (%v)", conf.InterfaceName, err)
 	}
 
-	report := GetReport(dev, conf, oldReport)
+	report := GetReport(dev, conf)
 	report.Print()
 }
 
-func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
+func GetReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
 	peerTimeout := viper.GetDuration("peer_timeout")
 	peerExpiry := viper.GetDuration("peer_expiry")
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
