@@ -82,9 +82,8 @@ func GenerateReport() {
 		ExitFail("Could not retrieve device '%s' (%v)", conf.InterfaceName, err)
 	}
 
-	oldReport := MustLoadDsnetReport()
 	report := GetReport(dev, conf, oldReport)
-	report.MustSave()
+	report.Print()
 }
 
 func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
@@ -92,7 +91,6 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) D
 	peerExpiry := viper.GetDuration("peer_expiry")
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
 	peerReports := make([]PeerReport, 0)
-	oldPeerReportIndex := make(map[string]PeerReport)
 	peersOnline := 0
 
 	linkDev, err := netlink.LinkByName(conf.InterfaceName)
@@ -102,12 +100,6 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) D
 
 	for _, peer := range dev.Peers {
 		wgPeerIndex[peer.PublicKey] = peer
-	}
-
-	if oldReport != nil {
-		for _, report := range oldReport.Peers {
-			oldPeerReportIndex[report.Hostname] = report
-		}
 	}
 
 	for _, peer := range conf.Peers {
@@ -174,34 +166,9 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) D
 	}
 }
 
-func (report *DsnetReport) MustSave() {
-	reportFilePath := viper.GetString("report_file")
-
+func (report *DsnetReport) Print() {
 	_json, _ := json.MarshalIndent(report, "", "    ")
 	_json = append(_json, '\n')
 
-	err := ioutil.WriteFile(reportFilePath, _json, 0644)
-	check(err)
-}
-
-func MustLoadDsnetReport() *DsnetReport {
-	reportFilePath := viper.GetString("report_file_path")
-	raw, err := ioutil.ReadFile(reportFilePath)
-
-	if os.IsNotExist(err) {
-		return nil
-	} else if os.IsPermission(err) {
-		ExitFail("%s cannot be accessed. Check read permissions.", reportFilePath)
-	} else {
-		check(err)
-	}
-
-	report := DsnetReport{}
-	err = json.Unmarshal(raw, &report)
-	check(err)
-
-	err = validator.New().Struct(report)
-	check(err)
-
-	return &report
+	fmt.Print(_json)
 }

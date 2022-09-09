@@ -68,12 +68,6 @@ route the whole internet through the server peer, add `0.0.0.0/0` to the list
 before adding peers. For more advanced options and theory, see
 <https://www.wireguard.com/netns/>.
 
-        "ReportFile": "/var/lib/dsnetreport.json",
-
-This is the location of the report file generated with `dsnet report`. It is
-suggested that this command is run via a cron job; the report can be safely
-consumed by a web service or DNS integration script, for instance.
-
 The report contains no sensitive information. At one site I use it together
 with [hugo](https://gohugo.io/)
 [shortcodes](https://gohugo.io/templates/shortcode-templates/) to generate a
