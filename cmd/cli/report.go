@@ -168,5 +168,5 @@ func (report *DsnetReport) Print() {
 	_json, _ := json.MarshalIndent(report, "", "    ")
 	_json = append(_json, '\n')
 
-	fmt.Print(_json)
+	fmt.Print(string(_json))
 }
