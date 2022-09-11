@@ -14,9 +14,11 @@ import (
 )
 
 type DsnetReport struct {
-	ExternalIP    net.IP
-	InterfaceName string
-	ListenPort    int
+	ExternalIP       net.IP
+	ExternalIP6      net.IP
+	ExternalHostname string
+	InterfaceName    string
+	ListenPort       int
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
 	Domain string
@@ -144,23 +146,25 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
 	}
 
 	return DsnetReport{
-		ExternalIP:      conf.ExternalIP,
-		InterfaceName:   conf.InterfaceName,
-		ListenPort:      conf.ListenPort,
-		Domain:          conf.Domain,
-		IP:              conf.IP,
-		IP6:             conf.IP6,
-		Network:         conf.Network,
-		Network6:        conf.Network6,
-		DNS:             conf.DNS,
-		Peers:           peerReports,
-		PeersOnline:     peersOnline,
-		PeersTotal:      len(peerReports),
-		ReceiveBytes:    stats.RxBytes,
-		TransmitBytes:   stats.TxBytes,
-		ReceiveBytesSI:  BytesToSI(stats.RxBytes),
-		TransmitBytesSI: BytesToSI(stats.TxBytes),
-		Timestamp:       time.Now(),
+		ExternalIP:       conf.ExternalIP,
+		ExternalIP6:      conf.ExternalIP6,
+		ExternalHostname: conf.ExternalHostname,
+		InterfaceName:    conf.InterfaceName,
+		ListenPort:       conf.ListenPort,
+		Domain:           conf.Domain,
+		IP:               conf.IP,
+		IP6:              conf.IP6,
+		Network:          conf.Network,
+		Network6:         conf.Network6,
+		DNS:              conf.DNS,
+		Peers:            peerReports,
+		PeersOnline:      peersOnline,
+		PeersTotal:       len(peerReports),
+		ReceiveBytes:     stats.RxBytes,
+		TransmitBytes:    stats.TxBytes,
+		ReceiveBytesSI:   BytesToSI(stats.RxBytes),
+		TransmitBytesSI:  BytesToSI(stats.TxBytes),
+		Timestamp:        time.Now(),
 	}
 }
 
