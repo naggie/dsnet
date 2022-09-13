@@ -34,15 +34,15 @@ mkdir -p dist
 export GOOS=linux
 export CGO_ENABLED=0
 
-GOARCH=arm GOARM=5 go build -ldflags="$LDFLAGS" cmd/dsnet.go
+GOARCH=arm GOARM=5 go build -ldflags="$LDFLAGS" cmd/root.go
 # upx -q dsnet
 mv dsnet dist/dsnet-linux-arm5
 
-GOARCH=arm64 go build -ldflags="$LDFLAGS" cmd/dsnet.go
+GOARCH=arm64 go build -ldflags="$LDFLAGS" cmd/root.go
 # upx -q dsnet
 mv dsnet dist/dsnet-linux-arm64
 
-GOARCH=amd64 go build -ldflags="$LDFLAGS" cmd/dsnet.go
+GOARCH=amd64 go build -ldflags="$LDFLAGS" cmd/root.go
 # upx -q dsnet
 mv dsnet dist/dsnet-linux-amd64
 
