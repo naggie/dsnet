@@ -13,6 +13,9 @@ BUILD_DATE=$(date)
 
 RELEASE_FILE=RELEASE.md
 
+export CGO_ENABLED=0
+export GOOS=linux
+
 LDFLAGS="-s -w \
     -X \"github.com/naggie/dsnet.GIT_COMMIT=$GIT_COMMIT\" \
     -X \"github.com/naggie/dsnet.VERSION=$VERSION\" \
