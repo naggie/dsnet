@@ -24,5 +24,6 @@ func GetServer(config *DsnetConfig) *lib.Server {
 		PostDown:         config.PostDown,
 		FallbackWGBin:    fallbackWGBin,
 		Peers:            jsonPeerToDsnetPeer(config.Peers),
+		Networks:         config.Networks,
 	}
 }
