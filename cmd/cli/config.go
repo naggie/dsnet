@@ -83,7 +83,13 @@ func LoadConfigFile() (*DsnetConfig, error) {
 		return nil, err
 	}
 
-	conf := DsnetConfig{}
+	conf := DsnetConfig{
+		// set default for if key is not set. If it is set, this will not be
+		// used _even if value is zero!_
+		// Effectively, this is a migration
+		PersistentKeepalive: 25,
+	}
+
 	err = json.Unmarshal(raw, &conf)
 	if err != nil {
 		return nil, err
