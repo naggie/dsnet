@@ -258,7 +258,7 @@ Example NixOS output:
               "fd00:80f8:af4a:4700::/64"
               ];
             endpoint = "123.123.123.123:51820";
-            PersistentKeepalive = 25;
+            persistentKeepalive = 25;
           }
         ];
       };

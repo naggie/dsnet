@@ -85,7 +85,7 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
           {{ end -}}
         ];
         endpoint = "{{ .Endpoint }}:{{ .Server.ListenPort }}";
-        PersistentKeepalive = {{ .Server.PersistentKeepalive }};
+        persistentKeepalive = {{ .Server.PersistentKeepalive }};
       {{ "}" }}
     ];
   {{ "};" }}
