@@ -34,17 +34,18 @@ func Init() {
 	check(err)
 
 	conf := &DsnetConfig{
-		PrivateKey:    privateKey,
-		ListenPort:    listenPort,
-		Network:       getPrivateNet(),
-		Network6:      getULANet(),
-		Peers:         []PeerConfig{},
-		Domain:        "dsnet",
-		ReportFile:    reportFile,
-		ExternalIP:    externalIPV4,
-		ExternalIP6:   getExternalIP6(),
-		InterfaceName: interfaceName,
-		Networks:      []lib.JSONIPNet{},
+		PrivateKey:          privateKey,
+		ListenPort:          listenPort,
+		Network:             getPrivateNet(),
+		Network6:            getULANet(),
+		Peers:               []PeerConfig{},
+		Domain:              "dsnet",
+		ReportFile:          reportFile,
+		ExternalIP:          externalIPV4,
+		ExternalIP6:         getExternalIP6(),
+		InterfaceName:       interfaceName,
+		Networks:            []lib.JSONIPNet{},
+		PersistentKeepalive: 25,
 	}
 
 	server := GetServer(conf)
