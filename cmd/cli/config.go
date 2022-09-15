@@ -65,6 +65,8 @@ type DsnetConfig struct {
 	PostUp     string
 	PostDown   string
 	Peers      []PeerConfig `validate:"dive"`
+	// used for server and client
+	PersistentKeepalive int `validate:"gte=0,lte=255"`
 }
 
 // LoadConfigFile parses the json config file, validates and stuffs

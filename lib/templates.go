@@ -16,7 +16,7 @@ DNS={{ .Server.DNS }}
 PublicKey={{ .Server.PrivateKey.PublicKey.Key }}
 PresharedKey={{ .Peer.PresharedKey.Key }}
 Endpoint={{ .Endpoint }}:{{ .Server.ListenPort }}
-PersistentKeepalive={{ .Keepalive }}
+PersistentKeepalive={{ .Server.PersistentKeepalive }}
 {{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
 AllowedIPs={{ .Server.Network.IPNet.IP }}/{{ .CidrSize }}
 {{ end -}}
@@ -44,7 +44,7 @@ set interfaces wireguard {{ .Wgif }} description {{ .Server.InterfaceName }}
 {{ end }}
 
 set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} endpoint {{ .Endpoint }}:{{ .Server.ListenPort }}
-set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
+set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Server.PersistentKeepalive }}
 set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
 {{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
 set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ .Server.Network.IPNet.IP }}/{{ .CidrSize }}
@@ -85,7 +85,7 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
           {{ end -}}
         ];
         endpoint = "{{ .Endpoint }}:{{ .Server.ListenPort }}";
-        persistentKeepalive = {{ .Keepalive }};
+        PersistentKeepalive = {{ .Server.PersistentKeepalive }};
       {{ "}" }}
     ];
   {{ "};" }}

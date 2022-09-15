@@ -24,17 +24,17 @@ const (
 )
 
 type Peer struct {
-	Hostname     string
-	Owner        string
-	Description  string
-	IP           net.IP
-	IP6          net.IP
-	Added        time.Time
-	PublicKey    JSONKey
-	PrivateKey   JSONKey
-	PresharedKey JSONKey
-	Networks     []JSONIPNet
-	KeepAlive    time.Duration
+	Hostname            string
+	Owner               string
+	Description         string
+	IP                  net.IP
+	IP6                 net.IP
+	Added               time.Time
+	PublicKey           JSONKey
+	PrivateKey          JSONKey
+	PresharedKey        JSONKey
+	Networks            []JSONIPNet
+	PersistentKeepalive int
 }
 
 func NewPeer(server *Server, owner string, hostname string, description string) (Peer, error) {
@@ -65,6 +65,8 @@ func NewPeer(server *Server, owner string, hostname string, description string) 
 		PrivateKey:   privateKey,
 		PresharedKey: presharedKey,
 		Networks:     []JSONIPNet{},
+		// inherit from server setting, which is derived from config
+		PersistentKeepalive: server.PersistentKeepalive,
 	}
 
 	if len(server.Network.IPNet.Mask) > 0 {
