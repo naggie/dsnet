@@ -143,6 +143,7 @@ func init() {
 	addCmd.Flags().StringVar(&description, "description", "", "description of the new peer")
 	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 	removeCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
+	regenerateCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 
 	// Environment variable handling.
 	viper.AutomaticEnv()
