@@ -127,7 +127,6 @@ Main (automatically generated) configuration example:
         "IP6": "fd00:d631:74ca:7b00:a28:11a1:b821:f013",
         "DNS": "",
         "Networks": [],
-        "ReportFile": "/var/lib/dsnetreport.json",
         "PrivateKey": "uC+xz3v1mfjWBHepwiCgAmPebZcY+EdhaHAvqX2r7U8=",
         "PostUp": "",
         "PostDown" "",

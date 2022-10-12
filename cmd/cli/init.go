@@ -16,7 +16,6 @@ import (
 )
 
 func Init() {
-	reportFile := viper.GetString("report_file")
 	listenPort := viper.GetInt("listen_port")
 	configFile := viper.GetString("config_file")
 	interfaceName := viper.GetString("interface_name")
@@ -40,7 +39,6 @@ func Init() {
 		Network6:            getULANet(),
 		Peers:               []PeerConfig{},
 		Domain:              "dsnet",
-		ReportFile:          reportFile,
 		ExternalIP:          externalIPV4,
 		ExternalIP6:         getExternalIP6(),
 		InterfaceName:       interfaceName,
