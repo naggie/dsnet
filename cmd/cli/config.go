@@ -60,7 +60,6 @@ type DsnetConfig struct {
 	// extra networks available, will be added to AllowedIPs
 	Networks []lib.JSONIPNet `validate:"required"`
 	// TODO Default subnets to route via VPN
-	ReportFile string      `validate:"required"`
 	PrivateKey lib.JSONKey `validate:"required,len=44"`
 	PostUp     string
 	PostDown   string
