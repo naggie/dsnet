@@ -60,11 +60,12 @@ type DsnetConfig struct {
 	// extra networks available, will be added to AllowedIPs
 	Networks []lib.JSONIPNet `validate:"required"`
 	// TODO Default subnets to route via VPN
-	ReportFile string      `validate:"required"`
 	PrivateKey lib.JSONKey `validate:"required,len=44"`
 	PostUp     string
 	PostDown   string
 	Peers      []PeerConfig `validate:"dive"`
+	// used for server and client
+	PersistentKeepalive int `validate:"gte=0,lte=255"`
 }
 
 // LoadConfigFile parses the json config file, validates and stuffs
@@ -81,7 +82,13 @@ func LoadConfigFile() (*DsnetConfig, error) {
 		return nil, err
 	}
 
-	conf := DsnetConfig{}
+	conf := DsnetConfig{
+		// set default for if key is not set. If it is set, this will not be
+		// used _even if value is zero!_
+		// Effectively, this is a migration
+		PersistentKeepalive: 25,
+	}
+
 	err = json.Unmarshal(raw, &conf)
 	if err != nil {
 		return nil, err

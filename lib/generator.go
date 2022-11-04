@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"text/template"
-	"time"
 )
 
 func getPeerConfTplString(peerType PeerType) (string, error) {
@@ -63,7 +62,6 @@ func GetWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buff
 	err = t.Execute(&templateBuff, map[string]interface{}{
 		"Peer":      peer,
 		"Server":    server,
-		"Keepalive": time.Duration(peer.KeepAlive).Seconds(),
 		"CidrSize":  cidrSize,
 		"CidrSize6": cidrSize6,
 		// vyatta requires an interface in range/format wg0-wg999

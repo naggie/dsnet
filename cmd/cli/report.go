@@ -2,12 +2,10 @@ package cli
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"net"
-	"os"
 	"time"
 
-	"github.com/go-playground/validator"
 	"github.com/naggie/dsnet/lib"
 	"github.com/spf13/viper"
 	"github.com/vishvananda/netlink"
@@ -16,9 +14,11 @@ import (
 )
 
 type DsnetReport struct {
-	ExternalIP    net.IP
-	InterfaceName string
-	ListenPort    int
+	ExternalIP       net.IP
+	ExternalIP6      net.IP
+	ExternalHostname string
+	InterfaceName    string
+	ListenPort       int
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
 	Domain string
@@ -82,17 +82,15 @@ func GenerateReport() {
 		ExitFail("Could not retrieve device '%s' (%v)", conf.InterfaceName, err)
 	}
 
-	oldReport := MustLoadDsnetReport()
-	report := GetReport(dev, conf, oldReport)
-	report.MustSave()
+	report := GetReport(dev, conf)
+	report.Print()
 }
 
-func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) DsnetReport {
+func GetReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
 	peerTimeout := viper.GetDuration("peer_timeout")
 	peerExpiry := viper.GetDuration("peer_expiry")
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
 	peerReports := make([]PeerReport, 0)
-	oldPeerReportIndex := make(map[string]PeerReport)
 	peersOnline := 0
 
 	linkDev, err := netlink.LinkByName(conf.InterfaceName)
@@ -102,12 +100,6 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) D
 
 	for _, peer := range dev.Peers {
 		wgPeerIndex[peer.PublicKey] = peer
-	}
-
-	if oldReport != nil {
-		for _, report := range oldReport.Peers {
-			oldPeerReportIndex[report.Hostname] = report
-		}
 	}
 
 	for _, peer := range conf.Peers {
@@ -154,54 +146,31 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) D
 	}
 
 	return DsnetReport{
-		ExternalIP:      conf.ExternalIP,
-		InterfaceName:   conf.InterfaceName,
-		ListenPort:      conf.ListenPort,
-		Domain:          conf.Domain,
-		IP:              conf.IP,
-		IP6:             conf.IP6,
-		Network:         conf.Network,
-		Network6:        conf.Network6,
-		DNS:             conf.DNS,
-		Peers:           peerReports,
-		PeersOnline:     peersOnline,
-		PeersTotal:      len(peerReports),
-		ReceiveBytes:    stats.RxBytes,
-		TransmitBytes:   stats.TxBytes,
-		ReceiveBytesSI:  BytesToSI(stats.RxBytes),
-		TransmitBytesSI: BytesToSI(stats.TxBytes),
-		Timestamp:       time.Now(),
+		ExternalIP:       conf.ExternalIP,
+		ExternalIP6:      conf.ExternalIP6,
+		ExternalHostname: conf.ExternalHostname,
+		InterfaceName:    conf.InterfaceName,
+		ListenPort:       conf.ListenPort,
+		Domain:           conf.Domain,
+		IP:               conf.IP,
+		IP6:              conf.IP6,
+		Network:          conf.Network,
+		Network6:         conf.Network6,
+		DNS:              conf.DNS,
+		Peers:            peerReports,
+		PeersOnline:      peersOnline,
+		PeersTotal:       len(peerReports),
+		ReceiveBytes:     stats.RxBytes,
+		TransmitBytes:    stats.TxBytes,
+		ReceiveBytesSI:   BytesToSI(stats.RxBytes),
+		TransmitBytesSI:  BytesToSI(stats.TxBytes),
+		Timestamp:        time.Now(),
 	}
 }
 
-func (report *DsnetReport) MustSave() {
-	reportFilePath := viper.GetString("report_file")
-
+func (report *DsnetReport) Print() {
 	_json, _ := json.MarshalIndent(report, "", "    ")
 	_json = append(_json, '\n')
 
-	err := ioutil.WriteFile(reportFilePath, _json, 0644)
-	check(err)
-}
-
-func MustLoadDsnetReport() *DsnetReport {
-	reportFilePath := viper.GetString("report_file_path")
-	raw, err := ioutil.ReadFile(reportFilePath)
-
-	if os.IsNotExist(err) {
-		return nil
-	} else if os.IsPermission(err) {
-		ExitFail("%s cannot be accessed. Check read permissions.", reportFilePath)
-	} else {
-		check(err)
-	}
-
-	report := DsnetReport{}
-	err = json.Unmarshal(raw, &report)
-	check(err)
-
-	err = validator.New().Struct(report)
-	check(err)
-
-	return &report
+	fmt.Print(string(_json))
 }

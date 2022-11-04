@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -36,22 +37,32 @@ var (
 	upCmd = &cobra.Command{
 		Use:   "up",
 		Short: "Create the interface, run pre/post up, sync",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			config := cli.MustLoadConfigFile()
 			server := cli.GetServer(config)
-			server.Up()
-			utils.ShellOut(config.PostUp, "PostUp")
+			if e := server.Up(); e != nil {
+				return e
+			}
+			if e := utils.ShellOut(config.PostUp, "PostUp"); e != nil {
+				return e
+			}
+			return nil
 		},
 	}
 
 	downCmd = &cobra.Command{
 		Use:   "down",
 		Short: "Destroy the interface, run pre/post down",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			config := cli.MustLoadConfigFile()
 			server := cli.GetServer(config)
-			server.DeleteLink()
-			utils.ShellOut(config.PostDown, "PostDown")
+			if e := server.DeleteLink(); e != nil {
+				return e
+			}
+			if e := utils.ShellOut(config.PostDown, "PostDown"); e != nil {
+				return e
+			}
+			return nil
 		},
 	}
 
@@ -99,7 +110,7 @@ var (
 
 	reportCmd = &cobra.Command{
 		Use:   "report",
-		Short: fmt.Sprintf("Generate a JSON status report to the location configured in %s.", viper.GetString("config_file")),
+		Short: "Generate a JSON status report to stdout",
 		Run: func(cmd *cobra.Command, args []string) {
 			cli.GenerateReport()
 		},
@@ -139,6 +150,7 @@ func init() {
 	addCmd.PersistentFlags().BoolP("private-key", "r", false, "Accept user-supplied private key. If supplied, dsnet will generate a public key.")
 	addCmd.PersistentFlags().BoolP("public-key", "u", false, "Accept user-supplied public key. If supplied, the user must add the private key to the generated config (or provide it with --private-key).")
 	removeCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
+	regenerateCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 
 	// Environment variable handling.
 	viper.AutomaticEnv()
@@ -152,7 +164,6 @@ func init() {
 	viper.SetDefault("config_file", "/etc/dsnetconfig.json")
 	viper.SetDefault("fallback_wg_bing", "wireguard-go")
 	viper.SetDefault("listen_port", 51820)
-	viper.SetDefault("report_file", "/var/lib/dsnetreport.json")
 	viper.SetDefault("interface_name", "dsnet")
 
 	// if last handshake (different from keepalive, see https://www.wireguard.com/protocol/)
@@ -177,4 +188,5 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		cli.ExitFail(err.Error())
 	}
+	os.Exit(0)
 }

@@ -28,17 +28,17 @@ const (
 )
 
 type Peer struct {
-	Hostname     string
-	Owner        string
-	Description  string
-	IP           net.IP
-	IP6          net.IP
-	Added        time.Time
-	PublicKey    JSONKey
-	PrivateKey   JSONKey
-	PresharedKey JSONKey
-	Networks     []JSONIPNet
-	KeepAlive    time.Duration
+	Hostname            string
+	Owner               string
+	Description         string
+	IP                  net.IP
+	IP6                 net.IP
+	Added               time.Time
+	PublicKey           JSONKey
+	PrivateKey          JSONKey
+	PresharedKey        JSONKey
+	Networks            []JSONIPNet
+	PersistentKeepalive int
 }
 
 // NewPeer generates a peer from the supplied arguments and generates keys if needed.
@@ -105,6 +105,8 @@ func NewPeer(server *Server, private, public, owner, hostname, description strin
 		PrivateKey:   privateKey,
 		PresharedKey: presharedKey,
 		Networks:     []JSONIPNet{},
+		// inherit from server setting, which is derived from config
+		PersistentKeepalive: server.PersistentKeepalive,
 	}
 
 	if len(server.Network.IPNet.Mask) > 0 {

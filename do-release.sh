@@ -13,20 +13,16 @@ BUILD_DATE=$(date)
 
 RELEASE_FILE=RELEASE.md
 
+export CGO_ENABLED=0
+export GOOS=linux
+
 LDFLAGS="-s -w \
     -X \"github.com/naggie/dsnet.GIT_COMMIT=$GIT_COMMIT\" \
     -X \"github.com/naggie/dsnet.VERSION=$VERSION\" \
     -X \"github.com/naggie/dsnet.BUILD_DATE=$BUILD_DATE\"\
 "
 
-# get release information
-if ! test -f $RELEASE_FILE || head -n 1 $RELEASE_FILE | grep -vq $VERSION; then
-    # file doesn't exist or is for old version, replace
-    printf "$VERSION\n\n\n" > $RELEASE_FILE
-fi
-
 vim "+ normal G $" $RELEASE_FILE
-
 
 # build
 mkdir -p dist
@@ -34,21 +30,26 @@ mkdir -p dist
 export GOOS=linux
 export CGO_ENABLED=0
 
-GOARCH=arm GOARM=5 go build -ldflags="$LDFLAGS" cmd/dsnet.go
+GOARCH=arm GOARM=5 go build -ldflags="$LDFLAGS" -o dist/dsnet cmd/root.go
 # upx -q dsnet
-mv dsnet dist/dsnet-linux-arm5
+mv dist/dsnet dist/dsnet-linux-arm5
 
-GOARCH=arm64 go build -ldflags="$LDFLAGS" cmd/dsnet.go
+GOARCH=arm64 go build -ldflags="$LDFLAGS" -o dist/dsnet cmd/root.go
 # upx -q dsnet
-mv dsnet dist/dsnet-linux-arm64
+mv dist/dsnet dist/dsnet-linux-arm64
 
-GOARCH=amd64 go build -ldflags="$LDFLAGS" cmd/dsnet.go
+GOARCH=amd64 go build -ldflags="$LDFLAGS" -o dist/dsnet cmd/root.go
 # upx -q dsnet
-mv dsnet dist/dsnet-linux-amd64
+mv dist/dsnet dist/dsnet-linux-amd64
 
-hub release create \
-    -a dist/dsnet-linux-arm5#"dsnet linux-arm5" \
-    -a dist/dsnet-linux-arm64#"dsnet linux-arm64" \
-    -a dist/dsnet-linux-amd64#"dsnet linux-amd64" \
-    -F $RELEASE_FILE \
-    $1
+# github.com/cli/cli
+# https://github.com/cli/cli/releases/download/v2.15.0/gh_2.15.0_linux_amd64.deb
+# do: gh auth login
+gh release create \
+    --title $VERSION \
+    --notes-file $RELEASE_FILE \
+    --draft \
+    $VERSION \
+    dist/dsnet-linux-arm5#"dsnet linux-arm5" \
+    dist/dsnet-linux-arm64#"dsnet linux-arm64" \
+    dist/dsnet-linux-amd64#"dsnet linux-amd64" \
