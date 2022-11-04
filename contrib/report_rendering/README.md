@@ -31,6 +31,8 @@ Courtesy of [@frillip](https://github.com/frillip/)
 
 ![dsnet report table](https://raw.githubusercontent.com/naggie/dsnet/master/etc/dsnet-report-js.png)
 
+# CLI (bash)
+
 On the command line, you can use [jtbl](https://github.com/kellyjonbrazil/jtbl) (and [jq](https://stedolan.github.io/jq/)) for a nice table rendering with this snippet:
 
 ```bash
