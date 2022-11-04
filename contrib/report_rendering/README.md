@@ -63,3 +63,9 @@ The output looks like:
 ├─────────┼───────┼──────────┼──────────┼──────────┼──────────┼─────────┼────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
 ...
 ```
+
+To tighten up the table, use JQ to remove columns you're not interested in:
+
+```
+sudo dsnet report | jq '.Peers | map(del(.Added,.Networks,.IP6,.Owner))' | jtbl
+```
