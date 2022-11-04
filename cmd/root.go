@@ -111,7 +111,7 @@ var (
 
 	reportCmd = &cobra.Command{
 		Use:   "report",
-		Short: fmt.Sprintf("Generate a JSON status report to the location configured in %s.", viper.GetString("config_file")),
+		Short: "Generate a JSON status report to stdout",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.GenerateReport()
 		},
@@ -149,6 +149,7 @@ func init() {
 	addCmd.Flags().StringVar(&description, "description", "", "description of the new peer")
 	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 	removeCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
+	regenerateCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 
 	// Environment variable handling.
 	viper.AutomaticEnv()
@@ -163,7 +164,6 @@ func init() {
 	viper.SetDefault("config_file", "/etc/dsnetconfig.json")
 	viper.SetDefault("fallback_wg_bing", "wireguard-go")
 	viper.SetDefault("listen_port", 51820)
-	viper.SetDefault("report_file", "/var/lib/dsnetreport.json")
 	viper.SetDefault("interface_name", "dsnet")
 
 	// if last handshake (different from keepalive, see https://www.wireguard.com/protocol/)

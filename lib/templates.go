@@ -16,7 +16,7 @@ DNS={{ .Server.DNS }}
 PublicKey={{ .Server.PrivateKey.PublicKey.Key }}
 PresharedKey={{ .Peer.PresharedKey.Key }}
 Endpoint={{ .Endpoint }}:{{ .Server.ListenPort }}
-PersistentKeepalive={{ .Keepalive }}
+PersistentKeepalive={{ .Server.PersistentKeepalive }}
 {{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
 AllowedIPs={{ .Server.Network.IPNet.IP }}/{{ .CidrSize }}
 {{ end -}}
@@ -28,32 +28,31 @@ AllowedIPs={{ . }}
 {{ end -}}
 `
 
-// TODO use random wg0-wg999 to hopefully avoid conflict by default?
 const vyattaPeerConf = `configure
 {{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
-set interfaces wireguard {{ .Wgif }} address {{ .Peer.IP }}/{{ .CidrSize }}
+set interfaces wireguard wg0 address {{ .Peer.IP }}/{{ .CidrSize }}
 {{ end -}}
 {{ if gt (.Server.Network6.IPNet.IP | len) 0 -}}
-set interfaces wireguard {{ .Wgif }} address {{ .Peer.IP6 }}/{{ .CidrSize6 }}
+set interfaces wireguard wg0 address {{ .Peer.IP6 }}/{{ .CidrSize6 }}
 {{ end -}}
-set interfaces wireguard {{ .Wgif }} route-allowed-ips true
-set interfaces wireguard {{ .Wgif }} private-key {{ .Peer.PrivateKey.Key }}
-set interfaces wireguard {{ .Wgif }} description {{ .Server.InterfaceName }}
+set interfaces wireguard wg0 route-allowed-ips true
+set interfaces wireguard wg0 private-key {{ .Peer.PrivateKey.Key }}
+set interfaces wireguard wg0 description {{ .Server.InterfaceName }}
 {{- if .Server.DNS }}
 #set service dns forwarding name-server {{ .Server.DNS }}
 {{ end }}
 
-set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} endpoint {{ .Endpoint }}:{{ .Server.ListenPort }}
-set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Keepalive }}
-set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
+set interfaces wireguard wg0 peer {{ .Server.PrivateKey.PublicKey.Key }} endpoint {{ .Endpoint }}:{{ .Server.ListenPort }}
+set interfaces wireguard wg0 peer {{ .Server.PrivateKey.PublicKey.Key }} persistent-keepalive {{ .Server.PersistentKeepalive }}
+set interfaces wireguard wg0 peer {{ .Server.PrivateKey.PublicKey.Key }} preshared-key {{ .Peer.PresharedKey.Key }}
 {{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
-set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ .Server.Network.IPNet.IP }}/{{ .CidrSize }}
+set interfaces wireguard wg0 peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ .Server.Network.IPNet.IP }}/{{ .CidrSize }}
 {{ end -}}
 {{ if gt (.Server.Network6.IPNet.IP | len) 0 -}}
-set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ .Server.Network6.IPNet.IP }}/{{ .CidrSize6  }}
+set interfaces wireguard wg0 peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ .Server.Network6.IPNet.IP }}/{{ .CidrSize6  }}
 {{ end -}}
 {{ range .Server.Networks -}}
-set interfaces wireguard {{ .Wgif }} peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
+set interfaces wireguard wg0 peer {{ .Server.PrivateKey.PublicKey.Key }} allowed-ips {{ . }}
 {{ end -}}
 commit; save
 `
@@ -85,7 +84,7 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
           {{ end -}}
         ];
         endpoint = "{{ .Endpoint }}:{{ .Server.ListenPort }}";
-        persistentKeepalive = {{ .Keepalive }};
+        persistentKeepalive = {{ .Server.PersistentKeepalive }};
       {{ "}" }}
     ];
   {{ "};" }}

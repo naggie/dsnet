@@ -1,6 +1,6 @@
 .PHONY: all build compile quick clean
 
-all: build
+all: compile
 
 clean:
 	@rm -r dist

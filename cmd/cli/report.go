@@ -3,12 +3,9 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
-	"os"
 	"time"
 
-	"github.com/go-playground/validator"
 	"github.com/naggie/dsnet/lib"
 	"github.com/spf13/viper"
 	"github.com/vishvananda/netlink"
@@ -17,9 +14,11 @@ import (
 )
 
 type DsnetReport struct {
-	ExternalIP    net.IP
-	InterfaceName string
-	ListenPort    int
+	ExternalIP       net.IP
+	ExternalIP6      net.IP
+	ExternalHostname string
+	InterfaceName    string
+	ListenPort       int
 	// domain to append to hostnames. Relies on separate DNS server for
 	// resolution. Informational only.
 	Domain string
@@ -88,23 +87,19 @@ func GenerateReport() error {
 		return fmt.Errorf("%w - Could not retrieve device '%s'", err, conf.InterfaceName)
 	}
 
-	oldReport, err := LoadDsnetReport()
+	report, err := GetReport(dev, conf)
 	if err != nil {
 		return err
 	}
-	report, err := GetReport(dev, conf, oldReport)
-	if err != nil {
-		return err
-	}
-	return report.Save()
+	report.Print()
+	return nil
 }
 
-func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) (DsnetReport, error) {
+func GetReport(dev *wgtypes.Device, conf *DsnetConfig) (DsnetReport, error) {
 	peerTimeout := viper.GetDuration("peer_timeout")
 	peerExpiry := viper.GetDuration("peer_expiry")
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
 	peerReports := make([]PeerReport, 0)
-	oldPeerReportIndex := make(map[string]PeerReport)
 	peersOnline := 0
 
 	linkDev, err := netlink.LinkByName(conf.InterfaceName)
@@ -116,12 +111,6 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) (
 
 	for _, peer := range dev.Peers {
 		wgPeerIndex[peer.PublicKey] = peer
-	}
-
-	if oldReport != nil {
-		for _, report := range oldReport.Peers {
-			oldPeerReportIndex[report.Hostname] = report
-		}
 	}
 
 	for _, peer := range conf.Peers {
@@ -168,54 +157,31 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig, oldReport *DsnetReport) (
 	}
 
 	return DsnetReport{
-		ExternalIP:      conf.ExternalIP,
-		InterfaceName:   conf.InterfaceName,
-		ListenPort:      conf.ListenPort,
-		Domain:          conf.Domain,
-		IP:              conf.IP,
-		IP6:             conf.IP6,
-		Network:         conf.Network,
-		Network6:        conf.Network6,
-		DNS:             conf.DNS,
-		Peers:           peerReports,
-		PeersOnline:     peersOnline,
-		PeersTotal:      len(peerReports),
-		ReceiveBytes:    stats.RxBytes,
-		TransmitBytes:   stats.TxBytes,
-		ReceiveBytesSI:  BytesToSI(stats.RxBytes),
-		TransmitBytesSI: BytesToSI(stats.TxBytes),
-		Timestamp:       time.Now(),
+		ExternalIP:       conf.ExternalIP,
+		ExternalIP6:      conf.ExternalIP6,
+		ExternalHostname: conf.ExternalHostname,
+		InterfaceName:    conf.InterfaceName,
+		ListenPort:       conf.ListenPort,
+		Domain:           conf.Domain,
+		IP:               conf.IP,
+		IP6:              conf.IP6,
+		Network:          conf.Network,
+		Network6:         conf.Network6,
+		DNS:              conf.DNS,
+		Peers:            peerReports,
+		PeersOnline:      peersOnline,
+		PeersTotal:       len(peerReports),
+		ReceiveBytes:     stats.RxBytes,
+		TransmitBytes:    stats.TxBytes,
+		ReceiveBytesSI:   BytesToSI(stats.RxBytes),
+		TransmitBytesSI:  BytesToSI(stats.TxBytes),
+		Timestamp:        time.Now(),
 	}, nil
 }
 
-func (report *DsnetReport) Save() error {
-	reportFilePath := viper.GetString("report_file")
-
+func (report *DsnetReport) Print() {
 	_json, _ := json.MarshalIndent(report, "", "    ")
 	_json = append(_json, '\n')
 
-	err := ioutil.WriteFile(reportFilePath, _json, 0644)
-	return err
-}
-
-func LoadDsnetReport() (*DsnetReport, error) {
-	reportFilePath := viper.GetString("report_file_path")
-	raw, err := ioutil.ReadFile(reportFilePath)
-
-	if os.IsNotExist(err) {
-		return nil, err
-	} else if os.IsPermission(err) {
-		return nil, fmt.Errorf("%s cannot be accessed. Check read permissions.", reportFilePath)
-	} else {
-		return nil, err
-	}
-
-	report := DsnetReport{}
-	err = json.Unmarshal(raw, &report)
-	return nil, err
-
-	err = validator.New().Struct(report)
-	return nil, err
-
-	return &report, nil
+	fmt.Print(string(_json))
 }

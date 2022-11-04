@@ -10,23 +10,24 @@ import (
 )
 
 type Server struct {
-	ExternalHostname string
-	ExternalIP       net.IP
-	ExternalIP6      net.IP
-	ListenPort       int
-	Domain           string
-	InterfaceName    string
-	Network          JSONIPNet
-	Network6         JSONIPNet
-	IP               net.IP
-	IP6              net.IP
-	DNS              net.IP
-	PrivateKey       JSONKey
-	PostUp           string
-	PostDown         string
-	FallbackWGBin    string
-	Peers            []Peer
-	Networks         []JSONIPNet
+	ExternalHostname    string
+	ExternalIP          net.IP
+	ExternalIP6         net.IP
+	ListenPort          int
+	Domain              string
+	InterfaceName       string
+	Network             JSONIPNet
+	Network6            JSONIPNet
+	IP                  net.IP
+	IP6                 net.IP
+	DNS                 net.IP
+	PrivateKey          JSONKey
+	PostUp              string
+	PostDown            string
+	FallbackWGBin       string
+	Peers               []Peer
+	Networks            []JSONIPNet
+	PersistentKeepalive int
 }
 
 func (s *Server) GetPeers() []wgtypes.PeerConfig {

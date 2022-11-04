@@ -16,7 +16,6 @@ import (
 )
 
 func Init() error {
-	reportFile := viper.GetString("report_file")
 	listenPort := viper.GetInt("listen_port")
 	configFile := viper.GetString("config_file")
 	interfaceName := viper.GetString("interface_name")
@@ -43,17 +42,17 @@ func Init() error {
 	}
 
 	conf := &DsnetConfig{
-		PrivateKey:    privateKey,
-		ListenPort:    listenPort,
-		Network:       getPrivateNet(),
-		Network6:      getULANet(),
-		Peers:         []PeerConfig{},
-		Domain:        "dsnet",
-		ReportFile:    reportFile,
-		ExternalIP:    externalIPV4,
-		ExternalIP6:   externalIPV6,
-		InterfaceName: interfaceName,
-		Networks:      []lib.JSONIPNet{},
+		PrivateKey:          privateKey,
+		ListenPort:          listenPort,
+		Network:             getPrivateNet(),
+		Network6:            getULANet(),
+		Peers:               []PeerConfig{},
+		Domain:              "dsnet",
+		ExternalIP:          externalIPV4,
+		ExternalIP6:         externalIPV6,
+		InterfaceName:       interfaceName,
+		Networks:            []lib.JSONIPNet{},
+		PersistentKeepalive: 25,
 	}
 
 	server := GetServer(conf)
