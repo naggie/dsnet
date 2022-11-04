@@ -9,12 +9,18 @@ import (
 )
 
 // Add prompts for the required information and creates a new peer
-func Add(hostname, owner, description string, confirm bool) {
-	// TODO accept existing pubkey
+func Add(hostname string, privKey, pubKey bool, owner, description string, confirm bool) {
 	config, err := LoadConfigFile()
 	check(err, "failed to load configuration file")
 	server := GetServer(config)
 
+	var private, public string
+	if privKey {
+		private = MustPromptString("private key", true)
+	}
+	if pubKey {
+		public = MustPromptString("public key", true)
+	}
 	if owner == "" {
 		owner = MustPromptString("owner", true)
 	}
@@ -30,7 +36,7 @@ func Add(hostname, owner, description string, confirm bool) {
 	// newline (not on stdout) to separate config
 	fmt.Fprintln(os.Stderr)
 
-	peer, err := lib.NewPeer(server, owner, hostname, description)
+	peer, err := lib.NewPeer(server, private, public, owner, hostname, description)
 	check(err, "failed to get new peer")
 
 	// TODO Some kind of recovery here would be nice, to avoid

@@ -67,8 +67,8 @@ var (
 	}
 
 	addCmd = &cobra.Command{
-		Use:   "add [hostname]",
-		Short: "Add a new peer + sync",
+		Use:   "add <hostname>",
+		Short: "Add a new peer + sync, optionally using a provided WireGuard private key",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Make sure we have the hostname
 			if len(args) != 1 {
@@ -77,7 +77,12 @@ var (
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			cli.Add(args[0], owner, description, confirm)
+			privKey, err := cmd.PersistentFlags().GetBool("private-key")
+			pubKey, err := cmd.PersistentFlags().GetBool("public-key")
+			if err != nil {
+				cli.ExitFail("%w - error processing key flag", err)
+			}
+			cli.Add(args[0], privKey, pubKey, owner, description, confirm)
 		},
 	}
 
@@ -142,6 +147,8 @@ func init() {
 	addCmd.Flags().StringVar(&owner, "owner", "", "owner of the new peer")
 	addCmd.Flags().StringVar(&description, "description", "", "description of the new peer")
 	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
+	addCmd.PersistentFlags().BoolP("private-key", "r", false, "Accept user-supplied private key. If supplied, dsnet will generate a public key.")
+	addCmd.PersistentFlags().BoolP("public-key", "u", false, "Accept user-supplied public key. If supplied, the user must add the private key to the generated config (or provide it with --private-key).")
 	removeCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 	regenerateCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 
