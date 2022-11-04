@@ -2,19 +2,27 @@ package cli
 
 import "fmt"
 
-func Remove(hostname string, confirm bool) {
-	conf := MustLoadConfigFile()
+func Remove(hostname string, confirm bool) error {
+	conf, err := LoadConfigFile()
+	if err != nil {
+		return fmt.Errorf("%w - failed to load config", err)
+	}
 
-	err := conf.RemovePeer(hostname)
-	check(err, "failed to update config")
+	if err = conf.RemovePeer(hostname); err != nil {
+		return fmt.Errorf("%w - failed to update config", err)
+	}
 
 	if !confirm {
 		ConfirmOrAbort("Do you really want to remove %s?", hostname)
 	}
 
-	conf.MustSave()
+	if err = conf.Save(); err != nil {
+		return fmt.Errorf("%w - failure to save config", err)
+	}
 	server := GetServer(conf)
 
-	err = server.ConfigureDevice()
-	check(err, fmt.Sprintf("failed to sync server config to wg interface: %s", server.InterfaceName))
+	if err = server.ConfigureDevice(); err != nil {
+		return fmt.Errorf("%w - failed to sync server config to wg interface: %s", err, server.InterfaceName)
+	}
+	return nil
 }

@@ -69,24 +69,33 @@ type PeerReport struct {
 	TransmitBytesSI   string
 }
 
-func GenerateReport() {
-	conf := MustLoadConfigFile()
+func GenerateReport() error {
+	conf, err := LoadConfigFile()
+	if err != nil {
+		return fmt.Errorf("%w - failure to load config", err)
+	}
 
 	wg, err := wgctrl.New()
-	check(err)
+	if err != nil {
+		return fmt.Errorf("%w - failure to create new client", err)
+	}
 	defer wg.Close()
 
 	dev, err := wg.Device(conf.InterfaceName)
 
 	if err != nil {
-		ExitFail("Could not retrieve device '%s' (%v)", conf.InterfaceName, err)
+		return fmt.Errorf("%w - Could not retrieve device '%s'", err, conf.InterfaceName)
 	}
 
-	report := GetReport(dev, conf)
+	report, err := GetReport(dev, conf)
+	if err != nil {
+		return err
+	}
 	report.Print()
+	return nil
 }
 
-func GetReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
+func GetReport(dev *wgtypes.Device, conf *DsnetConfig) (DsnetReport, error) {
 	peerTimeout := viper.GetDuration("peer_timeout")
 	peerExpiry := viper.GetDuration("peer_expiry")
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
@@ -94,7 +103,9 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
 	peersOnline := 0
 
 	linkDev, err := netlink.LinkByName(conf.InterfaceName)
-	check(err)
+	if err != nil {
+		return DsnetReport{}, fmt.Errorf("%w - error getting link", err)
+	}
 
 	stats := linkDev.Attrs().Statistics
 
@@ -165,7 +176,7 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig) DsnetReport {
 		ReceiveBytesSI:   BytesToSI(stats.RxBytes),
 		TransmitBytesSI:  BytesToSI(stats.TxBytes),
 		Timestamp:        time.Now(),
-	}
+	}, nil
 }
 
 func (report *DsnetReport) Print() {
