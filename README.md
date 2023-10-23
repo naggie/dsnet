@@ -209,13 +209,15 @@ default. It can also generate VyOS/Vyatta configuration for EdgeOS/Unifi devices
 such as the Edgerouter 4 using the
 [wireguard-vyatta](https://github.com/WireGuard/wireguard-vyatta-ubnt) package,
 as well as configuration for [NixOS](https://nixos.org), ready to be added to
-`configuration.nix` environment definition.
+`configuration.nix` environment definition. [MikroTik RouterOS](https://mikrotik.com/software)
+support is also available.
 
 To change the config file format, set the following environment variables:
 
 * `DSNET_OUTPUT=vyatta`
 * `DSNET_OUTPUT=wg-quick`
 * `DSNET_OUTPUT=nixos`
+* `DSNET_OUTPUT=routeros`
 
 Example vyatta output:
 
@@ -263,6 +265,24 @@ Example NixOS output:
       };
     };
 
+Example MikroTik RouterOS output:
+
+    /interface wireguard
+    add name=wg0 private-key="CDWdi0IcMZgla1hCYI41JejjuFaPCle+vPBxvX5OvVE=";
+    /interface list member
+    add interface=wg0 list=LAN
+    /ip address
+    add address=10.55.148.2/22 interface=wg0
+    /ipv6 address
+    add address=fd00:1965:946d:5000:5a88:878d:dc0:c777/64 advertise=no eui-64=no no-dad=no interface=wg0
+    /interface wireguard peers
+    add interface=wg0 \
+        public-key="iE7dleTu34JOCC4A8xdIZcnbNE+aoji8i1JpP+gdt0M=" \
+        preshared-key="Ch0BdZ6Um29D34awlWBSNa+cz1wGOUuHshjYIyqKxGU=" \
+        endpoint-address=198.51.100.73 \
+        endpoint-port=51820 \
+        persistent-keepalive=25s \
+        allowed-address=10.55.148.0/22,fd00:1965:946d:5000::/64,192.168.10.0/24,fe80::1/64
 
 # FAQ
 

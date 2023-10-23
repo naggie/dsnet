@@ -15,6 +15,8 @@ func getPeerConfTplString(peerType PeerType) (string, error) {
 		return vyattaPeerConf, nil
 	case NixOS:
 		return nixosPeerConf, nil
+	case RouterOS:
+		return routerosPeerConf, nil
 	default:
 		return "", fmt.Errorf("unrecognized peer type")
 	}
@@ -84,6 +86,8 @@ func AsciiPeerConfig(peer Peer, peerType string, server Server) (*bytes.Buffer, 
 		return GetWGPeerTemplate(peer, Vyatta, server)
 	case "nixos":
 		return GetWGPeerTemplate(peer, NixOS, server)
+	case "routeros":
+		return GetWGPeerTemplate(peer, RouterOS, server)
 	default:
 		return nil, errors.New("unrecognised OUTPUT type")
 	}
