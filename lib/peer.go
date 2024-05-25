@@ -4,7 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"time"
+
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 // PeerType is what configuration to use when generating
@@ -40,7 +43,15 @@ type Peer struct {
 	PersistentKeepalive int
 }
 
-func NewPeer(server *Server, owner string, hostname string, description string) (Peer, error) {
+// NewPeer generates a peer from the supplied arguments and generates keys if needed.
+//   - server is required and provides network information
+//   - private is a base64-encoded private key; if the empty string, a new key will be generated
+//   - public is a base64-encoded public key. If empty, it will be generated from the private key.
+//     If **not** empty, the private key will be included IFF a private key was provided.
+//   - owner is the owner name (required)
+//   - hostname is the name of the peer (required)
+//   - description is the annotation for the peer
+func NewPeer(server *Server, private, public, owner, hostname, description string) (Peer, error) {
 	if owner == "" {
 		return Peer{}, errors.New("missing owner")
 	}
@@ -48,11 +59,39 @@ func NewPeer(server *Server, owner string, hostname string, description string) 
 		return Peer{}, errors.New("missing hostname")
 	}
 
-	privateKey, err := GenerateJSONPrivateKey()
-	if err != nil {
-		return Peer{}, fmt.Errorf("failed to generate private key: %s", err)
+	var privateKey JSONKey
+	if private != "" {
+		userKey := &JSONKey{}
+		userKey.UnmarshalJSON([]byte(private))
+		privateKey = *userKey
+	} else {
+		var err error
+		privateKey, err = GenerateJSONPrivateKey()
+		if err != nil {
+			return Peer{}, fmt.Errorf("failed to generate private key: %s", err)
+		}
 	}
-	publicKey := privateKey.PublicKey()
+
+	var publicKey JSONKey
+	if public != "" {
+		b64Key := strings.Trim(string(public), "\"")
+		key, err := wgtypes.ParseKey(b64Key)
+		if err != nil {
+			return Peer{}, err
+		}
+		publicKey = JSONKey{Key: key}
+		if private == "" {
+			privateKey = JSONKey{Key: wgtypes.Key([wgtypes.KeyLen]byte{})}
+		} else {
+			pubK := privateKey.PublicKey()
+			ascK := pubK.Key.String()
+			if ascK != public {
+				return Peer{}, fmt.Errorf("user-supplied private and public keys are not related")
+			}
+		}
+	} else {
+		publicKey = privateKey.PublicKey()
+	}
 
 	presharedKey, err := GenerateJSONKey()
 	if err != nil {
