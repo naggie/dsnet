@@ -9,17 +9,25 @@ import (
 )
 
 // Add prompts for the required information and creates a new peer
-func Add(hostname, owner, description string, confirm bool) {
+func Add(hostname, owner, description string, confirm bool) error {
 	// TODO accept existing pubkey
 	config, err := LoadConfigFile()
-	check(err, "failed to load configuration file")
+	if err != nil {
+		return fmt.Errorf("%w - failed to load configuration file", err)
+	}
 	server := GetServer(config)
 
 	if owner == "" {
-		owner = MustPromptString("owner", true)
+		owner, err = PromptString("owner", true)
+		if err != nil {
+			return fmt.Errorf("%w - invalid input for owner", err)
+		}
 	}
 	if description == "" {
-		description = MustPromptString("Description", true)
+		description, err = PromptString("Description", true)
+		if err != nil {
+			return fmt.Errorf("%w - invalid input for Description", err)
+		}
 	}
 
 	// publicKey := MustPromptString("PublicKey (optional)", false)
@@ -31,22 +39,32 @@ func Add(hostname, owner, description string, confirm bool) {
 	fmt.Fprintln(os.Stderr)
 
 	peer, err := lib.NewPeer(server, owner, hostname, description)
-	check(err, "failed to get new peer")
+	if err != nil {
+		return fmt.Errorf("%w - failed to get new peer", err)
+	}
 
 	// TODO Some kind of recovery here would be nice, to avoid
 	// leaving things in a potential broken state
 
-	config.MustAddPeer(peer)
+	if err = config.AddPeer(peer); err != nil {
+		return fmt.Errorf("%w - failed to add new peer", err)
+	}
 
 	peerType := viper.GetString("output")
 
 	peerConfigBytes, err := lib.AsciiPeerConfig(peer, peerType, *server)
-	check(err, "failed to get peer configuration")
+	if err != nil {
+		return fmt.Errorf("%w - failed to get peer configuration", err)
+	}
 	os.Stdout.Write(peerConfigBytes.Bytes())
 
-	config.MustSave()
+	if err = config.Save(); err != nil {
+		return fmt.Errorf("%w - failed to save config file", err)
+	}
 
 	server = GetServer(config)
-	err = server.ConfigureDevice()
-	check(err, "failed to configure device")
+	if err = server.ConfigureDevice(); err != nil {
+		return fmt.Errorf("%w - failed to configure device", err)
+	}
+	return nil
 }
