@@ -1,5 +1,7 @@
 package cli
 
+// FIXME every function in this file has public scope, but only private references
+
 import (
 	"bufio"
 	"fmt"
@@ -8,15 +10,6 @@ import (
 
 	"github.com/naggie/dsnet/lib"
 )
-
-func check(e error, optMsg ...string) {
-	if e != nil {
-		if len(optMsg) > 0 {
-			ExitFail("%s - %s", e, strings.Join(optMsg, " "))
-		}
-		ExitFail("%s", e)
-	}
-}
 
 func jsonPeerToDsnetPeer(peers []PeerConfig) []lib.Peer {
 	libPeers := make([]lib.Peer, 0, len(peers))
@@ -37,12 +30,7 @@ func jsonPeerToDsnetPeer(peers []PeerConfig) []lib.Peer {
 	return libPeers
 }
 
-func ExitFail(format string, a ...interface{}) {
-	fmt.Fprintf(os.Stderr, "\033[31m"+format+"\033[0m\n", a...)
-	os.Exit(1)
-}
-
-func MustPromptString(prompt string, required bool) string {
+func PromptString(prompt string, required bool) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	var text string
 	var err error
@@ -50,12 +38,15 @@ func MustPromptString(prompt string, required bool) string {
 	for text == "" {
 		fmt.Fprintf(os.Stderr, "%s: ", prompt)
 		text, err = reader.ReadString('\n')
-		check(err)
+		if err != nil {
+			return "", fmt.Errorf("%w - error getting input", err)
+		}
 		text = strings.TrimSpace(text)
 	}
-	return text
+	return text, nil
 }
 
+// FIXME is it critical for this to panic, or can we cascade the errors?
 func ConfirmOrAbort(format string, a ...interface{}) {
 	fmt.Fprintf(os.Stderr, format+" [y/n] ", a...)
 
@@ -69,7 +60,8 @@ func ConfirmOrAbort(format string, a ...interface{}) {
 	if input == "y\n" {
 		return
 	} else {
-		ExitFail("Aborted.")
+		fmt.Fprintf(os.Stderr, "\033[31mAborted.\033[0m\n")
+		os.Exit(1)
 	}
 }
 

@@ -29,8 +29,8 @@ var (
 			"Create %s containing default configuration + new keys without loading. Edit to taste.",
 			viper.GetString("config_file"),
 		),
-		Run: func(cmd *cobra.Command, args []string) {
-			cli.Init()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cli.Init()
 		},
 	}
 
@@ -38,7 +38,10 @@ var (
 		Use:   "up",
 		Short: "Create the interface, run pre/post up, sync",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config := cli.MustLoadConfigFile()
+			config, err := cli.LoadConfigFile()
+			if err != nil {
+				return fmt.Errorf("%w - failure to load config file", err)
+			}
 			server := cli.GetServer(config)
 			if e := server.Up(); e != nil {
 				return e
@@ -54,7 +57,10 @@ var (
 		Use:   "down",
 		Short: "Destroy the interface, run pre/post down",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config := cli.MustLoadConfigFile()
+			config, err := cli.LoadConfigFile()
+			if err != nil {
+				return fmt.Errorf("%w - failure to load config file", err)
+			}
 			server := cli.GetServer(config)
 			if e := server.DeleteLink(); e != nil {
 				return e
@@ -76,7 +82,7 @@ var (
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) {
 			privKey, err := cmd.PersistentFlags().GetBool("private-key")
 			pubKey, err := cmd.PersistentFlags().GetBool("public-key")
 			if err != nil {
@@ -95,24 +101,24 @@ var (
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-			cli.Regenerate(args[0], confirm)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cli.Regenerate(args[0], confirm)
 		},
 	}
 
 	syncCmd = &cobra.Command{
 		Use:   "sync",
 		Short: fmt.Sprintf("Update wireguard configuration from %s after validating", viper.GetString("config_file")),
-		Run: func(cmd *cobra.Command, args []string) {
-			cli.Sync()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cli.Sync()
 		},
 	}
 
 	reportCmd = &cobra.Command{
 		Use:   "report",
 		Short: "Generate a JSON status report to stdout",
-		Run: func(cmd *cobra.Command, args []string) {
-			cli.GenerateReport()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cli.GenerateReport()
 		},
 	}
 
@@ -127,8 +133,8 @@ var (
 
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-			cli.Remove(args[0], confirm)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cli.Remove(args[0], confirm)
 		},
 	}
 
@@ -158,7 +164,8 @@ func init() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if err := viper.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output")); err != nil {
-		cli.ExitFail(err.Error())
+		fmt.Fprintf(os.Stderr, "\033[31m%s\033[0m\n", err.Error())
+		os.Exit(1)
 	}
 
 	viper.SetDefault("config_file", "/etc/dsnetconfig.json")
@@ -186,7 +193,9 @@ func init() {
 
 func main() {
 	if err := rootCmd.Execute(); err != nil {
-		cli.ExitFail(err.Error())
+		// Because of side effects in viper, this gets printed twice
+		fmt.Fprintf(os.Stderr, "\033[31m%s\033[0m\n", err.Error())
+		os.Exit(1)
 	}
 	os.Exit(0)
 }
