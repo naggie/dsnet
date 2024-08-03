@@ -24,6 +24,9 @@ const (
 	// NixOS is a declartive linux distro
 	// https://nixos.wiki/wiki/Wireguard
 	NixOS
+	// RouterOS is proprietary Linux based OS by MikroTik
+	// https://help.mikrotik.com/docs/display/ROS/WireGuard
+	RouterOS
 )
 
 type Peer struct {

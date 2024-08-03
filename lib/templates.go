@@ -90,3 +90,39 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
   {{ "};" }}
 {{ "};" }}
 `
+
+const routerosPeerConf = `/interface wireguard
+add name=wg0 private-key="{{ .Peer.PrivateKey.Key }}";
+/interface list member
+add interface=wg0 list=LAN
+/ip address
+{{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
+add address={{ .Peer.IP }}/{{ .CidrSize }} interface=wg0
+{{ end -}}
+/ipv6 address
+{{ if gt (.Server.Network6.IPNet.IP | len) 0 -}}
+add address={{ .Peer.IP6 }}/{{ .CidrSize6 }} advertise=no interface=wg0
+{{ end -}}
+/interface wireguard peers
+{{/* MikroTik RouterOS does not like trailing commas in arrays */ -}}
+{{ $first := true -}}
+add interface=wg0 \
+    public-key="{{ .Server.PrivateKey.PublicKey.Key }}" \
+    preshared-key="{{ .Peer.PresharedKey.Key }}" \
+    endpoint-address={{ .Endpoint }} \
+    endpoint-port={{ .Server.ListenPort }} \
+    persistent-keepalive={{ .Server.PersistentKeepalive }}s \
+    allowed-address=
+        {{- if gt (.Server.Network.IPNet.IP | len) 0 }}
+            {{- if $first}}{{$first = false}}{{else}},{{end}}
+            {{- .Server.Network.IPNet.IP }}/{{ .CidrSize }}
+        {{- end }}
+        {{- if gt (.Server.Network6.IPNet.IP | len) 0 }}
+            {{- if $first}}{{$first = false}}{{else}},{{end}}
+            {{- .Server.Network6.IPNet.IP }}/{{ .CidrSize6 }}
+        {{- end }}
+        {{- range .Server.Networks }}
+            {{- if $first}}{{$first = false}}{{else}},{{end}}
+            {{- . }}
+        {{- end }}
+`
