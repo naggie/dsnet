@@ -9,14 +9,24 @@ import (
 )
 
 // Add prompts for the required information and creates a new peer
-func Add(hostname, owner, description string, confirm bool) error {
-	// TODO accept existing pubkey
+func Add(hostname string, privKey, pubKey bool, owner, description string, confirm bool) error {
 	config, err := LoadConfigFile()
 	if err != nil {
 		return fmt.Errorf("%w - failed to load configuration file", err)
 	}
 	server := GetServer(config)
 
+	var private, public string
+	if privKey {
+		if private, err = PromptString("private key", true); err != nil {
+			return err
+		}
+	}
+	if pubKey {
+		if public, err = PromptString("public key", true); err != nil {
+			return err
+		}
+	}
 	if owner == "" {
 		owner, err = PromptString("owner", true)
 		if err != nil {
@@ -38,7 +48,7 @@ func Add(hostname, owner, description string, confirm bool) error {
 	// newline (not on stdout) to separate config
 	fmt.Fprintln(os.Stderr)
 
-	peer, err := lib.NewPeer(server, owner, hostname, description)
+	peer, err := lib.NewPeer(server, private, public, owner, hostname, description)
 	if err != nil {
 		return fmt.Errorf("%w - failed to get new peer", err)
 	}
