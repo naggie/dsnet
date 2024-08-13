@@ -106,12 +106,6 @@ func LoadConfigFile() (*DsnetConfig, error) {
 	return &conf, nil
 }
 
-func MustLoadConfigFile() *DsnetConfig {
-	config, err := LoadConfigFile()
-	check(err, "failed to load configuration file")
-	return config
-}
-
 // Save writes the configuration to disk
 func (conf *DsnetConfig) Save() error {
 	configFile := viper.GetString("config_file")
@@ -122,12 +116,6 @@ func (conf *DsnetConfig) Save() error {
 		return err
 	}
 	return nil
-}
-
-// MustSave is like Save except it exits on error
-func (conf *DsnetConfig) MustSave() {
-	err := conf.Save()
-	check(err, "failed to save config file")
 }
 
 // AddPeer adds a provided peer to the Peers list in the conf
@@ -169,12 +157,6 @@ func (conf *DsnetConfig) AddPeer(peer lib.Peer) error {
 	return nil
 }
 
-// MustAddPeer is like AddPeer, except it exist on error
-func (conf *DsnetConfig) MustAddPeer(peer lib.Peer) {
-	err := conf.AddPeer(peer)
-	check(err)
-}
-
 // RemovePeer removes a peer from the peer list based on hostname
 func (conf *DsnetConfig) RemovePeer(hostname string) error {
 	peerIndex := -1
@@ -193,12 +175,6 @@ func (conf *DsnetConfig) RemovePeer(hostname string) error {
 	copy(conf.Peers[peerIndex:], conf.Peers[peerIndex+1:]) // shift left
 	conf.Peers = conf.Peers[:len(conf.Peers)-1]            // truncate
 	return nil
-}
-
-// MustRemovePeer is like RemovePeer, except it exits on error
-func (conf *DsnetConfig) MustRemovePeer(hostname string) {
-	err := conf.RemovePeer(hostname)
-	check(err)
 }
 
 func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {

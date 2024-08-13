@@ -1,10 +1,17 @@
 package cli
 
-func Sync() {
+import "fmt"
+
+func Sync() error {
 	// TODO check device settings first
 	conf, err := LoadConfigFile()
-	check(err, "failed to load configuration file")
+	if err != nil {
+		return fmt.Errorf("%w - failed to load configuration file", err)
+	}
 	server := GetServer(conf)
 	err = server.ConfigureDevice()
-	check(err, "failed to sync device configuration")
+	if err != nil {
+		return fmt.Errorf("%w - failed to sync device configuration", err)
+	}
+	return nil
 }
