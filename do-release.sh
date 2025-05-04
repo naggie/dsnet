@@ -22,7 +22,13 @@ LDFLAGS="-s -w \
     -X \"github.com/naggie/dsnet.BUILD_DATE=$BUILD_DATE\"\
 "
 
-vim "+ normal G $" $RELEASE_FILE
+# check tag starts with v
+if [ "${VERSION:0:1}" != "v" ]; then
+    echo "Tag must start with v"
+    exit 1
+fi
+
+nvim "+ normal G $" $RELEASE_FILE
 
 # build
 mkdir -p dist
