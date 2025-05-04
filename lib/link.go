@@ -9,6 +9,20 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
+// IPExists checks if the given IP address already exists on the specified link
+func IPExists(link netlink.Link, ipNet *net.IPNet, family int) (bool, error) {
+	addrs, err := netlink.AddrList(link, family)
+	if err != nil {
+		return false, fmt.Errorf("failed to list addresses for interface: %v", err)
+	}
+	for _, addr := range addrs {
+		if addr.IPNet.String() == ipNet.String() {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // CreateLink sets up the WG interface and link with the correct
 // address
 func (s *Server) CreateLink() error {
@@ -33,7 +47,7 @@ func (s *Server) CreateLink() error {
 		}
 	}
 
-	if len(s.IP) != 0 {
+		if len(s.IP) != 0 {
 		addr := &netlink.Addr{
 			IPNet: &net.IPNet{
 				IP:   s.IP,
@@ -41,9 +55,15 @@ func (s *Server) CreateLink() error {
 			},
 		}
 
-		err = netlink.AddrAdd(link, addr)
+		exists, err := IPExists(link, addr.IPNet, netlink.FAMILY_V4)
 		if err != nil {
-			return fmt.Errorf("could not add ipv4 addr %s to interface %s", addr.IP, err)
+			return err
+		}
+		if !exists {
+			err = netlink.AddrAdd(link, addr)
+			if err != nil {
+				return fmt.Errorf("could not add ipv4 addr %s to interface %s: %v", addr.IP, s.InterfaceName, err)
+			}
 		}
 	}
 
@@ -55,9 +75,15 @@ func (s *Server) CreateLink() error {
 			},
 		}
 
-		err = netlink.AddrAdd(link, addr6)
+		exists, err := IPExists(link, addr6.IPNet, netlink.FAMILY_V6)
 		if err != nil {
-			return fmt.Errorf("could not add ipv6 addr %s to interface %s", addr6.IP, err)
+			return err
+		}
+		if !exists {
+			err = netlink.AddrAdd(link, addr6)
+			if err != nil {
+				return fmt.Errorf("could not add ipv6 addr %s to interface %s: %v", addr6.IP, s.InterfaceName, err)
+			}
 		}
 	}
 
