@@ -226,7 +226,7 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 	return wgPeers
 }
 
-func (conf *DsnetConfig) Merge(patch DsnetConfig) {
+func (conf *DsnetConfig) Merge(patch DsnetConfig) err {
 	// Merge the patch into the config
 	if patch.ExternalHostname != "" {
 		conf.ExternalHostname = patch.ExternalHostname
@@ -275,5 +275,10 @@ func (conf *DsnetConfig) Merge(patch DsnetConfig) {
 	}
 	if len(patch.Peers) > 0 {
 		conf.Peers = patch.Peers
+	}
+
+	err = validator.New().Struct(conf)
+	if err != nil {
+		return nil, err
 	}
 }

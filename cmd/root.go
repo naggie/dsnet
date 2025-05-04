@@ -172,7 +172,14 @@ var (
 			if err := json.Unmarshal(jsonData, &patch); err != nil {
 				return fmt.Errorf("failed to unmarshal JSON: %w", err)
 			}
-			return cli.Patch(patch)
+			err = cli.Patch(patch)
+			if err != nil {
+				return fmt.Errorf("failed to validate patched config: %w", err)
+			}
+
+			if err := conf.Save(); err != nil {
+				return fmt.Errorf("%w - failed to save config file", err)
+			}
 		},
 	}
 )
