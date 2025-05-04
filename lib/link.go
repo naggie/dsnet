@@ -60,13 +60,11 @@ func (s *Server) CreateLink() error {
 			return err
 		}
 
-		if exists {
-			return nil;
-		}
-
-		err = netlink.AddrAdd(link, addr)
-		if err != nil {
-			return fmt.Errorf("could not add ipv4 addr %s to interface %s: %v", addr.IP, s.InterfaceName, err)
+		if ! exists {
+			err = netlink.AddrAdd(link, addr)
+			if err != nil {
+				return fmt.Errorf("could not add ipv4 addr %s to interface %s: %v", addr.IP, s.InterfaceName, err)
+			}
 		}
 	}
 
@@ -83,13 +81,11 @@ func (s *Server) CreateLink() error {
 			return err
 		}
 
-		if exists {
-			return nil;
-		}
-
-		err = netlink.AddrAdd(link, addr6)
-		if err != nil {
-			return fmt.Errorf("could not add ipv6 addr %s to interface %s: %v", addr6.IP, s.InterfaceName, err)
+		if !exists {
+			err = netlink.AddrAdd(link, addr6)
+			if err != nil {
+				return fmt.Errorf("could not add ipv6 addr %s to interface %s: %v", addr6.IP, s.InterfaceName, err)
+			}
 		}
 	}
 
