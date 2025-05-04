@@ -195,8 +195,13 @@ func init() {
 }
 
 func main() {
+	// do not show usage on non cli-parsing related errors
+	rootCmd.SilenceUsage = true;
+
+	// we handle errors ourselves
+	rootCmd.SilenceErrors = true;
+
 	if err := rootCmd.Execute(); err != nil {
-		// Because of side effects in viper, this gets printed twice
 		fmt.Fprintf(os.Stderr, "\033[31m%s\033[0m\n", err.Error())
 		os.Exit(1)
 	}
