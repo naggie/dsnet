@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"encoding/json"
 
 	"github.com/naggie/dsnet"
 	"github.com/naggie/dsnet/cmd/cli"
@@ -148,6 +149,32 @@ var (
 		Use:   "version",
 		Short: "Print version",
 	}
+
+	patchCmd = &cobra.Command{
+		Use:   "patch",
+		Short: "Pipe in JSON to patch the config file. Top level keys are replaced, not merged!",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Make sure we have the hostname
+			if len(args) > 0 {
+				return errors.New("Too many arguments")
+			}
+
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Read the JSON from stdin
+			jsonData, err := os.ReadFile("/dev/stdin")
+			if err != nil {
+				return fmt.Errorf("failed to read from stdin: %w", err)
+			}
+			// Unmarshal the JSON into a DsnetConfig struct
+			var patch cli.DsnetConfig
+			if err := json.Unmarshal(jsonData, &patch); err != nil {
+				return fmt.Errorf("failed to unmarshal JSON: %w", err)
+			}
+			return cli.Patch(patch)
+		},
+	}
 )
 
 func init() {
@@ -192,6 +219,7 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(upCmd)
 	rootCmd.AddCommand(downCmd)
+	rootCmd.AddCommand(patchCmd)
 }
 
 func main() {
