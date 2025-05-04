@@ -23,7 +23,7 @@ func Init() error {
 	_, err := os.Stat(configFile)
 
 	if !os.IsNotExist(err) {
-		return fmt.Errorf("%w - Refusing to overwrite existing %s", err, configFile)
+		return fmt.Errorf("Refusing to overwrite existing %s", configFile)
 	}
 
 	privateKey, err := lib.GenerateJSONPrivateKey()
