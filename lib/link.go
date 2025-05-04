@@ -84,7 +84,7 @@ func (s *Server) CreateLink() error {
 		if !exists {
 			err = netlink.AddrAdd(link, addr6)
 			if err != nil {
-				return fmt.Errorf("could not add ipv6 addr %s to interface %s: %v", addr6.IP, s.InterfaceName, err)
+				return fmt.Errorf("could not add ipv6 addr %s to interface %s: %v. Do you have IPv6 enabled?", addr6.IP, s.InterfaceName, err)
 			}
 		}
 	}
