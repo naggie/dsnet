@@ -102,18 +102,20 @@ func (s *Server) CreateLink() error {
 	return nil
 }
 
-// DeleteLink removes the Netlink interface
+// DeleteLink removes the Netlink interface if it exists
 func (s *Server) DeleteLink() error {
-	linkAttrs := netlink.NewLinkAttrs()
-	linkAttrs.Name = s.InterfaceName
-
-	link := &netlink.GenericLink{
-		LinkAttrs: linkAttrs,
+	link, err := netlink.LinkByName(s.InterfaceName)
+	if err != nil {
+		// If the error is because the link doesn't exist, just return nil
+		if _, ok := err.(netlink.LinkNotFoundError); ok {
+			return nil
+		}
+		return fmt.Errorf("failed to get interface(%s): %v", s.InterfaceName, err)
 	}
 
-	err := netlink.LinkDel(link)
+	err = netlink.LinkDel(link)
 	if err != nil {
-		return fmt.Errorf("failed to delete interface(%s): %s", s.InterfaceName, err)
+		return fmt.Errorf("failed to delete interface(%s): %v", s.InterfaceName, err)
 	}
 	return nil
 }
