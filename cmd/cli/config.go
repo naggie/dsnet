@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"time"
+	"strings"
 
 	"github.com/go-playground/validator"
 	"github.com/naggie/dsnet/lib"
@@ -228,54 +229,77 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 
 func (conf *DsnetConfig) Merge(patch map[string]interface{}) error {
 	// Merge the patch into the config
-	if patch["ExternalHostname"].(string) != "" {
-		conf.ExternalHostname = patch["ExternalHostname"].(string)
+	
+	if val, ok := patch["ExternalHostname"].(string); ok && val != "" {
+		conf.ExternalHostname = val
 	}
-	if len(patch["ExternalIP"].(string)) > 0 {
-		conf.ExternalIP = patch["ExternalIP"].(net.IP)
+	if val, ok := patch["ExternalIP"].(string); ok && len(val) > 0 {
+		conf.ExternalIP = net.ParseIP(val)
 	}
-	if len(patch["ExternalIP6"].(string)) > 0 {
-		conf.ExternalIP6 = patch["ExternalIP6"].(net.IP)
+	if val, ok := patch["ExternalIP6"].(string); ok && len(val) > 0 {
+		conf.ExternalIP6 = net.ParseIP(val)
 	}
-	if patch["ListenPort"].(int) > 0 {
-		conf.ListenPort = patch["ListenPort"].(int)
+	if val, ok := patch["ListenPort"].(int); ok && val > 0 {
+		conf.ListenPort = val
 	}
-	if patch["Domain"].(string) != "" {
-		conf.Domain = patch["Domain"].(string)
+	if val, ok := patch["Domain"].(string); ok && val != "" {
+		conf.Domain = val
 	}
-	if patch["InterfaceName"].(string) != "" {
-		conf.InterfaceName = patch["InterfaceName"].(string)
+	if val, ok := patch["InterfaceName"].(string); ok && val != "" {
+		conf.InterfaceName = val
 	}
-	if len(patch["Network"].(string)) > 0 {
-		conf.Network = patch["Network"].(lib.JSONIPNet)
+	if val, ok := patch["Network"].(string); ok && len(val) > 0 {
+		net, err := lib.ParseJSONIPNet(val)
+		if err != nil {
+			return fmt.Errorf("failed to parse network: %w", err)
+		}
+		conf.Network = net
 	}
-	if len(patch["Network6"].(string)) > 0 {
-		conf.Network6 = patch["Network6"].(lib.JSONIPNet)
+	if val, ok := patch["Network6"].(string); ok && len(val) > 0 {
+		net, err := lib.ParseJSONIPNet(val)
+		if err != nil {
+			return fmt.Errorf("failed to parse network6: %w", err)
+		}
+		conf.Network6 = net
 	}
-	if len(patch["IP"].(string)) > 0 {
-		conf.IP = patch["IP"].(net.IP)
+	if val, ok := patch["IP"].(string); ok && len(val) > 0 {
+		conf.IP = net.ParseIP(val)
 	}
-	if len(patch["IP6"].(string)) > 0 {
-		conf.IP6 = patch["IP6"].(net.IP)
+	if val, ok := patch["IP6"].(string); ok && len(val) > 0 {
+		conf.IP6 = net.ParseIP(val)
 	}
-	if len(patch["DNS"].(string)) > 0 {
-		conf.DNS = patch["DNS"].(net.IP)
+	if val, ok := patch["DNS"].(string); ok && len(val) > 0 {
+		conf.DNS = net.ParseIP(val)
 	}
-	if len(patch["Networks"].(string)) > 0 {
-		conf.Networks = patch["Networks"].([]lib.JSONIPNet)
+	if val, ok := patch["Networks"].([]string); ok && len(val) > 0 {
+		conf.Networks = make([]lib.JSONIPNet, len(val))
+		for i, v := range val {
+			net, err := lib.ParseJSONIPNet(v)
+			if err != nil {
+				return fmt.Errorf("failed to parse network: %w", err)
+			}
+			conf.Networks[i] = net
+		}
 	}
-	if len(patch["PrivateKey"].(string)) > 0 {
-		conf.PrivateKey = patch["PrivateKey"].(lib.JSONKey)
+	if val, ok := patch["PrivateKey"].(string); ok && len(val) > 0 {
+		conf.PrivateKey = lib.JSONKey{}
+		b64Key := strings.Trim(val, "\"")
+		key, err := wgtypes.ParseKey(b64Key)
+		if err != nil {
+			return fmt.Errorf("failed to parse private key: %w", err)
+		}
+		conf.PrivateKey.Key = key
 	}
-	if len(patch["PostUp"].(string)) > 0 {
-		conf.PostUp = patch["PostUp"].(string)
+	if val, ok := patch["PostUp"].(string); ok && len(val) > 0 {
+		conf.PostUp = val
 	}
-	if len(patch["PostDown"].(string)) > 0 {
-		conf.PostDown = patch["PostDown"].(string)
+	if val, ok := patch["PostDown"].(string); ok && len(val) > 0 {
+		conf.PostDown = val
 	}
-	if len(patch["Peers"].([]PeerConfig)) > 0 {
-		conf.Peers = patch["Peers"].([]PeerConfig)
+	if val, ok := patch["Peers"].([]PeerConfig); ok && len(val) > 0 {
+		conf.Peers = val
 	}
 
+	// Validate the updated configuration
 	return validator.New().Struct(conf)
 }

@@ -88,3 +88,11 @@ func GenerateJSONKey() (JSONKey, error) {
 		Key: privateKey,
 	}, nil
 }
+
+func ParseJSONIPNet(cidr string) (JSONIPNet, error) {
+	_, ipnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return JSONIPNet{}, fmt.Errorf("failed to parse CIDR %s: %w", cidr, err)
+	}
+	return JSONIPNet{ IPNet: *ipnet }, nil
+}
