@@ -225,3 +225,57 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 
 	return wgPeers
 }
+
+func (conf *DsnetConfig) Merge(patch DsnetConfig) error {
+	// Merge the patch into the config
+	if patch.ExternalHostname != "" {
+		conf.ExternalHostname = patch.ExternalHostname
+	}
+	if len(patch.ExternalIP) > 0 {
+		conf.ExternalIP = patch.ExternalIP
+	}
+	if len(patch.ExternalIP6) > 0 {
+		conf.ExternalIP6 = patch.ExternalIP6
+	}
+	if patch.ListenPort != 0 {
+		conf.ListenPort = patch.ListenPort
+	}
+	if patch.Domain != "" {
+		conf.Domain = patch.Domain
+	}
+	if patch.InterfaceName != "" {
+		conf.InterfaceName = patch.InterfaceName
+	}
+	if len(patch.Network.IPNet.IP) > 0 {
+		conf.Network = patch.Network
+	}
+	if len(patch.Network6.IPNet.IP) > 0 {
+		conf.Network6 = patch.Network6
+	}
+	if len(patch.IP) > 0 {
+		conf.IP = patch.IP
+	}
+	if len(patch.IP6) > 0 {
+		conf.IP6 = patch.IP6
+	}
+	if len(patch.DNS) > 0 {
+		conf.DNS = patch.DNS
+	}
+	if len(patch.Networks) > 0 {
+		conf.Networks = patch.Networks
+	}
+	if len(patch.PrivateKey.Key) > 0 {
+		conf.PrivateKey = patch.PrivateKey
+	}
+	if len(patch.PostUp) > 0 {
+		conf.PostUp = patch.PostUp
+	}
+	if len(patch.PostDown) > 0 {
+		conf.PostDown = patch.PostDown
+	}
+	if len(patch.Peers) > 0 {
+		conf.Peers = patch.Peers
+	}
+
+	return validator.New().Struct(conf)
+}
