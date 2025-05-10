@@ -152,7 +152,7 @@ var (
 
 	patchCmd = &cobra.Command{
 		Use:   "patch",
-		Short: "Pipe in JSON to patch the config file. Top level keys are replaced, not merged!",
+		Short: "Pipe in JSON to patch the config file. Top level keys are replaced, not merged! Does not sync with interface. Run dsnet sync to apply.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Make sure we have the hostname
 			if len(args) > 0 {

@@ -13,10 +13,6 @@ func Patch(patch map[string]interface{}) error {
 	if err = conf.Save(); err != nil {
 		return fmt.Errorf("%w - failure to save config", err)
 	}
-	server := GetServer(conf)
 
-	if err = server.ConfigureDevice(); err != nil {
-		return fmt.Errorf("%w - failed to sync server config to wg interface: %s", err, server.InterfaceName)
-	}
 	return nil
 }
