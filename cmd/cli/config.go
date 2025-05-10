@@ -226,54 +226,54 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 	return wgPeers
 }
 
-func (conf *DsnetConfig) Merge(patch DsnetConfig) error {
+func (conf *DsnetConfig) Merge(patch map[string]interface{}) error {
 	// Merge the patch into the config
-	if patch.ExternalHostname != "" {
-		conf.ExternalHostname = patch.ExternalHostname
+	if patch["ExternalHostname"].(string) != "" {
+		conf.ExternalHostname = patch["ExternalHostname"].(string)
 	}
-	if len(patch.ExternalIP) > 0 {
-		conf.ExternalIP = patch.ExternalIP
+	if len(patch["ExternalIP"].(string)) > 0 {
+		conf.ExternalIP = net.ParseIP(patch["ExternalIP"].(string))
 	}
-	if len(patch.ExternalIP6) > 0 {
-		conf.ExternalIP6 = patch.ExternalIP6
+	if len(patch["ExternalIP6"].(string)) > 0 {
+		conf.ExternalIP6 = net.ParseIP(patch["ExternalIP6"].(string))
 	}
-	if patch.ListenPort != 0 {
-		conf.ListenPort = patch.ListenPort
+	if patch["ListenPort"].(int) > 0 {
+		conf.ListenPort = patch["ListenPort"].(int)
 	}
-	if patch.Domain != "" {
-		conf.Domain = patch.Domain
+	if patch["Domain"].(string) != "" {
+		conf.Domain = patch["Domain"].(string)
 	}
-	if patch.InterfaceName != "" {
-		conf.InterfaceName = patch.InterfaceName
+	if patch["InterfaceName"].(string) != "" {
+		conf.InterfaceName = patch["InterfaceName"].(string)
 	}
-	if len(patch.Network.IPNet.IP) > 0 {
-		conf.Network = patch.Network
+	if len(patch["Network"].(string)) > 0 {
+		conf.Network = patch["Network"].(string)
 	}
-	if len(patch.Network6.IPNet.IP) > 0 {
-		conf.Network6 = patch.Network6
+	if len(patch["Network6"].(string)) > 0 {
+		conf.Network6 = patch["Network6"].(string)
 	}
-	if len(patch.IP) > 0 {
-		conf.IP = patch.IP
+	if len(patch["IP"].(string)) > 0 {
+		conf.IP = net.ParseIP(patch["IP"].(string))
 	}
-	if len(patch.IP6) > 0 {
-		conf.IP6 = patch.IP6
+	if len(patch["IP6"].(string)) > 0 {
+		conf.IP6 = net.ParseIP(patch["IP6"].(string))
 	}
-	if len(patch.DNS) > 0 {
-		conf.DNS = patch.DNS
+	if len(patch["DNS"].(string)) > 0 {
+		conf.DNS = patch["DNS"].(string)
 	}
-	if len(patch.Networks) > 0 {
-		conf.Networks = patch.Networks
+	if len(patch["Networks"].(string)) > 0 {
+		conf.Networks = patch["Networks"].(string)
 	}
-	if len(patch.PrivateKey.Key) > 0 {
-		conf.PrivateKey = patch.PrivateKey
+	if len(patch["PrivateKey"].(string)) > 0 {
+		conf.PrivateKey = patch["PrivateKey"].(string)
 	}
-	if len(patch.PostUp) > 0 {
-		conf.PostUp = patch.PostUp
+	if len(patch["PostUp"].(string)) > 0 {
+		conf.PostUp = patch["PostUp"].(string)
 	}
-	if len(patch.PostDown) > 0 {
-		conf.PostDown = patch.PostDown
+	if len(patch["PostDown"].(string)) > 0 {
+		conf.PostDown = patch["PostDown"].(string)
 	}
-	if len(patch.Peers) > 0 {
+	if len(patch["Peers"].([]PeerConfig)) > 0 {
 		conf.Peers = patch.Peers
 	}
 

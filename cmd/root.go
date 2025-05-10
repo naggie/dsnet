@@ -167,7 +167,7 @@ var (
 				return fmt.Errorf("failed to read from stdin: %w", err)
 			}
 			// Unmarshal the JSON into a DsnetConfig struct
-			var patch cli.DsnetConfig
+			var patch map[string]interface{}
 			if err := json.Unmarshal(jsonData, &patch); err != nil {
 				return fmt.Errorf("failed to unmarshal JSON: %w", err)
 			}
