@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"encoding/json"
 
 	"github.com/naggie/dsnet"
 	"github.com/naggie/dsnet/cmd/cli"

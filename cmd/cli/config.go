@@ -232,10 +232,10 @@ func (conf *DsnetConfig) Merge(patch map[string]interface{}) error {
 		conf.ExternalHostname = patch["ExternalHostname"].(string)
 	}
 	if len(patch["ExternalIP"].(string)) > 0 {
-		conf.ExternalIP = net.ParseIP(patch["ExternalIP"].(string))
+		conf.ExternalIP = patch["ExternalIP"].(net.IP)
 	}
 	if len(patch["ExternalIP6"].(string)) > 0 {
-		conf.ExternalIP6 = net.ParseIP(patch["ExternalIP6"].(string))
+		conf.ExternalIP6 = patch["ExternalIP6"].(net.IP)
 	}
 	if patch["ListenPort"].(int) > 0 {
 		conf.ListenPort = patch["ListenPort"].(int)
@@ -247,25 +247,25 @@ func (conf *DsnetConfig) Merge(patch map[string]interface{}) error {
 		conf.InterfaceName = patch["InterfaceName"].(string)
 	}
 	if len(patch["Network"].(string)) > 0 {
-		conf.Network = patch["Network"].(string)
+		conf.Network = patch["Network"].(lib.JSONIPNet)
 	}
 	if len(patch["Network6"].(string)) > 0 {
-		conf.Network6 = patch["Network6"].(string)
+		conf.Network6 = patch["Network6"].(lib.JSONIPNet)
 	}
 	if len(patch["IP"].(string)) > 0 {
-		conf.IP = net.ParseIP(patch["IP"].(string))
+		conf.IP = patch["IP"].(net.IP)
 	}
 	if len(patch["IP6"].(string)) > 0 {
-		conf.IP6 = net.ParseIP(patch["IP6"].(string))
+		conf.IP6 = patch["IP6"].(net.IP)
 	}
 	if len(patch["DNS"].(string)) > 0 {
-		conf.DNS = patch["DNS"].(string)
+		conf.DNS = patch["DNS"].(net.IP)
 	}
 	if len(patch["Networks"].(string)) > 0 {
-		conf.Networks = patch["Networks"].(string)
+		conf.Networks = patch["Networks"].([]lib.JSONIPNet)
 	}
 	if len(patch["PrivateKey"].(string)) > 0 {
-		conf.PrivateKey = patch["PrivateKey"].(string)
+		conf.PrivateKey = patch["PrivateKey"].(lib.JSONKey)
 	}
 	if len(patch["PostUp"].(string)) > 0 {
 		conf.PostUp = patch["PostUp"].(string)
@@ -274,7 +274,7 @@ func (conf *DsnetConfig) Merge(patch map[string]interface{}) error {
 		conf.PostDown = patch["PostDown"].(string)
 	}
 	if len(patch["Peers"].([]PeerConfig)) > 0 {
-		conf.Peers = patch.Peers
+		conf.Peers = patch["Peers"].([]PeerConfig)
 	}
 
 	return validator.New().Struct(conf)
