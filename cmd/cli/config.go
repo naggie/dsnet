@@ -296,8 +296,85 @@ func (conf *DsnetConfig) Merge(patch map[string]interface{}) error {
 	if val, ok := patch["PostDown"].(string); ok && len(val) > 0 {
 		conf.PostDown = val
 	}
-	if val, ok := patch["Peers"].([]PeerConfig); ok && len(val) > 0 {
-		conf.Peers = val
+	if val, ok := patch["Peers"].([]interface{}); ok && len(val) > 0 {
+		conf.Peers = make([]PeerConfig, len(val))
+		for i, v := range val {
+			peerMap, ok := v.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("failed to parse peer: %v", v)
+			}
+			peer := PeerConfig{}
+			// decode manually without peerstructure
+			if val, ok := peerMap["Hostname"].(string); ok && val != "" {
+				peer.Hostname = val
+			} else {
+				return fmt.Errorf("failed to parse peer hostname: %v", peerMap)
+			}
+			if val, ok := peerMap["Description"].(string); ok && val != "" {
+				peer.Description = val
+			} else {
+				return fmt.Errorf("failed to parse peer description: %v", peerMap)
+			}
+			if val, ok := peerMap["Owner"].(string); ok && val != "" {
+				peer.Owner = val
+			} else {
+				return fmt.Errorf("failed to parse peer owner: %v", peerMap)
+			}
+			if val, ok := peerMap["IP"].(string); ok && len(val) > 0 {
+				peer.IP = net.ParseIP(val)
+			} else {
+				return fmt.Errorf("failed to parse peer IP: %v", peerMap)
+			}
+			if val, ok := peerMap["IP6"].(string); ok && len(val) > 0 {
+				peer.IP6 = net.ParseIP(val)
+			} else {
+				return fmt.Errorf("failed to parse peer IP6: %v", peerMap)
+			}
+			if val, ok := peerMap["Added"].(string); ok && len(val) > 0 {
+				t, err := time.Parse(time.RFC3339, val)
+				if err != nil {
+					return fmt.Errorf("failed to parse peer Added: %w", err)
+				}
+				peer.Added = t
+			} else {
+				return fmt.Errorf("failed to parse peer Added: %v", peerMap)
+			}
+			if val, ok := peerMap["Networks"].([]interface{}); ok && len(val) > 0 {
+				peer.Networks = make([]lib.JSONIPNet, len(val))
+				for j, v := range val {
+					net, err := lib.ParseJSONIPNet(v.(string))
+					if err != nil {
+						return fmt.Errorf("failed to parse peer network: %w", err)
+					}
+					peer.Networks[j] = net
+				}
+			} else {
+				return fmt.Errorf("failed to parse peer networks: %v", peerMap)
+			}
+			if val, ok := peerMap["PublicKey"].(string); ok && len(val) > 0 {
+				b64Key := strings.Trim(val, "\"")
+				key, err := wgtypes.ParseKey(b64Key)
+				if err != nil {
+					return fmt.Errorf("failed to parse peer public key: %w", err)
+				}
+				peer.PublicKey.Key = key
+			} else {
+				return fmt.Errorf("failed to parse peer public key: %v", peerMap)
+			}
+
+			if val, ok := peerMap["PresharedKey"].(string); ok && len(val) > 0 {
+				b64Key := strings.Trim(val, "\"")
+				key, err := wgtypes.ParseKey(b64Key)
+				if err != nil {
+					return fmt.Errorf("failed to parse peer preshared key: %w", err)
+				}
+				peer.PresharedKey.Key = key
+			} else {
+				return fmt.Errorf("failed to parse peer preshared key: %v", peerMap)
+			}
+
+			conf.Peers[i] = peer
+		}
 	}
 
 	// Validate the updated configuration
