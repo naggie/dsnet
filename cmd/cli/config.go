@@ -67,7 +67,7 @@ type DsnetConfig struct {
 	Peers      []PeerConfig `validate:"dive"`
 	// used for server and client
 	PersistentKeepalive int `validate:"gte=0,lte=255"`
-	MTU			 int `validate:"gte=0,lte=65535"`
+	MTU                 int `validate:"gte=0,lte=65535"`
 }
 
 // LoadConfigFile parses the json config file, validates and stuffs
@@ -89,7 +89,7 @@ func LoadConfigFile() (*DsnetConfig, error) {
 		// used _even if value is zero!_
 		// Effectively, this is a migration
 		PersistentKeepalive: 25,
-		MTU: 1420,
+		MTU:                 1420,
 	}
 
 	err = json.Unmarshal(raw, &conf)
