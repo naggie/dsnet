@@ -47,7 +47,7 @@ func (s *Server) CreateLink() error {
 		}
 	}
 
-		if len(s.IP) != 0 {
+	if len(s.IP) != 0 {
 		addr := &netlink.Addr{
 			IPNet: &net.IPNet{
 				IP:   s.IP,
@@ -60,7 +60,7 @@ func (s *Server) CreateLink() error {
 			return err
 		}
 
-		if ! exists {
+		if !exists {
 			err = netlink.AddrAdd(link, addr)
 			if err != nil {
 				return fmt.Errorf("could not add ipv4 addr %s to interface %s: %v", addr.IP, s.InterfaceName, err)

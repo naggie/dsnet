@@ -94,5 +94,5 @@ func ParseJSONIPNet(cidr string) (JSONIPNet, error) {
 	if err != nil {
 		return JSONIPNet{}, fmt.Errorf("failed to parse CIDR %s: %w", cidr, err)
 	}
-	return JSONIPNet{ IPNet: *ipnet }, nil
+	return JSONIPNet{IPNet: *ipnet}, nil
 }
