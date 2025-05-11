@@ -1,12 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
-	"encoding/json"
 
 	"github.com/naggie/dsnet"
 	"github.com/naggie/dsnet/cmd/cli"
@@ -230,10 +230,10 @@ func init() {
 
 func main() {
 	// do not show usage on non cli-parsing related errors
-	rootCmd.SilenceUsage = true;
+	rootCmd.SilenceUsage = true
 
 	// we handle errors ourselves
-	rootCmd.SilenceErrors = true;
+	rootCmd.SilenceErrors = true
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "\033[31m%s\033[0m\n", err.Error())

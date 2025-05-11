@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"time"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator"
 	"github.com/naggie/dsnet/lib"
@@ -231,7 +231,7 @@ func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
 
 func (conf *DsnetConfig) Merge(patch map[string]interface{}) error {
 	// Merge the patch into the config
-	
+
 	if val, ok := patch["ExternalHostname"].(string); ok && val != "" {
 		conf.ExternalHostname = val
 	}
