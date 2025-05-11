@@ -118,7 +118,6 @@ func (s *Server) CreateLink() error {
 		}
 	}
 
-
 	// set MTU
 	err = netlink.LinkSetMTU(link, s.MTU)
 	if err != nil {
