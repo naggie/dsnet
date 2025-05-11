@@ -65,6 +65,8 @@ func (s *Server) CreateLink() error {
 			if err != nil {
 				return fmt.Errorf("could not add ipv4 addr %s to interface %s: %v", addr.IP, s.InterfaceName, err)
 			}
+			// set MTU
+			err = netlink.LinkSetMTU(link, s.MTU)
 		}
 	}
 

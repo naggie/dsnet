@@ -206,6 +206,7 @@ func init() {
 	viper.SetDefault("config_file", "/etc/dsnetconfig.json")
 	viper.SetDefault("fallback_wg_bing", "wireguard-go")
 	viper.SetDefault("listen_port", 51820)
+	viper.SetDefault("MTU", 1420)
 	viper.SetDefault("interface_name", "dsnet")
 
 	// if last handshake (different from keepalive, see https://www.wireguard.com/protocol/)
