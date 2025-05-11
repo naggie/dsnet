@@ -28,6 +28,7 @@ type Server struct {
 	Peers               []Peer
 	Networks            []JSONIPNet
 	PersistentKeepalive int
+	MTU                 int
 }
 
 func (s *Server) GetPeers() []wgtypes.PeerConfig {

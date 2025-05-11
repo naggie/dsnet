@@ -26,5 +26,6 @@ func GetServer(config *DsnetConfig) *lib.Server {
 		Peers:               jsonPeerToDsnetPeer(config.Peers),
 		Networks:            config.Networks,
 		PersistentKeepalive: config.PersistentKeepalive,
+		MTU:                 config.MTU,
 	}
 }
