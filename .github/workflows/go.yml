@@ -30,5 +30,8 @@ jobs:
     - name: Build
       run: GOOS=linux CGO_ENABLED=0 ${{ matrix.arch }} go build -v ./cmd/root.go
 
+    - name: Lint
+      run: test -z $(gofmt -l .)
+
     - name: Test
       run: go test -v ./...
