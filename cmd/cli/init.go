@@ -17,6 +17,7 @@ import (
 
 func Init() error {
 	listenPort := viper.GetInt("listen_port")
+	MTU := viper.GetInt("mtu")
 	configFile := viper.GetString("config_file")
 	interfaceName := viper.GetString("interface_name")
 
@@ -53,6 +54,7 @@ func Init() error {
 		InterfaceName:       interfaceName,
 		Networks:            []lib.JSONIPNet{},
 		PersistentKeepalive: 25,
+		MTU:                 MTU,
 	}
 
 	server := GetServer(conf)

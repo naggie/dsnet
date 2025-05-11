@@ -65,8 +65,6 @@ func (s *Server) CreateLink() error {
 			if err != nil {
 				return fmt.Errorf("could not add ipv4 addr %s to interface %s: %v", addr.IP, s.InterfaceName, err)
 			}
-			// set MTU
-			err = netlink.LinkSetMTU(link, s.MTU)
 		}
 
 		// remove any other IPs on the interface
@@ -118,6 +116,13 @@ func (s *Server) CreateLink() error {
 				}
 			}
 		}
+	}
+
+
+	// set MTU
+	err = netlink.LinkSetMTU(link, s.MTU)
+	if err != nil {
+		return fmt.Errorf("failed to set MTU %d on interface %s: %v", s.MTU, s.InterfaceName, err)
 	}
 
 	// bring up interface (UNKNOWN state instead of UP, a wireguard quirk)
