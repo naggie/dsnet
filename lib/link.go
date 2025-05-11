@@ -66,6 +66,20 @@ func (s *Server) CreateLink() error {
 				return fmt.Errorf("could not add ipv4 addr %s to interface %s: %v", addr.IP, s.InterfaceName, err)
 			}
 		}
+
+		// remove any other IPs on the interface
+		addrs, err := netlink.AddrList(link, netlink.FAMILY_V4)
+		if err != nil {
+			return fmt.Errorf("failed to list addresses for interface: %v", err)
+		}
+		for _, addr := range addrs {
+			if addr.IPNet.String() != addr.IPNet.String() {
+				err := netlink.AddrDel(link, addr)
+				if err != nil {
+					return fmt.Errorf("failed to delete address %s from interface %s: %v", addr.IP, s.InterfaceName, err)
+				}
+			}
+		}
 	}
 
 	if len(s.IP6) != 0 {
@@ -85,6 +99,21 @@ func (s *Server) CreateLink() error {
 			err = netlink.AddrAdd(link, addr6)
 			if err != nil {
 				return fmt.Errorf("could not add ipv6 addr %s to interface %s: %v. Do you have IPv6 enabled?", addr6.IP, s.InterfaceName, err)
+			}
+		}
+
+		// remove any other IPs on the interface
+		addrs, err := netlink.AddrList(link, netlink.FAMILY_V6)
+		if err != nil {
+			return fmt.Errorf("failed to list v6 addresses for interface: %v", err)
+		}
+
+		for _, addr := range addrs {
+			if addr.IPNet.String() != addr6.IPNet.String() {
+				err := netlink.AddrDel(link, addr)
+				if err != nil {
+					return fmt.Errorf("failed to delete address %s from interface %s: %v", addr.IP, s.InterfaceName, err)
+				}
 			}
 		}
 	}
