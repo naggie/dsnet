@@ -345,6 +345,47 @@ a secure web interface that does not require root. A web interface is currently
 being created by a friend; it will not be part of dstask, rather a separate
 project.
 
+
+# NixOS
+
+Dsnet is available in the NixOS package repository as both a package and a
+service module.
+
+Dsnet keeps its own configuration at `/etc/dsnetconfig.json`, which is more of
+a database. The way this module works is to patch this database with whatever
+is configured in the nix service instantiation. This happens automatically when
+required.
+
+This way it is possible to decide what to let dnset manage and what parts you
+want to keep declaratively.
+
+Example usage:
+
+```
+services.dsnet = {
+  enable = true;
+  settings = {
+    ExternalHostname = "vpn.example.com";
+    Network = "10.171.90.0/24";
+    Network6 = "";
+    IP = "10.171.90.1";
+    IP6 = "";
+    DNS = "10.171.90.1";
+    Networks = [ "0.0.0.0/0" ];
+  };
+
+```
+
+Minimal usage:
+
+```
+    services.dsnet.enable = true;
+```
+
+You're then free to use `dsnet add` (etc) as usual. Editing the nix
+configuration will reload/restart dsnet as appropriate.
+
 ----
 
 The dsnet logo was kindly designed by [@mirorauhala](https://github.com/mirorauhala).
+
