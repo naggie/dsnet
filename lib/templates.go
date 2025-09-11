@@ -68,9 +68,6 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
       {{ end -}}
     ];
     privateKey = "{{ .Peer.PrivateKey.Key }}";
-    {{- if .Server.DNS }}
-    dns = [ "{{ .Server.DNS }}" ];
-    {{ end }}
     peers = [
       {{ "{" }}
         publicKey = "{{ .Server.PrivateKey.PublicKey.Key }}";
