@@ -79,6 +79,9 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
           {{ if gt (.Server.Network6.IPNet.IP | len) 0 -}}
           "{{ .Server.Network6.IPNet.IP }}/{{ .CidrSize6  }}"
           {{ end -}}
+		  {{ range .Server.Networks -}}
+			"{{ . }}"
+		  {{ end -}}
         ];
         endpoint = "{{ .Endpoint }}:{{ .Server.ListenPort }}";
         persistentKeepalive = {{ .Server.PersistentKeepalive }};
