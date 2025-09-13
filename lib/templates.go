@@ -59,8 +59,6 @@ commit; save
 
 const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
   dsnet = {{ "{" }}
-	dynamicEndpointRefreshSeconds = 5; # restart on failure (e.g. DNS issue) 
-	dynamicEndpointRefreshSeconds = 300; # refresh DNS periodically          
     ips = [
       {{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
       "{{ .Peer.IP }}/{{ .CidrSize }}"
@@ -87,6 +85,8 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
         ];
         endpoint = "{{ .Endpoint }}:{{ .Server.ListenPort }}";
         persistentKeepalive = {{ .Server.PersistentKeepalive }};
+		dynamicEndpointRefreshRestartSeconds = 5; # restart on failure (e.g. DNS issue)
+		dynamicEndpointRefreshSeconds = 300; # refresh DNS periodically
       {{ "}" }}
     ];
   {{ "};" }}
