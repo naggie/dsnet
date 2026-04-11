@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ "1.17", "1.18" ]
+        go: [ "1.25", "1.26" ]
         arch:
           - "GOARCH=amd64"
           - "GOARCH=arm GOARM=5"
@@ -20,10 +20,10 @@ jobs:
           - "GOARCH=arm GOARM=7"
           - "GOARCH=arm64"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go }}
 
@@ -40,7 +40,7 @@ jobs:
         fi
 
     - name: Test
-      run: go test -v ./...
+      run: CGO_ENABLED=0 go test -v ./...
 
   coverage:
     runs-on: ubuntu-latest
