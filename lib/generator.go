@@ -51,7 +51,7 @@ func GetWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buff
 	} else if len(server.ExternalIP) > 0 {
 		endpoint = server.ExternalIP.String()
 	} else if len(server.ExternalIP6) > 0 {
-		endpoint = server.ExternalIP6.String()
+		endpoint = "[" + server.ExternalIP6.String() + "]"
 	} else {
 		return nil, errors.New("server config requires at least one of ExternalIP, ExternalIP6 or ExternalHostname")
 	}

@@ -237,8 +237,7 @@ func TestGetWGPeerTemplateEndpointPrecedence(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		// NOTE: IPv6 endpoint is not bracket-wrapped in the source — to be fixed in modernization pass
-		if !strings.Contains(buf.String(), "2001:db8::1:51820") {
+		if !strings.Contains(buf.String(), "[2001:db8::1]:51820") {
 			t.Fatal("should use ExternalIP6 as last resort")
 		}
 	})
