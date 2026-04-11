@@ -127,7 +127,7 @@ func (s *Server) CreateLink() error {
 	// bring up interface (UNKNOWN state instead of UP, a wireguard quirk)
 	err = netlink.LinkSetUp(link)
 	if err != nil {
-		return fmt.Errorf("could not bring up device '%s' (%w)", s.InterfaceName, err)
+		return fmt.Errorf("could not bring up device '%s': %w", s.InterfaceName, err)
 	}
 	return nil
 }

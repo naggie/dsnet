@@ -40,7 +40,7 @@ func (p *Peer) getIfName() string {
 func GetWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buffer, error) {
 	peerConf, err := getPeerConfTplString(peerType)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get wg template: %s", err)
+		return nil, fmt.Errorf("failed to get wg template: %w", err)
 	}
 
 	// See DsnetConfig type for explanation

@@ -10,7 +10,7 @@ func ShellOut(command string, name string) error {
 		shell := exec.Command("/bin/sh", "-c", command)
 		err := shell.Run()
 		if err != nil {
-			return fmt.Errorf("failed to execute(%s - `%s`): %s ", name, command, err)
+			return fmt.Errorf("failed to execute(%s - `%s`): %w", name, command, err)
 		}
 	}
 	return nil
