@@ -9,60 +9,26 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-func TestBytesToSIZero(t *testing.T) {
-	result := BytesToSI(0)
-	if result != "0 B" {
-		t.Fatalf("expected '0 B', got '%s'", result)
+func TestBytesToSI(t *testing.T) {
+	tests := []struct {
+		input uint64
+		want  string
+	}{
+		{0, "0 B"},
+		{999, "999 B"},
+		{1000, "1.0 kB"},
+		{1500, "1.5 kB"},
+		{1000000, "1.0 MB"},
+		{1000000000, "1.0 GB"},
+		{1000000000000, "1.0 TB"},
+		{2500000000, "2.5 GB"},
 	}
-}
-
-func TestBytesToSIBytes(t *testing.T) {
-	result := BytesToSI(999)
-	if result != "999 B" {
-		t.Fatalf("expected '999 B', got '%s'", result)
-	}
-}
-
-func TestBytesToSIKilo(t *testing.T) {
-	result := BytesToSI(1000)
-	if result != "1.0 kB" {
-		t.Fatalf("expected '1.0 kB', got '%s'", result)
-	}
-}
-
-func TestBytesToSIKiloFractional(t *testing.T) {
-	result := BytesToSI(1500)
-	if result != "1.5 kB" {
-		t.Fatalf("expected '1.5 kB', got '%s'", result)
-	}
-}
-
-func TestBytesToSIMega(t *testing.T) {
-	result := BytesToSI(1000000)
-	if result != "1.0 MB" {
-		t.Fatalf("expected '1.0 MB', got '%s'", result)
-	}
-}
-
-func TestBytesToSIGiga(t *testing.T) {
-	result := BytesToSI(1000000000)
-	if result != "1.0 GB" {
-		t.Fatalf("expected '1.0 GB', got '%s'", result)
-	}
-}
-
-func TestBytesToSITera(t *testing.T) {
-	result := BytesToSI(1000000000000)
-	if result != "1.0 TB" {
-		t.Fatalf("expected '1.0 TB', got '%s'", result)
-	}
-}
-
-func TestBytesToSILargeValue(t *testing.T) {
-	// 2.5 GB
-	result := BytesToSI(2500000000)
-	if result != "2.5 GB" {
-		t.Fatalf("expected '2.5 GB', got '%s'", result)
+	for _, tt := range tests {
+		t.Run(tt.want, func(t *testing.T) {
+			if got := BytesToSI(tt.input); got != tt.want {
+				t.Fatalf("BytesToSI(%d) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
 	}
 }
 

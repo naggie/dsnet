@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/naggie/dsnet/lib"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 func TestDsnetReportPrint(t *testing.T) {
@@ -62,8 +61,6 @@ func TestDsnetReportPrint(t *testing.T) {
 }
 
 func TestDsnetReportJSONRoundTrip(t *testing.T) {
-	privKey, _ := wgtypes.GeneratePrivateKey()
-	psk, _ := wgtypes.GenerateKey()
 	now := time.Now().Truncate(time.Second) // JSON loses sub-second on some formats
 
 	report := DsnetReport{
@@ -115,9 +112,6 @@ func TestDsnetReportJSONRoundTrip(t *testing.T) {
 			},
 		},
 	}
-
-	_ = privKey
-	_ = psk
 
 	b, err := json.MarshalIndent(report, "", "    ")
 	if err != nil {

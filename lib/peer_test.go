@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewPeerBasic(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	peer, err := NewPeer(s, "", "", "alice", "laptop", "Alice's laptop")
 	if err != nil {
@@ -33,7 +33,7 @@ func TestNewPeerBasic(t *testing.T) {
 }
 
 func TestNewPeerGeneratesKeys(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	peer, err := NewPeer(s, "", "", "alice", "laptop", "test")
 	if err != nil {
@@ -59,7 +59,7 @@ func TestNewPeerGeneratesKeys(t *testing.T) {
 }
 
 func TestNewPeerAllocatesIP(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	peer, err := NewPeer(s, "", "", "alice", "laptop", "test")
 	if err != nil {
@@ -81,7 +81,7 @@ func TestNewPeerAllocatesIP(t *testing.T) {
 }
 
 func TestNewPeerSequentialIPs(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	peer1, err := NewPeer(s, "", "", "alice", "laptop1", "test")
 	if err != nil {
@@ -102,7 +102,7 @@ func TestNewPeerSequentialIPs(t *testing.T) {
 }
 
 func TestNewPeerMissingOwner(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	_, err := NewPeer(s, "", "", "", "laptop", "test")
 	if err == nil {
@@ -111,7 +111,7 @@ func TestNewPeerMissingOwner(t *testing.T) {
 }
 
 func TestNewPeerMissingHostname(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	_, err := NewPeer(s, "", "", "alice", "", "test")
 	if err == nil {
@@ -120,7 +120,7 @@ func TestNewPeerMissingHostname(t *testing.T) {
 }
 
 func TestNewPeerWithPrivateKey(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	privKey, _ := wgtypes.GeneratePrivateKey()
 	b64 := privKey.String()
@@ -139,7 +139,7 @@ func TestNewPeerWithPrivateKey(t *testing.T) {
 }
 
 func TestNewPeerWithPublicKeyOnly(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	privKey, _ := wgtypes.GeneratePrivateKey()
 	pubKey := privKey.PublicKey()
@@ -161,7 +161,7 @@ func TestNewPeerWithPublicKeyOnly(t *testing.T) {
 }
 
 func TestNewPeerWithMatchingKeyPair(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	privKey, _ := wgtypes.GeneratePrivateKey()
 	pubKey := privKey.PublicKey()
@@ -180,7 +180,7 @@ func TestNewPeerWithMatchingKeyPair(t *testing.T) {
 }
 
 func TestNewPeerWithMismatchedKeys(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	privKey1, _ := wgtypes.GeneratePrivateKey()
 	privKey2, _ := wgtypes.GeneratePrivateKey()
@@ -193,7 +193,7 @@ func TestNewPeerWithMismatchedKeys(t *testing.T) {
 }
 
 func TestNewPeerNoNetwork(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 	s.IP = nil
 	s.IP6 = nil
 	s.Network = JSONIPNet{}
@@ -206,7 +206,7 @@ func TestNewPeerNoNetwork(t *testing.T) {
 }
 
 func TestNewPeerIPv4Only(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 	s.IP6 = nil
 	s.Network6 = JSONIPNet{}
 
@@ -224,7 +224,7 @@ func TestNewPeerIPv4Only(t *testing.T) {
 }
 
 func TestNewPeerEmptyNetworks(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	peer, err := NewPeer(s, "", "", "alice", "laptop", "test")
 	if err != nil {

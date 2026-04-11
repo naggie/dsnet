@@ -7,8 +7,12 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-func testServer() *Server {
-	privKey, _ := wgtypes.GeneratePrivateKey()
+func testServer(t *testing.T) *Server {
+	t.Helper()
+	privKey, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		t.Fatalf("failed to generate key: %v", err)
+	}
 	return &Server{
 		ExternalHostname: "vpn.example.com",
 		ListenPort:       51820,
@@ -36,7 +40,7 @@ func testServer() *Server {
 }
 
 func TestAllocateIPFirst(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	ip, err := s.AllocateIP()
 	if err != nil {
@@ -51,7 +55,7 @@ func TestAllocateIPFirst(t *testing.T) {
 }
 
 func TestAllocateIPSequential(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	// Add a peer at .2
 	s.Peers = append(s.Peers, Peer{
@@ -70,7 +74,7 @@ func TestAllocateIPSequential(t *testing.T) {
 }
 
 func TestAllocateIPSkipsServer(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	// Verify that the server IP (.1) is skipped
 	if !s.IPAllocated(net.IP{10, 0, 0, 1}) {
@@ -79,7 +83,7 @@ func TestAllocateIPSkipsServer(t *testing.T) {
 }
 
 func TestAllocateIPExhausted(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 	// Use a /30 network (only 2 usable IPs: .1 and .2)
 	s.Network = JSONIPNet{
 		IPNet: net.IPNet{
@@ -99,7 +103,7 @@ func TestAllocateIPExhausted(t *testing.T) {
 }
 
 func TestAllocateIP6(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	ip, err := s.AllocateIP6()
 	if err != nil {
@@ -118,7 +122,7 @@ func TestAllocateIP6(t *testing.T) {
 }
 
 func TestAllocateIP6Unique(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	ip1, err := s.AllocateIP6()
 	if err != nil {
@@ -138,7 +142,7 @@ func TestAllocateIP6Unique(t *testing.T) {
 }
 
 func TestIPAllocatedServerIP(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 
 	if !s.IPAllocated(s.IP) {
 		t.Fatal("server IPv4 should be allocated")
@@ -149,7 +153,7 @@ func TestIPAllocatedServerIP(t *testing.T) {
 }
 
 func TestIPAllocatedPeerIP(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 	peerIP := net.IP{10, 0, 0, 5}
 	s.Peers = append(s.Peers, Peer{IP: peerIP})
 
@@ -163,7 +167,7 @@ func TestIPAllocatedPeerIP(t *testing.T) {
 }
 
 func TestIPAllocatedPeerNetwork(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 	_, subnet, _ := net.ParseCIDR("192.168.1.0/24")
 	s.Peers = append(s.Peers, Peer{
 		IP: net.IP{10, 0, 0, 5},
@@ -178,7 +182,7 @@ func TestIPAllocatedPeerNetwork(t *testing.T) {
 }
 
 func TestGetPeersEmpty(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 	peers := s.GetPeers()
 	if len(peers) != 0 {
 		t.Fatalf("expected 0 peers, got %d", len(peers))
@@ -186,7 +190,7 @@ func TestGetPeersEmpty(t *testing.T) {
 }
 
 func TestGetPeersWithPeer(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 	peerKey, _ := wgtypes.GeneratePrivateKey()
 	psk, _ := wgtypes.GenerateKey()
 
@@ -228,7 +232,7 @@ func TestGetPeersWithPeer(t *testing.T) {
 }
 
 func TestGetPeersAllowedIPsIncludesNetworks(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 	peerKey, _ := wgtypes.GeneratePrivateKey()
 	psk, _ := wgtypes.GenerateKey()
 	_, subnet, _ := net.ParseCIDR("192.168.1.0/24")
@@ -251,7 +255,7 @@ func TestGetPeersAllowedIPsIncludesNetworks(t *testing.T) {
 }
 
 func TestGetPeersPresharedKeyIsolation(t *testing.T) {
-	s := testServer()
+	s := testServer(t)
 	key1, _ := wgtypes.GeneratePrivateKey()
 	key2, _ := wgtypes.GeneratePrivateKey()
 	psk1, _ := wgtypes.GenerateKey()

@@ -6,10 +6,14 @@ import (
 	"time"
 
 	"github.com/naggie/dsnet/lib"
+	"github.com/spf13/viper"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 func TestGetServerFieldMapping(t *testing.T) {
+	viper.Set("fallback_wg_bin", "/usr/bin/wg")
+	t.Cleanup(func() { viper.Set("fallback_wg_bin", "") })
+
 	privKey, _ := wgtypes.GeneratePrivateKey()
 	peerKey, _ := wgtypes.GeneratePrivateKey()
 	psk, _ := wgtypes.GenerateKey()
@@ -99,6 +103,9 @@ func TestGetServerFieldMapping(t *testing.T) {
 	if server.PostDown != "iptables -D" {
 		t.Fatalf("PostDown mismatch: %s", server.PostDown)
 	}
+	if server.FallbackWGBin != "/usr/bin/wg" {
+		t.Fatalf("FallbackWGBin mismatch: %s", server.FallbackWGBin)
+	}
 	if server.PersistentKeepalive != 30 {
 		t.Fatalf("PersistentKeepalive mismatch: %d", server.PersistentKeepalive)
 	}
@@ -119,7 +126,7 @@ func TestGetServerFieldMapping(t *testing.T) {
 }
 
 func TestGetServerEmptyPeers(t *testing.T) {
-	config := testDsnetConfig()
+	config := testDsnetConfig(t)
 	server := GetServer(config)
 
 	if len(server.Peers) != 0 {

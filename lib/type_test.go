@@ -76,7 +76,9 @@ func TestJSONIPNetString(t *testing.T) {
 
 func TestJSONIPNetRoundTrip(t *testing.T) {
 	original := JSONIPNet{}
-	original.UnmarshalJSON([]byte(`"10.5.4.0/22"`))
+	if err := original.UnmarshalJSON([]byte(`"10.5.4.0/22"`)); err != nil {
+		t.Fatalf("unmarshal error: %v", err)
+	}
 
 	b, err := original.MarshalJSON()
 	if err != nil {

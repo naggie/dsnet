@@ -9,8 +9,12 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-func testDsnetConfig() *DsnetConfig {
-	privKey, _ := wgtypes.GeneratePrivateKey()
+func testDsnetConfig(t *testing.T) *DsnetConfig {
+	t.Helper()
+	privKey, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		t.Fatalf("failed to generate key: %v", err)
+	}
 	return &DsnetConfig{
 		ExternalHostname: "vpn.example.com",
 		ListenPort:       51820,
@@ -37,9 +41,16 @@ func testDsnetConfig() *DsnetConfig {
 	}
 }
 
-func testLibPeer(hostname, owner string, ip net.IP) lib.Peer {
-	privKey, _ := wgtypes.GeneratePrivateKey()
-	psk, _ := wgtypes.GenerateKey()
+func testLibPeer(t *testing.T, hostname, owner string, ip net.IP) lib.Peer {
+	t.Helper()
+	privKey, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		t.Fatalf("failed to generate key: %v", err)
+	}
+	psk, err := wgtypes.GenerateKey()
+	if err != nil {
+		t.Fatalf("failed to generate preshared key: %v", err)
+	}
 	return lib.Peer{
 		Hostname:     hostname,
 		Owner:        owner,
@@ -55,8 +66,8 @@ func testLibPeer(hostname, owner string, ip net.IP) lib.Peer {
 }
 
 func TestAddPeerBasic(t *testing.T) {
-	conf := testDsnetConfig()
-	peer := testLibPeer("laptop", "alice", net.IP{10, 0, 0, 2})
+	conf := testDsnetConfig(t)
+	peer := testLibPeer(t, "laptop", "alice", net.IP{10, 0, 0, 2})
 
 	err := conf.AddPeer(peer)
 	if err != nil {
@@ -80,10 +91,10 @@ func TestAddPeerBasic(t *testing.T) {
 }
 
 func TestAddPeerMultiple(t *testing.T) {
-	conf := testDsnetConfig()
+	conf := testDsnetConfig(t)
 
-	peer1 := testLibPeer("laptop1", "alice", net.IP{10, 0, 0, 2})
-	peer2 := testLibPeer("laptop2", "bob", net.IP{10, 0, 0, 3})
+	peer1 := testLibPeer(t, "laptop1", "alice", net.IP{10, 0, 0, 2})
+	peer2 := testLibPeer(t, "laptop2", "bob", net.IP{10, 0, 0, 3})
 
 	if err := conf.AddPeer(peer1); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -98,9 +109,9 @@ func TestAddPeerMultiple(t *testing.T) {
 }
 
 func TestAddPeerDuplicateHostname(t *testing.T) {
-	conf := testDsnetConfig()
-	peer1 := testLibPeer("laptop", "alice", net.IP{10, 0, 0, 2})
-	peer2 := testLibPeer("laptop", "bob", net.IP{10, 0, 0, 3})
+	conf := testDsnetConfig(t)
+	peer1 := testLibPeer(t, "laptop", "alice", net.IP{10, 0, 0, 2})
+	peer2 := testLibPeer(t, "laptop", "bob", net.IP{10, 0, 0, 3})
 
 	if err := conf.AddPeer(peer1); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -113,9 +124,9 @@ func TestAddPeerDuplicateHostname(t *testing.T) {
 }
 
 func TestAddPeerDuplicatePublicKey(t *testing.T) {
-	conf := testDsnetConfig()
-	peer1 := testLibPeer("laptop1", "alice", net.IP{10, 0, 0, 2})
-	peer2 := testLibPeer("laptop2", "bob", net.IP{10, 0, 0, 3})
+	conf := testDsnetConfig(t)
+	peer1 := testLibPeer(t, "laptop1", "alice", net.IP{10, 0, 0, 2})
+	peer2 := testLibPeer(t, "laptop2", "bob", net.IP{10, 0, 0, 3})
 
 	// Make them share the same public key
 	peer2.PublicKey = peer1.PublicKey
@@ -131,9 +142,9 @@ func TestAddPeerDuplicatePublicKey(t *testing.T) {
 }
 
 func TestAddPeerDuplicatePresharedKey(t *testing.T) {
-	conf := testDsnetConfig()
-	peer1 := testLibPeer("laptop1", "alice", net.IP{10, 0, 0, 2})
-	peer2 := testLibPeer("laptop2", "bob", net.IP{10, 0, 0, 3})
+	conf := testDsnetConfig(t)
+	peer1 := testLibPeer(t, "laptop1", "alice", net.IP{10, 0, 0, 2})
+	peer2 := testLibPeer(t, "laptop2", "bob", net.IP{10, 0, 0, 3})
 
 	// Make them share the same preshared key
 	peer2.PresharedKey = peer1.PresharedKey
@@ -149,8 +160,8 @@ func TestAddPeerDuplicatePresharedKey(t *testing.T) {
 }
 
 func TestAddPeerFieldMapping(t *testing.T) {
-	conf := testDsnetConfig()
-	peer := testLibPeer("laptop", "alice", net.IP{10, 0, 0, 2})
+	conf := testDsnetConfig(t)
+	peer := testLibPeer(t, "laptop", "alice", net.IP{10, 0, 0, 2})
 	peer.Description = "specific description"
 
 	if err := conf.AddPeer(peer); err != nil {
@@ -176,8 +187,8 @@ func TestAddPeerFieldMapping(t *testing.T) {
 }
 
 func TestRemovePeerBasic(t *testing.T) {
-	conf := testDsnetConfig()
-	peer := testLibPeer("laptop", "alice", net.IP{10, 0, 0, 2})
+	conf := testDsnetConfig(t)
+	peer := testLibPeer(t, "laptop", "alice", net.IP{10, 0, 0, 2})
 	conf.AddPeer(peer)
 
 	err := conf.RemovePeer("laptop")
@@ -191,7 +202,7 @@ func TestRemovePeerBasic(t *testing.T) {
 }
 
 func TestRemovePeerNotFound(t *testing.T) {
-	conf := testDsnetConfig()
+	conf := testDsnetConfig(t)
 
 	err := conf.RemovePeer("nonexistent")
 	if err == nil {
@@ -200,10 +211,10 @@ func TestRemovePeerNotFound(t *testing.T) {
 }
 
 func TestRemovePeerRetainsOrder(t *testing.T) {
-	conf := testDsnetConfig()
-	peer1 := testLibPeer("laptop1", "alice", net.IP{10, 0, 0, 2})
-	peer2 := testLibPeer("laptop2", "bob", net.IP{10, 0, 0, 3})
-	peer3 := testLibPeer("laptop3", "carol", net.IP{10, 0, 0, 4})
+	conf := testDsnetConfig(t)
+	peer1 := testLibPeer(t, "laptop1", "alice", net.IP{10, 0, 0, 2})
+	peer2 := testLibPeer(t, "laptop2", "bob", net.IP{10, 0, 0, 3})
+	peer3 := testLibPeer(t, "laptop3", "carol", net.IP{10, 0, 0, 4})
 
 	conf.AddPeer(peer1)
 	conf.AddPeer(peer2)
@@ -227,9 +238,9 @@ func TestRemovePeerRetainsOrder(t *testing.T) {
 }
 
 func TestRemovePeerFirst(t *testing.T) {
-	conf := testDsnetConfig()
-	peer1 := testLibPeer("laptop1", "alice", net.IP{10, 0, 0, 2})
-	peer2 := testLibPeer("laptop2", "bob", net.IP{10, 0, 0, 3})
+	conf := testDsnetConfig(t)
+	peer1 := testLibPeer(t, "laptop1", "alice", net.IP{10, 0, 0, 2})
+	peer2 := testLibPeer(t, "laptop2", "bob", net.IP{10, 0, 0, 3})
 
 	conf.AddPeer(peer1)
 	conf.AddPeer(peer2)
@@ -248,9 +259,9 @@ func TestRemovePeerFirst(t *testing.T) {
 }
 
 func TestRemovePeerLast(t *testing.T) {
-	conf := testDsnetConfig()
-	peer1 := testLibPeer("laptop1", "alice", net.IP{10, 0, 0, 2})
-	peer2 := testLibPeer("laptop2", "bob", net.IP{10, 0, 0, 3})
+	conf := testDsnetConfig(t)
+	peer1 := testLibPeer(t, "laptop1", "alice", net.IP{10, 0, 0, 2})
+	peer2 := testLibPeer(t, "laptop2", "bob", net.IP{10, 0, 0, 3})
 
 	conf.AddPeer(peer1)
 	conf.AddPeer(peer2)
@@ -269,8 +280,8 @@ func TestRemovePeerLast(t *testing.T) {
 }
 
 func TestGetWgPeerConfigs(t *testing.T) {
-	conf := testDsnetConfig()
-	peer := testLibPeer("laptop", "alice", net.IP{10, 0, 0, 2})
+	conf := testDsnetConfig(t)
+	peer := testLibPeer(t, "laptop", "alice", net.IP{10, 0, 0, 2})
 	conf.AddPeer(peer)
 
 	wgPeers := conf.GetWgPeerConfigs()
@@ -291,8 +302,8 @@ func TestGetWgPeerConfigs(t *testing.T) {
 }
 
 func TestGetWgPeerConfigsAllowedIPs(t *testing.T) {
-	conf := testDsnetConfig()
-	peer := testLibPeer("laptop", "alice", net.IP{10, 0, 0, 2})
+	conf := testDsnetConfig(t)
+	peer := testLibPeer(t, "laptop", "alice", net.IP{10, 0, 0, 2})
 	conf.AddPeer(peer)
 
 	wgPeers := conf.GetWgPeerConfigs()
@@ -314,8 +325,8 @@ func TestGetWgPeerConfigsAllowedIPs(t *testing.T) {
 }
 
 func TestGetWgPeerConfigsWithNetworks(t *testing.T) {
-	conf := testDsnetConfig()
-	peer := testLibPeer("laptop", "alice", net.IP{10, 0, 0, 2})
+	conf := testDsnetConfig(t)
+	peer := testLibPeer(t, "laptop", "alice", net.IP{10, 0, 0, 2})
 	peer.IP6 = nil // IPv4 only for simpler test
 
 	_, subnet, _ := net.ParseCIDR("192.168.1.0/24")
@@ -333,9 +344,9 @@ func TestGetWgPeerConfigsWithNetworks(t *testing.T) {
 }
 
 func TestGetWgPeerConfigsPresharedKeyIsolation(t *testing.T) {
-	conf := testDsnetConfig()
-	peer1 := testLibPeer("laptop1", "alice", net.IP{10, 0, 0, 2})
-	peer2 := testLibPeer("laptop2", "bob", net.IP{10, 0, 0, 3})
+	conf := testDsnetConfig(t)
+	peer1 := testLibPeer(t, "laptop1", "alice", net.IP{10, 0, 0, 2})
+	peer2 := testLibPeer(t, "laptop2", "bob", net.IP{10, 0, 0, 3})
 
 	conf.AddPeer(peer1)
 	conf.AddPeer(peer2)

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -31,8 +32,11 @@ func TestShellOutErrorContainsInfo(t *testing.T) {
 		t.Fatal("expected error")
 	}
 	errStr := err.Error()
-	if errStr == "" {
-		t.Fatal("error message should not be empty")
+	if !strings.Contains(errStr, "my-task") {
+		t.Fatalf("error should mention task name 'my-task', got: %s", errStr)
+	}
+	if !strings.Contains(errStr, "false") {
+		t.Fatalf("error should mention command 'false', got: %s", errStr)
 	}
 }
 

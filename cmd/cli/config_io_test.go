@@ -15,7 +15,9 @@ import (
 
 func setupViperForTest(t *testing.T, configPath string) {
 	t.Helper()
+	old := viper.GetString("config_file")
 	viper.Set("config_file", configPath)
+	t.Cleanup(func() { viper.Set("config_file", old) })
 }
 
 func writeTestConfig(t *testing.T, path string, conf *DsnetConfig) {
@@ -25,7 +27,7 @@ func writeTestConfig(t *testing.T, path string, conf *DsnetConfig) {
 		t.Fatalf("failed to marshal config: %v", err)
 	}
 	b = append(b, '\n')
-	if err := os.WriteFile(path, b, 0600); err != nil {
+	if err := os.WriteFile(path, b, 0o600); err != nil {
 		t.Fatalf("failed to write config: %v", err)
 	}
 }
@@ -35,9 +37,18 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "dsnetconfig.json")
 	setupViperForTest(t, configPath)
 
-	privKey, _ := wgtypes.GeneratePrivateKey()
-	peerKey, _ := wgtypes.GeneratePrivateKey()
-	psk, _ := wgtypes.GenerateKey()
+	privKey, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		t.Fatalf("failed to generate private key: %v", err)
+	}
+	peerKey, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		t.Fatalf("failed to generate peer key: %v", err)
+	}
+	psk, err := wgtypes.GenerateKey()
+	if err != nil {
+		t.Fatalf("failed to generate preshared key: %v", err)
+	}
 
 	original := &DsnetConfig{
 		ExternalHostname: "vpn.example.com",
@@ -82,7 +93,7 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 	}
 
 	// Save
-	err := original.Save()
+	err = original.Save()
 	if err != nil {
 		t.Fatalf("Save error: %v", err)
 	}
@@ -157,7 +168,7 @@ func TestSaveFilePermissions(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "dsnetconfig.json")
 	setupViperForTest(t, configPath)
 
-	conf := testDsnetConfig()
+	conf := testDsnetConfig(t)
 	if err := conf.Save(); err != nil {
 		t.Fatalf("Save error: %v", err)
 	}
@@ -169,7 +180,7 @@ func TestSaveFilePermissions(t *testing.T) {
 
 	// Should be 0600 (owner read/write only)
 	perm := info.Mode().Perm()
-	if perm != 0600 {
+	if perm != 0o600 {
 		t.Fatalf("expected permissions 0600, got %o", perm)
 	}
 }
@@ -188,7 +199,9 @@ func TestLoadConfigFileInvalidJSON(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "dsnetconfig.json")
 	setupViperForTest(t, configPath)
 
-	os.WriteFile(configPath, []byte("not json"), 0600)
+	if err := os.WriteFile(configPath, []byte("not json"), 0o600); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
 
 	_, err := LoadConfigFile()
 	if err == nil {
@@ -202,22 +215,29 @@ func TestLoadConfigFileDefaultKeepalive(t *testing.T) {
 	setupViperForTest(t, configPath)
 
 	// Write config without PersistentKeepalive
-	privKey, _ := wgtypes.GeneratePrivateKey()
-	raw := map[string]interface{}{
-		"ExternalHostname":    "vpn.example.com",
-		"ListenPort":          51820,
-		"Domain":              "dsnet",
-		"InterfaceName":       "dsnet",
-		"Network":             "10.0.0.0/22",
-		"Network6":            "fd00::/64",
-		"IP":                  "10.0.0.1",
-		"IP6":                 "fd00::1",
-		"PrivateKey":          privKey.String(),
-		"Networks":            []string{},
-		"Peers":               []interface{}{},
+	privKey, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		t.Fatalf("failed to generate key: %v", err)
 	}
-	b, _ := json.MarshalIndent(raw, "", "    ")
-	os.WriteFile(configPath, b, 0600)
+	raw := []byte(`{
+		"ExternalHostname": "vpn.example.com",
+		"ListenPort":       51820,
+		"Domain":           "dsnet",
+		"InterfaceName":    "dsnet",
+		"Network":          "10.0.0.0/22",
+		"Network6":         "fd00::/64",
+		"IP":               "10.0.0.1",
+		"IP6":              "fd00::1",
+		"PrivateKey":       "` + privKey.String() + `",
+		"Networks":         [],
+		"Peers":            []
+	}`)
+	if !json.Valid(raw) {
+		t.Fatalf("test fixture is not valid JSON: %s", raw)
+	}
+	if err := os.WriteFile(configPath, raw, 0o600); err != nil {
+		t.Fatalf("failed to write config: %v", err)
+	}
 
 	loaded, err := LoadConfigFile()
 	if err != nil {
@@ -235,7 +255,10 @@ func TestLoadConfigFileMissingEndpoint(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "dsnetconfig.json")
 	setupViperForTest(t, configPath)
 
-	privKey, _ := wgtypes.GeneratePrivateKey()
+	privKey, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		t.Fatalf("failed to generate key: %v", err)
+	}
 	conf := &DsnetConfig{
 		// No ExternalHostname, ExternalIP, or ExternalIP6
 		ListenPort:    51820,
@@ -263,7 +286,7 @@ func TestLoadConfigFileMissingEndpoint(t *testing.T) {
 
 	writeTestConfig(t, configPath, conf)
 
-	_, err := LoadConfigFile()
+	_, err = LoadConfigFile()
 	if err == nil {
 		t.Fatal("expected error when no endpoint is configured")
 	}
@@ -274,7 +297,7 @@ func TestSaveCreatesValidJSON(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "dsnetconfig.json")
 	setupViperForTest(t, configPath)
 
-	conf := testDsnetConfig()
+	conf := testDsnetConfig(t)
 	if err := conf.Save(); err != nil {
 		t.Fatalf("Save error: %v", err)
 	}
@@ -285,9 +308,8 @@ func TestSaveCreatesValidJSON(t *testing.T) {
 		t.Fatalf("read error: %v", err)
 	}
 
-	var m map[string]interface{}
-	if err := json.Unmarshal(raw, &m); err != nil {
-		t.Fatalf("saved file is not valid JSON: %v", err)
+	if !json.Valid(raw) {
+		t.Fatalf("saved file is not valid JSON: %s", raw)
 	}
 
 	// Should end with newline
@@ -301,13 +323,13 @@ func TestSaveOverwritesExisting(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "dsnetconfig.json")
 	setupViperForTest(t, configPath)
 
-	conf := testDsnetConfig()
+	conf := testDsnetConfig(t)
 	if err := conf.Save(); err != nil {
 		t.Fatalf("first Save error: %v", err)
 	}
 
 	// Add a peer and save again
-	peer := testLibPeer("laptop", "alice", net.IP{10, 0, 0, 2})
+	peer := testLibPeer(t, "laptop", "alice", net.IP{10, 0, 0, 2})
 	conf.AddPeer(peer)
 	if err := conf.Save(); err != nil {
 		t.Fatalf("second Save error: %v", err)
