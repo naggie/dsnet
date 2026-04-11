@@ -61,7 +61,7 @@ func GetWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buff
 	cidrSize6, _ := server.Network6.IPNet.Mask.Size()
 
 	var templateBuff bytes.Buffer
-	err = t.Execute(&templateBuff, map[string]interface{}{
+	err = t.Execute(&templateBuff, map[string]any{
 		"Peer":      peer,
 		"Server":    server,
 		"CidrSize":  cidrSize,

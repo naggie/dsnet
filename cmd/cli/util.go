@@ -47,7 +47,7 @@ func PromptString(prompt string, required bool) (string, error) {
 }
 
 // FIXME is it critical for this to panic, or can we cascade the errors?
-func ConfirmOrAbort(format string, a ...interface{}) {
+func ConfirmOrAbort(format string, a ...any) {
 	fmt.Fprintf(os.Stderr, format+" [y/n] ", a...)
 
 	reader := bufio.NewReader(os.Stdin)

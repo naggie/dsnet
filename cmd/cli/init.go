@@ -3,8 +3,8 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"math/rand"
+	"crypto/rand"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -87,7 +87,6 @@ func Init() error {
 // get a random IPv4  /22 subnet on 10.0.0.0 (1023 hosts) (or /24?)
 func getPrivateNet() lib.JSONIPNet {
 	rbs := make([]byte, 2)
-	rand.Seed(time.Now().UTC().UnixNano())
 	rand.Read(rbs)
 
 	return lib.JSONIPNet{
@@ -100,7 +99,6 @@ func getPrivateNet() lib.JSONIPNet {
 
 func getULANet() lib.JSONIPNet {
 	rbs := make([]byte, 5)
-	rand.Seed(time.Now().UTC().UnixNano())
 	rand.Read(rbs)
 
 	// fd00 prefix with 40 bit global id and zero (16 bit) subnet ID
@@ -143,7 +141,7 @@ func getExternalIP() (net.IP, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -177,7 +175,7 @@ func getExternalIP6() (net.IP, error) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode == http.StatusOK {
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return nil, err
 			}

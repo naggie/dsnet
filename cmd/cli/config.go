@@ -3,7 +3,6 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"strings"
@@ -74,7 +73,7 @@ type DsnetConfig struct {
 // it in to a struct
 func LoadConfigFile() (*DsnetConfig, error) {
 	configFile := viper.GetString("config_file")
-	raw, err := ioutil.ReadFile(configFile)
+	raw, err := os.ReadFile(configFile)
 
 	if os.IsNotExist(err) {
 		return nil, fmt.Errorf("%s does not exist. `dsnet init` may be required", configFile)
@@ -114,7 +113,7 @@ func (conf *DsnetConfig) Save() error {
 	configFile := viper.GetString("config_file")
 	_json, _ := json.MarshalIndent(conf, "", "    ")
 	_json = append(_json, '\n')
-	err := ioutil.WriteFile(configFile, _json, 0600)
+	err := os.WriteFile(configFile, _json, 0600)
 	if err != nil {
 		return err
 	}
