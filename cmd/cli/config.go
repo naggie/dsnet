@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 	"github.com/naggie/dsnet/lib"
 	"github.com/spf13/viper"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -31,9 +31,9 @@ type PeerConfig struct {
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
 	// TODO support routing additional networks (AllowedIPs)
 	Networks     []lib.JSONIPNet `validate:"required"`
-	PublicKey    lib.JSONKey     `validate:"required,len=44"`
+	PublicKey    lib.JSONKey     `validate:"required"`
 	PrivateKey   lib.JSONKey     `json:"-"` // omitted from config!
-	PresharedKey lib.JSONKey     `validate:"required,len=44"`
+	PresharedKey lib.JSONKey     `validate:"required"`
 }
 
 type DsnetConfig struct {
@@ -61,7 +61,7 @@ type DsnetConfig struct {
 	// extra networks available, will be added to AllowedIPs
 	Networks []lib.JSONIPNet `validate:"required"`
 	// TODO Default subnets to route via VPN
-	PrivateKey lib.JSONKey `validate:"required,len=44"`
+	PrivateKey lib.JSONKey `validate:"required"`
 	PostUp     string
 	PostDown   string
 	Peers      []PeerConfig `validate:"dive"`
