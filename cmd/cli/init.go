@@ -1,9 +1,9 @@
 package cli
 
 import (
+	"crypto/rand"
 	"errors"
 	"fmt"
-	"crypto/rand"
 	"io"
 	"net"
 	"net/http"
@@ -23,8 +23,10 @@ func Init() error {
 
 	_, err := os.Stat(configFile)
 
-	if !os.IsNotExist(err) {
-		return fmt.Errorf("Refusing to overwrite existing %s", configFile)
+	if err == nil {
+		return fmt.Errorf("refusing to overwrite existing %s", configFile)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("could not stat %s: %w", configFile, err)
 	}
 
 	privateKey, err := lib.GenerateJSONPrivateKey()

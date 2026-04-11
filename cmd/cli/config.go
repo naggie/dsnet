@@ -111,13 +111,12 @@ func LoadConfigFile() (*DsnetConfig, error) {
 // Save writes the configuration to disk
 func (conf *DsnetConfig) Save() error {
 	configFile := viper.GetString("config_file")
-	_json, _ := json.MarshalIndent(conf, "", "    ")
-	_json = append(_json, '\n')
-	err := os.WriteFile(configFile, _json, 0600)
+	_json, err := json.MarshalIndent(conf, "", "    ")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal config: %w", err)
 	}
-	return nil
+	_json = append(_json, '\n')
+	return os.WriteFile(configFile, _json, 0600)
 }
 
 // AddPeer adds a provided peer to the Peers list in the conf

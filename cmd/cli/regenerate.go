@@ -67,6 +67,8 @@ func Regenerate(hostname string, confirm bool) error {
 	if err = config.Save(); err != nil {
 		return fmt.Errorf("%w - failure saving config", err)
 	}
-	server.ConfigureDevice()
+	if err := server.ConfigureDevice(); err != nil {
+		return fmt.Errorf("%w - failed to configure device", err)
+	}
 	return nil
 }
