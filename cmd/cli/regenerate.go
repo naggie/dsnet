@@ -18,7 +18,9 @@ func Regenerate(hostname string, confirm bool) error {
 	found := false
 
 	if !confirm {
-		ConfirmOrAbort("This will invalidate current configuration. Regenerate config for %s?", hostname)
+		if err := ConfirmOrAbort("This will invalidate current configuration. Regenerate config for %s?", hostname); err != nil {
+			return err
+		}
 	}
 
 	for _, peer := range server.Peers {
@@ -67,6 +69,8 @@ func Regenerate(hostname string, confirm bool) error {
 	if err = config.Save(); err != nil {
 		return fmt.Errorf("%w - failure saving config", err)
 	}
-	server.ConfigureDevice()
+	if err := server.ConfigureDevice(); err != nil {
+		return fmt.Errorf("%w - failed to configure device", err)
+	}
 	return nil
 }

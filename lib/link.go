@@ -13,7 +13,7 @@ import (
 func IPExists(link netlink.Link, ipNet *net.IPNet, family int) (bool, error) {
 	addrs, err := netlink.AddrList(link, family)
 	if err != nil {
-		return false, fmt.Errorf("failed to list addresses for interface: %v", err)
+		return false, fmt.Errorf("failed to list addresses for interface: %w", err)
 	}
 	for _, addr := range addrs {
 		if addr.IPNet.String() == ipNet.String() {
@@ -43,7 +43,7 @@ func (s *Server) CreateLink() error {
 		// return fmt.Errorf("could not add interface '%s' (%v), falling back to the userspace implementation", s.InterfaceName, err)
 		cmdStr := fmt.Sprintf("%s %s", s.FallbackWGBin, s.InterfaceName)
 		if err = utils.ShellOut(cmdStr, "Userspace implementation"); err != nil {
-			return fmt.Errorf("failed to start userspace wireguard: %s", err)
+			return fmt.Errorf("failed to start userspace wireguard: %w", err)
 		}
 	}
 
@@ -63,20 +63,21 @@ func (s *Server) CreateLink() error {
 		if !exists {
 			err = netlink.AddrAdd(link, addr)
 			if err != nil {
-				return fmt.Errorf("could not add ipv4 addr %s to interface %s: %v", addr.IP, s.InterfaceName, err)
+				return fmt.Errorf("could not add ipv4 addr %s to interface %s: %w", addr.IP, s.InterfaceName, err)
 			}
 		}
 
 		// remove any other IPs on the interface
 		addrs, err := netlink.AddrList(link, netlink.FAMILY_V4)
 		if err != nil {
-			return fmt.Errorf("failed to list addresses for interface: %v", err)
+			return fmt.Errorf("failed to list addresses for interface: %w", err)
 		}
-		for _, addr := range addrs {
-			if addr.IPNet.String() != addr.IPNet.String() {
-				err := netlink.AddrDel(link, &addr)
+		want := addr.IPNet.String()
+		for _, existing := range addrs {
+			if existing.IPNet.String() != want {
+				err := netlink.AddrDel(link, &existing)
 				if err != nil {
-					return fmt.Errorf("failed to delete address %s from interface %s: %v", addr.IP, s.InterfaceName, err)
+					return fmt.Errorf("failed to delete address %s from interface %s: %w", existing.IP, s.InterfaceName, err)
 				}
 			}
 		}
@@ -98,21 +99,21 @@ func (s *Server) CreateLink() error {
 		if !exists {
 			err = netlink.AddrAdd(link, addr6)
 			if err != nil {
-				return fmt.Errorf("could not add ipv6 addr %s to interface %s: %v. Do you have IPv6 enabled?", addr6.IP, s.InterfaceName, err)
+				return fmt.Errorf("could not add ipv6 addr %s to interface %s: %w. Do you have IPv6 enabled?", addr6.IP, s.InterfaceName, err)
 			}
 		}
 
 		// remove any other IPs on the interface
 		addrs, err := netlink.AddrList(link, netlink.FAMILY_V6)
 		if err != nil {
-			return fmt.Errorf("failed to list v6 addresses for interface: %v", err)
+			return fmt.Errorf("failed to list v6 addresses for interface: %w", err)
 		}
 
 		for _, addr := range addrs {
 			if addr.IPNet.String() != addr6.IPNet.String() {
 				err := netlink.AddrDel(link, &addr)
 				if err != nil {
-					return fmt.Errorf("failed to delete address %s from interface %s: %v", addr.IP, s.InterfaceName, err)
+					return fmt.Errorf("failed to delete address %s from interface %s: %w", addr.IP, s.InterfaceName, err)
 				}
 			}
 		}
@@ -121,14 +122,13 @@ func (s *Server) CreateLink() error {
 	// set MTU
 	err = netlink.LinkSetMTU(link, s.MTU)
 	if err != nil {
-		return fmt.Errorf("failed to set MTU %d on interface %s: %v", s.MTU, s.InterfaceName, err)
+		return fmt.Errorf("failed to set MTU %d on interface %s: %w", s.MTU, s.InterfaceName, err)
 	}
 
 	// bring up interface (UNKNOWN state instead of UP, a wireguard quirk)
 	err = netlink.LinkSetUp(link)
-
 	if err != nil {
-		return fmt.Errorf("could not bring up device '%s' (%v)", s.InterfaceName, err)
+		return fmt.Errorf("could not bring up device '%s': %w", s.InterfaceName, err)
 	}
 	return nil
 }
@@ -141,12 +141,12 @@ func (s *Server) DeleteLink() error {
 		if _, ok := err.(netlink.LinkNotFoundError); ok {
 			return nil
 		}
-		return fmt.Errorf("failed to get interface(%s): %v", s.InterfaceName, err)
+		return fmt.Errorf("failed to get interface(%s): %w", s.InterfaceName, err)
 	}
 
 	err = netlink.LinkDel(link)
 	if err != nil {
-		return fmt.Errorf("failed to delete interface(%s): %v", s.InterfaceName, err)
+		return fmt.Errorf("failed to delete interface(%s): %w", s.InterfaceName, err)
 	}
 	return nil
 }

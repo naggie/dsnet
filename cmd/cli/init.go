@@ -1,10 +1,10 @@
 package cli
 
 import (
+	"crypto/rand"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"math/rand"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -23,8 +23,10 @@ func Init() error {
 
 	_, err := os.Stat(configFile)
 
-	if !os.IsNotExist(err) {
-		return fmt.Errorf("Refusing to overwrite existing %s", configFile)
+	if err == nil {
+		return fmt.Errorf("refusing to overwrite existing %s", configFile)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("could not stat %s: %w", configFile, err)
 	}
 
 	privateKey, err := lib.GenerateJSONPrivateKey()
@@ -42,11 +44,21 @@ func Init() error {
 		return err
 	}
 
+	network, err := getPrivateNet()
+	if err != nil {
+		return fmt.Errorf("%w - failed to generate private network", err)
+	}
+
+	network6, err := getULANet()
+	if err != nil {
+		return fmt.Errorf("%w - failed to generate ULA network", err)
+	}
+
 	conf := &DsnetConfig{
 		PrivateKey:          privateKey,
 		ListenPort:          listenPort,
-		Network:             getPrivateNet(),
-		Network6:            getULANet(),
+		Network:             network,
+		Network6:            network6,
 		Peers:               []PeerConfig{},
 		Domain:              "dsnet",
 		ExternalIP:          externalIPV4,
@@ -85,23 +97,25 @@ func Init() error {
 }
 
 // get a random IPv4  /22 subnet on 10.0.0.0 (1023 hosts) (or /24?)
-func getPrivateNet() lib.JSONIPNet {
+func getPrivateNet() (lib.JSONIPNet, error) {
 	rbs := make([]byte, 2)
-	rand.Seed(time.Now().UTC().UnixNano())
-	rand.Read(rbs)
+	if _, err := rand.Read(rbs); err != nil {
+		return lib.JSONIPNet{}, fmt.Errorf("%w - failed to read random bytes", err)
+	}
 
 	return lib.JSONIPNet{
 		IPNet: net.IPNet{
 			IP:   net.IP{10, rbs[0], rbs[1] << 2, 0},
 			Mask: net.IPMask{255, 255, 252, 0},
 		},
-	}
+	}, nil
 }
 
-func getULANet() lib.JSONIPNet {
+func getULANet() (lib.JSONIPNet, error) {
 	rbs := make([]byte, 5)
-	rand.Seed(time.Now().UTC().UnixNano())
-	rand.Read(rbs)
+	if _, err := rand.Read(rbs); err != nil {
+		return lib.JSONIPNet{}, fmt.Errorf("%w - failed to read random bytes", err)
+	}
 
 	// fd00 prefix with 40 bit global id and zero (16 bit) subnet ID
 	return lib.JSONIPNet{
@@ -109,7 +123,7 @@ func getULANet() lib.JSONIPNet {
 			IP:   net.IP{0xfd, 0, rbs[0], rbs[1], rbs[2], rbs[3], rbs[4], 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			Mask: net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0},
 		},
-	}
+	}, nil
 }
 
 // TODO factor getExternalIP + getExternalIP6
@@ -143,7 +157,7 @@ func getExternalIP() (net.IP, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -177,7 +191,7 @@ func getExternalIP6() (net.IP, error) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode == http.StatusOK {
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return nil, err
 			}

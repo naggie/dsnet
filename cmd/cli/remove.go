@@ -13,7 +13,9 @@ func Remove(hostname string, confirm bool) error {
 	}
 
 	if !confirm {
-		ConfirmOrAbort("Do you really want to remove %s?", hostname)
+		if err := ConfirmOrAbort("Do you really want to remove %s?", hostname); err != nil {
+			return err
+		}
 	}
 
 	if err = conf.Save(); err != nil {

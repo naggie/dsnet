@@ -3,13 +3,12 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 	"github.com/naggie/dsnet/lib"
 	"github.com/spf13/viper"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -31,9 +30,9 @@ type PeerConfig struct {
 	//ExternalIP     net.UDPAddr `validate:"required,udp4_addr"`
 	// TODO support routing additional networks (AllowedIPs)
 	Networks     []lib.JSONIPNet `validate:"required"`
-	PublicKey    lib.JSONKey     `validate:"required,len=44"`
+	PublicKey    lib.JSONKey     `validate:"required"`
 	PrivateKey   lib.JSONKey     `json:"-"` // omitted from config!
-	PresharedKey lib.JSONKey     `validate:"required,len=44"`
+	PresharedKey lib.JSONKey     `validate:"required"`
 }
 
 type DsnetConfig struct {
@@ -61,7 +60,7 @@ type DsnetConfig struct {
 	// extra networks available, will be added to AllowedIPs
 	Networks []lib.JSONIPNet `validate:"required"`
 	// TODO Default subnets to route via VPN
-	PrivateKey lib.JSONKey `validate:"required,len=44"`
+	PrivateKey lib.JSONKey `validate:"required"`
 	PostUp     string
 	PostDown   string
 	Peers      []PeerConfig `validate:"dive"`
@@ -74,7 +73,7 @@ type DsnetConfig struct {
 // it in to a struct
 func LoadConfigFile() (*DsnetConfig, error) {
 	configFile := viper.GetString("config_file")
-	raw, err := ioutil.ReadFile(configFile)
+	raw, err := os.ReadFile(configFile)
 
 	if os.IsNotExist(err) {
 		return nil, fmt.Errorf("%s does not exist. `dsnet init` may be required", configFile)
@@ -112,13 +111,12 @@ func LoadConfigFile() (*DsnetConfig, error) {
 // Save writes the configuration to disk
 func (conf *DsnetConfig) Save() error {
 	configFile := viper.GetString("config_file")
-	_json, _ := json.MarshalIndent(conf, "", "    ")
-	_json = append(_json, '\n')
-	err := ioutil.WriteFile(configFile, _json, 0600)
+	_json, err := json.MarshalIndent(conf, "", "    ")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal config: %w", err)
 	}
-	return nil
+	_json = append(_json, '\n')
+	return os.WriteFile(configFile, _json, 0600)
 }
 
 // AddPeer adds a provided peer to the Peers list in the conf
@@ -178,55 +176,6 @@ func (conf *DsnetConfig) RemovePeer(hostname string) error {
 	copy(conf.Peers[peerIndex:], conf.Peers[peerIndex+1:]) // shift left
 	conf.Peers = conf.Peers[:len(conf.Peers)-1]            // truncate
 	return nil
-}
-
-func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
-	wgPeers := make([]wgtypes.PeerConfig, 0, len(conf.Peers))
-
-	for _, peer := range conf.Peers {
-		// create a new PSK in memory to avoid passing the same value by
-		// pointer to each peer (d'oh)
-		presharedKey := peer.PresharedKey.Key
-
-		// AllowedIPs = private IP + defined networks
-		allowedIPs := make([]net.IPNet, 0, len(peer.Networks)+2)
-
-		if len(peer.IP) > 0 {
-			allowedIPs = append(
-				allowedIPs,
-				net.IPNet{
-					IP:   peer.IP,
-					Mask: net.IPMask{255, 255, 255, 255},
-				},
-			)
-		}
-
-		if len(peer.IP6) > 0 {
-			allowedIPs = append(
-				allowedIPs,
-				net.IPNet{
-					IP:   peer.IP6,
-					Mask: net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-				},
-			)
-		}
-
-		for _, net := range peer.Networks {
-			allowedIPs = append(allowedIPs, net.IPNet)
-		}
-
-		wgPeers = append(wgPeers, wgtypes.PeerConfig{
-			PublicKey:         peer.PublicKey.Key,
-			Remove:            false,
-			UpdateOnly:        false,
-			PresharedKey:      &presharedKey,
-			Endpoint:          nil,
-			ReplaceAllowedIPs: true,
-			AllowedIPs:        allowedIPs,
-		})
-	}
-
-	return wgPeers
 }
 
 func (conf *DsnetConfig) Merge(patch map[string]interface{}) error {

@@ -68,7 +68,7 @@ func NewPeer(server *Server, private, public, owner, hostname, description strin
 		var err error
 		privateKey, err = GenerateJSONPrivateKey()
 		if err != nil {
-			return Peer{}, fmt.Errorf("failed to generate private key: %s", err)
+			return Peer{}, fmt.Errorf("failed to generate private key: %w", err)
 		}
 	}
 
@@ -95,7 +95,7 @@ func NewPeer(server *Server, private, public, owner, hostname, description strin
 
 	presharedKey, err := GenerateJSONKey()
 	if err != nil {
-		return Peer{}, fmt.Errorf("failed to generate private key: %s", err)
+		return Peer{}, fmt.Errorf("failed to generate preshared key: %w", err)
 	}
 
 	newPeer := Peer{
@@ -114,7 +114,7 @@ func NewPeer(server *Server, private, public, owner, hostname, description strin
 	if len(server.Network.IPNet.Mask) > 0 {
 		newIP, err := server.AllocateIP()
 		if err != nil {
-			return Peer{}, fmt.Errorf("failed to allocate ipv4 address: %s", err)
+			return Peer{}, fmt.Errorf("failed to allocate ipv4 address: %w", err)
 		}
 		newPeer.IP = newIP
 	}
@@ -122,7 +122,7 @@ func NewPeer(server *Server, private, public, owner, hostname, description strin
 	if len(server.Network6.IPNet.Mask) > 0 {
 		newIPV6, err := server.AllocateIP6()
 		if err != nil {
-			return Peer{}, fmt.Errorf("failed to allocate ipv6 address: %s", err)
+			return Peer{}, fmt.Errorf("failed to allocate ipv6 address: %w", err)
 		}
 		newPeer.IP6 = newIPV6
 	}
