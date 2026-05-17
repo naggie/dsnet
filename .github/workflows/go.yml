@@ -31,7 +31,13 @@ jobs:
       run: GOOS=linux CGO_ENABLED=0 ${{ matrix.arch }} go build -v ./cmd/root.go
 
     - name: Lint
-      run: test -z $(gofmt -l .)
+      run: |
+        unformatted=$(gofmt -l .)
+        if [ -n "$unformatted" ]; then
+          echo "The following files are not gofmt-clean:"
+          echo "$unformatted"
+          exit 1
+        fi
 
     - name: Test
       run: go test -v ./...

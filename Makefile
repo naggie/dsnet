@@ -1,4 +1,4 @@
-.PHONY: all build compile quick clean test cover cover-html
+.PHONY: all build compile quick clean test cover cover-html lint
 
 all: compile
 
@@ -15,6 +15,15 @@ quick: compile
 
 test:
 	CGO_ENABLED=0 go test ./...
+
+lint:
+	@unformatted=$$(gofmt -l .); \
+	if [ -n "$$unformatted" ]; then \
+		echo "The following files are not gofmt-clean:"; \
+		echo "$$unformatted"; \
+		exit 1; \
+	fi
+	CGO_ENABLED=0 go vet ./...
 
 cover:
 	CGO_ENABLED=0 go test -coverprofile=coverage.out ./...
