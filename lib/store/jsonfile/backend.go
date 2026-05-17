@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/gofrs/flock"
 	"github.com/naggie/dsnet/lib"
 	"github.com/naggie/dsnet/lib/store"
 	"github.com/spf13/viper"
@@ -27,9 +28,12 @@ func init() {
 // Backend persists a single-network dsnet State as a JSON document on disk.
 type Backend struct {
 	path string
+	lock *flock.Flock
 }
 
-// Open returns a Backend bound to the path in u (u.Path).
+// Open returns a Backend bound to the path in u (u.Path). A sibling
+// .lock file is used for advisory file locking; concurrent dsnet
+// invocations against the same storage URL serialise on it.
 func Open(u *url.URL) (store.Backend, error) {
 	if u == nil {
 		return nil, errors.New("jsonfile: nil URL")
@@ -37,16 +41,32 @@ func Open(u *url.URL) (store.Backend, error) {
 	if u.Path == "" {
 		return nil, errors.New("jsonfile: storage URL is missing a path")
 	}
-	return &Backend{path: u.Path}, nil
+	return &Backend{
+		path: u.Path,
+		lock: flock.New(u.Path + ".lock"),
+	}, nil
 }
 
-// Close releases any held resources. The basic Backend holds none.
-func (b *Backend) Close() error { return nil }
+// Close releases the advisory lock if held.
+func (b *Backend) Close() error {
+	if b.lock == nil {
+		return nil
+	}
+	if err := b.lock.Unlock(); err != nil {
+		return fmt.Errorf("%w - failed to release file lock", err)
+	}
+	return nil
+}
 
 // Load reads the JSON file, validates it, and returns the resulting State
 // together with a Version (the SHA-256 of the file contents). Returns a
 // helpful error if the file is missing or unreadable.
-func (b *Backend) Load(_ context.Context) (*store.State, store.Version, error) {
+func (b *Backend) Load(ctx context.Context) (*store.State, store.Version, error) {
+	if err := b.acquireRead(ctx); err != nil {
+		return nil, "", err
+	}
+	defer b.releaseLock()
+
 	raw, err := os.ReadFile(b.path)
 	if os.IsNotExist(err) {
 		return nil, "", fmt.Errorf("%s does not exist. `dsnet init` may be required", b.path)
@@ -82,7 +102,7 @@ func (b *Backend) Load(_ context.Context) (*store.State, store.Version, error) {
 // Save writes the State to disk. If expected is non-empty, Save first
 // re-hashes the on-disk file and returns an error if it differs (another
 // writer changed the file under us).
-func (b *Backend) Save(_ context.Context, state *store.State, expected store.Version) error {
+func (b *Backend) Save(ctx context.Context, state *store.State, expected store.Version) error {
 	if state == nil {
 		return errors.New("jsonfile: nil state")
 	}
@@ -90,10 +110,15 @@ func (b *Backend) Save(_ context.Context, state *store.State, expected store.Ver
 		return fmt.Errorf("jsonfile: multi-network state not supported (got %d networks)", len(state.Networks))
 	}
 
-	var server = singleServer(state)
+	server := singleServer(state)
 	if server == nil {
 		return errors.New("jsonfile: state has no server")
 	}
+
+	if err := b.acquireWrite(ctx); err != nil {
+		return err
+	}
+	defer b.releaseLock()
 
 	if expected != "" {
 		current, err := b.currentVersion()
@@ -162,4 +187,39 @@ func (b *Backend) currentVersion() (store.Version, error) {
 func hashVersion(raw []byte) store.Version {
 	sum := sha256.Sum256(raw)
 	return store.Version(hex.EncodeToString(sum[:]))
+}
+
+func (b *Backend) acquireRead(ctx context.Context) error {
+	if b.lock == nil {
+		return nil
+	}
+	got, err := b.lock.TryRLockContext(ctx, lockRetryInterval)
+	if err != nil {
+		return fmt.Errorf("%w - failed to acquire read lock on %s", err, b.lock.Path())
+	}
+	if !got {
+		return fmt.Errorf("failed to acquire read lock on %s", b.lock.Path())
+	}
+	return nil
+}
+
+func (b *Backend) acquireWrite(ctx context.Context) error {
+	if b.lock == nil {
+		return nil
+	}
+	got, err := b.lock.TryLockContext(ctx, lockRetryInterval)
+	if err != nil {
+		return fmt.Errorf("%w - failed to acquire write lock on %s", err, b.lock.Path())
+	}
+	if !got {
+		return fmt.Errorf("failed to acquire write lock on %s", b.lock.Path())
+	}
+	return nil
+}
+
+func (b *Backend) releaseLock() {
+	if b.lock == nil {
+		return
+	}
+	_ = b.lock.Unlock()
 }
