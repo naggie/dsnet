@@ -30,11 +30,11 @@ func testServer(t *testing.T) *Server {
 				Mask: net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0},
 			},
 		},
-		IP:  net.IP{10, 0, 0, 1},
-		IP6: net.IP{0xfd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		PrivateKey: JSONKey{Key: privKey},
-		Peers:      []Peer{},
-		Networks:   []JSONIPNet{},
+		IP:                  net.IP{10, 0, 0, 1},
+		IP6:                 net.IP{0xfd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		PrivateKey:          JSONKey{Key: privKey},
+		Peers:               []Peer{},
+		Networks:            []JSONIPNet{},
 		PersistentKeepalive: 25,
 	}
 }
