@@ -1,35 +1,12 @@
 package cli
 
-// FIXME every function in this file has public scope, but only private references
-
 import (
 	"bufio"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/naggie/dsnet/lib"
 )
-
-func jsonPeerToDsnetPeer(peers []PeerConfig) []lib.Peer {
-	libPeers := make([]lib.Peer, 0, len(peers))
-	for _, p := range peers {
-		libPeers = append(libPeers, lib.Peer{
-			Hostname:     p.Hostname,
-			Owner:        p.Owner,
-			Description:  p.Description,
-			IP:           p.IP,
-			IP6:          p.IP6,
-			Added:        p.Added,
-			PublicKey:    p.PublicKey,
-			PrivateKey:   p.PrivateKey,
-			PresharedKey: p.PresharedKey,
-			Networks:     p.Networks,
-		})
-	}
-	return libPeers
-}
 
 func PromptString(prompt string, required bool) (string, error) {
 	reader := bufio.NewReader(os.Stdin)

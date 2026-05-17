@@ -1,32 +1,36 @@
 package cli
 
 import (
+	"context"
 	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/naggie/dsnet/lib"
+	"github.com/naggie/dsnet/lib/store"
 	"github.com/spf13/viper"
 )
 
 func Init() error {
 	listenPort := viper.GetInt("listen_port")
 	MTU := viper.GetInt("mtu")
-	configFile := viper.GetString("config_file")
 	interfaceName := viper.GetString("interface_name")
+	fallbackWGBin := viper.GetString("fallback_wg_bin")
 
-	_, err := os.Stat(configFile)
+	backend, err := OpenStore()
+	if err != nil {
+		return fmt.Errorf("%w - failed to open storage backend", err)
+	}
+	defer backend.Close()
 
-	if err == nil {
-		return fmt.Errorf("refusing to overwrite existing %s", configFile)
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("could not stat %s: %w", configFile, err)
+	// Refuse to overwrite an existing state.
+	if _, _, err := backend.Load(context.Background()); err == nil {
+		return fmt.Errorf("refusing to overwrite existing state")
 	}
 
 	privateKey, err := lib.GenerateJSONPrivateKey()
@@ -54,12 +58,12 @@ func Init() error {
 		return fmt.Errorf("%w - failed to generate ULA network", err)
 	}
 
-	conf := &DsnetConfig{
+	server := &lib.Server{
 		PrivateKey:          privateKey,
 		ListenPort:          listenPort,
 		Network:             network,
 		Network6:            network6,
-		Peers:               []PeerConfig{},
+		Peers:               []lib.Peer{},
 		Domain:              "dsnet",
 		ExternalIP:          externalIPV4,
 		ExternalIP6:         externalIPV6,
@@ -67,9 +71,8 @@ func Init() error {
 		Networks:            []lib.JSONIPNet{},
 		PersistentKeepalive: 25,
 		MTU:                 MTU,
+		FallbackWGBin:       fallbackWGBin,
 	}
-
-	server := GetServer(conf)
 
 	ipv4, err := server.AllocateIP()
 	if err != nil {
@@ -81,18 +84,23 @@ func Init() error {
 		return fmt.Errorf("%w - failed to allocate ipv6 address", err)
 	}
 
-	conf.IP = ipv4
-	conf.IP6 = ipv6
+	server.IP = ipv4
+	server.IP6 = ipv6
 
-	if len(conf.ExternalIP) == 0 && len(conf.ExternalIP6) == 0 {
+	if len(server.ExternalIP) == 0 && len(server.ExternalIP6) == 0 {
 		return fmt.Errorf("Could not determine any external IP, v4 or v6")
 	}
 
-	if err := conf.Save(); err != nil {
-		return fmt.Errorf("%w - failed to save config file", err)
+	state := &store.State{
+		Networks: map[string]*store.Network{
+			server.InterfaceName: {Server: server},
+		},
+	}
+	if err := backend.Save(context.Background(), state, ""); err != nil {
+		return fmt.Errorf("%w - failed to save state", err)
 	}
 
-	fmt.Printf("Config written to %s. Please check/edit.\n", configFile)
+	fmt.Printf("Config written. Please check/edit.\n")
 	return nil
 }
 

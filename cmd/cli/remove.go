@@ -1,15 +1,29 @@
 package cli
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 func Remove(hostname string, confirm bool) error {
-	conf, err := LoadConfigFile()
+	backend, err := OpenStore()
 	if err != nil {
-		return fmt.Errorf("%w - failed to load config", err)
+		return fmt.Errorf("%w - failed to open storage backend", err)
 	}
+	defer backend.Close()
 
-	if err = conf.RemovePeer(hostname); err != nil {
-		return fmt.Errorf("%w - failed to update config", err)
+	state, version, err := backend.Load(context.Background())
+	if err != nil {
+		return fmt.Errorf("%w - failed to load state", err)
+	}
+	network, err := DefaultNetwork(state)
+	if err != nil {
+		return err
+	}
+	server := network.Server
+
+	if err := server.RemovePeer(hostname); err != nil {
+		return fmt.Errorf("%w - failed to update state", err)
 	}
 
 	if !confirm {
@@ -18,12 +32,11 @@ func Remove(hostname string, confirm bool) error {
 		}
 	}
 
-	if err = conf.Save(); err != nil {
-		return fmt.Errorf("%w - failure to save config", err)
+	if err := backend.Save(context.Background(), state, version); err != nil {
+		return fmt.Errorf("%w - failed to save state", err)
 	}
-	server := GetServer(conf)
 
-	if err = server.ConfigureDevice(); err != nil {
+	if err := server.ConfigureDevice(); err != nil {
 		return fmt.Errorf("%w - failed to sync server config to wg interface: %s", err, server.InterfaceName)
 	}
 	return nil

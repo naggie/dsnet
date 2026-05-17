@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -70,10 +71,21 @@ type PeerReport struct {
 }
 
 func GenerateReport() error {
-	conf, err := LoadConfigFile()
+	backend, err := OpenStore()
 	if err != nil {
-		return fmt.Errorf("%w - failure to load config", err)
+		return fmt.Errorf("%w - failed to open storage backend", err)
 	}
+	defer backend.Close()
+
+	state, _, err := backend.Load(context.Background())
+	if err != nil {
+		return fmt.Errorf("%w - failed to load state", err)
+	}
+	network, err := DefaultNetwork(state)
+	if err != nil {
+		return err
+	}
+	server := network.Server
 
 	wg, err := wgctrl.New()
 	if err != nil {
@@ -81,27 +93,26 @@ func GenerateReport() error {
 	}
 	defer wg.Close()
 
-	dev, err := wg.Device(conf.InterfaceName)
-
+	dev, err := wg.Device(server.InterfaceName)
 	if err != nil {
-		return fmt.Errorf("%w - Could not retrieve device '%s'", err, conf.InterfaceName)
+		return fmt.Errorf("%w - Could not retrieve device '%s'", err, server.InterfaceName)
 	}
 
-	report, err := GetReport(dev, conf)
+	report, err := GetReport(dev, server)
 	if err != nil {
 		return err
 	}
 	return report.Print()
 }
 
-func GetReport(dev *wgtypes.Device, conf *DsnetConfig) (DsnetReport, error) {
+func GetReport(dev *wgtypes.Device, server *lib.Server) (DsnetReport, error) {
 	peerTimeout := viper.GetDuration("peer_timeout")
 	peerExpiry := viper.GetDuration("peer_expiry")
 	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
 	peerReports := make([]PeerReport, 0)
 	peersOnline := 0
 
-	linkDev, err := netlink.LinkByName(conf.InterfaceName)
+	linkDev, err := netlink.LinkByName(server.InterfaceName)
 	if err != nil {
 		return DsnetReport{}, fmt.Errorf("%w - error getting link", err)
 	}
@@ -112,7 +123,7 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig) (DsnetReport, error) {
 		wgPeerIndex[peer.PublicKey] = peer
 	}
 
-	for _, peer := range conf.Peers {
+	for _, peer := range server.Peers {
 		wgPeer, known := wgPeerIndex[peer.PublicKey.Key]
 
 		if !known {
@@ -156,17 +167,17 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig) (DsnetReport, error) {
 	}
 
 	return DsnetReport{
-		ExternalIP:       conf.ExternalIP,
-		ExternalIP6:      conf.ExternalIP6,
-		ExternalHostname: conf.ExternalHostname,
-		InterfaceName:    conf.InterfaceName,
-		ListenPort:       conf.ListenPort,
-		Domain:           conf.Domain,
-		IP:               conf.IP,
-		IP6:              conf.IP6,
-		Network:          conf.Network,
-		Network6:         conf.Network6,
-		DNS:              conf.DNS,
+		ExternalIP:       server.ExternalIP,
+		ExternalIP6:      server.ExternalIP6,
+		ExternalHostname: server.ExternalHostname,
+		InterfaceName:    server.InterfaceName,
+		ListenPort:       server.ListenPort,
+		Domain:           server.Domain,
+		IP:               server.IP,
+		IP6:              server.IP6,
+		Network:          server.Network,
+		Network6:         server.Network6,
+		DNS:              server.DNS,
 		Peers:            peerReports,
 		PeersOnline:      peersOnline,
 		PeersTotal:       len(peerReports),

@@ -159,3 +159,42 @@ func (s *Server) IPAllocated(IP net.IP) bool {
 
 	return false
 }
+
+// AddPeer appends peer to s.Peers, rejecting duplicates on hostname,
+// public key, or preshared key.
+func (s *Server) AddPeer(peer Peer) error {
+	for _, p := range s.Peers {
+		if peer.Hostname == p.Hostname {
+			return fmt.Errorf("%s is not an unique hostname", peer.Hostname)
+		}
+	}
+	for _, p := range s.Peers {
+		if peer.PublicKey.Key == p.PublicKey.Key {
+			return fmt.Errorf("%s is not an unique public key", peer.Hostname)
+		}
+	}
+	for _, p := range s.Peers {
+		if peer.PresharedKey.Key == p.PresharedKey.Key {
+			return fmt.Errorf("%s is not an unique preshared key", peer.Hostname)
+		}
+	}
+	s.Peers = append(s.Peers, peer)
+	return nil
+}
+
+// RemovePeer drops the peer with the given hostname, preserving the order
+// of the surrounding peers.
+func (s *Server) RemovePeer(hostname string) error {
+	peerIndex := -1
+	for i, peer := range s.Peers {
+		if peer.Hostname == hostname {
+			peerIndex = i
+		}
+	}
+	if peerIndex == -1 {
+		return fmt.Errorf("failed to find peer with hostname %s", hostname)
+	}
+	copy(s.Peers[peerIndex:], s.Peers[peerIndex+1:])
+	s.Peers = s.Peers[:len(s.Peers)-1]
+	return nil
+}

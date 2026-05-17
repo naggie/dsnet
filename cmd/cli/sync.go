@@ -1,22 +1,32 @@
 package cli
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 func Sync() error {
-	// TODO check device settings first
-	conf, err := LoadConfigFile()
+	backend, err := OpenStore()
 	if err != nil {
-		return fmt.Errorf("%w - failed to load configuration file", err)
+		return fmt.Errorf("%w - failed to open storage backend", err)
 	}
-	server := GetServer(conf)
+	defer backend.Close()
 
-	err = server.ConfigureDevice()
+	state, _, err := backend.Load(context.Background())
 	if err != nil {
+		return fmt.Errorf("%w - failed to load state", err)
+	}
+	network, err := DefaultNetwork(state)
+	if err != nil {
+		return err
+	}
+	server := network.Server
+
+	if err := server.ConfigureDevice(); err != nil {
 		return fmt.Errorf("%w - failed to sync device configuration", err)
 	}
 
-	err = server.Up() // set IPs, interface must be up by this point
-	if err != nil {
+	if err := server.Up(); err != nil {
 		return fmt.Errorf("%w - failed to bring up the interface", err)
 	}
 	return nil

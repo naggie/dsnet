@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -10,11 +11,21 @@ import (
 
 // Add prompts for the required information and creates a new peer
 func Add(hostname string, privKey, pubKey bool, owner, description string, confirm bool) error {
-	config, err := LoadConfigFile()
+	backend, err := OpenStore()
 	if err != nil {
-		return fmt.Errorf("%w - failed to load configuration file", err)
+		return fmt.Errorf("%w - failed to open storage backend", err)
 	}
-	server := GetServer(config)
+	defer backend.Close()
+
+	state, version, err := backend.Load(context.Background())
+	if err != nil {
+		return fmt.Errorf("%w - failed to load state", err)
+	}
+	network, err := DefaultNetwork(state)
+	if err != nil {
+		return err
+	}
+	server := network.Server
 
 	var private, public string
 	if privKey {
@@ -40,7 +51,6 @@ func Add(hostname string, privKey, pubKey bool, owner, description string, confi
 		}
 	}
 
-	// publicKey := MustPromptString("PublicKey (optional)", false)
 	if !confirm {
 		if err := ConfirmOrAbort("\nDo you want to add the above configuration?"); err != nil {
 			return err
@@ -55,10 +65,7 @@ func Add(hostname string, privKey, pubKey bool, owner, description string, confi
 		return fmt.Errorf("%w - failed to get new peer", err)
 	}
 
-	// TODO Some kind of recovery here would be nice, to avoid
-	// leaving things in a potential broken state
-
-	if err = config.AddPeer(peer); err != nil {
+	if err = server.AddPeer(peer); err != nil {
 		return fmt.Errorf("%w - failed to add new peer", err)
 	}
 
@@ -70,12 +77,11 @@ func Add(hostname string, privKey, pubKey bool, owner, description string, confi
 	}
 	os.Stdout.Write(peerConfigBytes.Bytes())
 
-	if err = config.Save(); err != nil {
-		return fmt.Errorf("%w - failed to save config file", err)
+	if err := backend.Save(context.Background(), state, version); err != nil {
+		return fmt.Errorf("%w - failed to save state", err)
 	}
 
-	server = GetServer(config)
-	if err = server.ConfigureDevice(); err != nil {
+	if err := server.ConfigureDevice(); err != nil {
 		return fmt.Errorf("%w - failed to configure device", err)
 	}
 	return nil

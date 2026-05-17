@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/naggie/dsnet"
 	"github.com/naggie/dsnet/cmd/cli"
+	_ "github.com/naggie/dsnet/lib/store/jsonfile"
 	"github.com/naggie/dsnet/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,8 +28,8 @@ var (
 	initCmd = &cobra.Command{
 		Use: "init",
 		Short: fmt.Sprintf(
-			"Create %s containing default configuration + new keys without loading. Edit to taste.",
-			viper.GetString("config_file"),
+			"Initialise %s with default configuration + new keys without loading. Edit to taste.",
+			viper.GetString("store"),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.Init()
@@ -39,15 +40,25 @@ var (
 		Use:   "up",
 		Short: "Create the interface, run pre/post up, sync",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := cli.LoadConfigFile()
+			backend, err := cli.OpenStore()
 			if err != nil {
-				return fmt.Errorf("%w - failure to load config file", err)
+				return fmt.Errorf("%w - failed to open storage backend", err)
 			}
-			server := cli.GetServer(config)
+			defer backend.Close()
+
+			state, _, err := backend.Load(context.Background())
+			if err != nil {
+				return fmt.Errorf("%w - failed to load state", err)
+			}
+			network, err := cli.DefaultNetwork(state)
+			if err != nil {
+				return err
+			}
+			server := network.Server
 			if e := server.Up(); e != nil {
 				return e
 			}
-			if e := utils.ShellOut(config.PostUp, "PostUp"); e != nil {
+			if e := utils.ShellOut(server.PostUp, "PostUp"); e != nil {
 				return e
 			}
 			return nil
@@ -58,15 +69,25 @@ var (
 		Use:   "down",
 		Short: "Destroy the interface, run pre/post down",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := cli.LoadConfigFile()
+			backend, err := cli.OpenStore()
 			if err != nil {
-				return fmt.Errorf("%w - failure to load config file", err)
+				return fmt.Errorf("%w - failed to open storage backend", err)
 			}
-			server := cli.GetServer(config)
+			defer backend.Close()
+
+			state, _, err := backend.Load(context.Background())
+			if err != nil {
+				return fmt.Errorf("%w - failed to load state", err)
+			}
+			network, err := cli.DefaultNetwork(state)
+			if err != nil {
+				return err
+			}
+			server := network.Server
 			if e := server.DeleteLink(); e != nil {
 				return e
 			}
-			if e := utils.ShellOut(config.PostDown, "PostDown"); e != nil {
+			if e := utils.ShellOut(server.PostDown, "PostDown"); e != nil {
 				return e
 			}
 			return nil
@@ -112,7 +133,7 @@ var (
 
 	syncCmd = &cobra.Command{
 		Use:   "sync",
-		Short: fmt.Sprintf("Update wireguard configuration from %s after validating", viper.GetString("config_file")),
+		Short: fmt.Sprintf("Update wireguard configuration from %s after validating", viper.GetString("store")),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.Sync()
 		},
@@ -149,37 +170,6 @@ var (
 		Use:   "version",
 		Short: "Print version",
 	}
-
-	patchCmd = &cobra.Command{
-		Use:   "patch",
-		Short: "Pipe in JSON to patch the config file. Top level keys are replaced, not merged! Does not sync with interface. Run dsnet sync to apply.",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			// Make sure we have the hostname
-			if len(args) > 0 {
-				return errors.New("Too many arguments")
-			}
-
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// Read the JSON from stdin
-			jsonData, err := os.ReadFile("/dev/stdin")
-			if err != nil {
-				return fmt.Errorf("failed to read from stdin: %w", err)
-			}
-			// Unmarshal the JSON into a DsnetConfig struct
-			var patch map[string]interface{}
-			if err := json.Unmarshal(jsonData, &patch); err != nil {
-				return fmt.Errorf("failed to unmarshal JSON: %w", err)
-			}
-			err = cli.Patch(patch)
-
-			if err != nil {
-				return fmt.Errorf("failed to apply patch: %w", err)
-			}
-			return nil
-		},
-	}
 )
 
 func init() {
@@ -203,7 +193,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	viper.SetDefault("config_file", "/etc/dsnetconfig.json")
+	viper.SetDefault("store", "jsonfile:///etc/dsnetconfig.json")
 	viper.SetDefault("fallback_wg_bin", "wireguard-go")
 	viper.SetDefault("listen_port", 51820)
 	viper.SetDefault("MTU", 1420)
@@ -225,7 +215,6 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(upCmd)
 	rootCmd.AddCommand(downCmd)
-	rootCmd.AddCommand(patchCmd)
 }
 
 func main() {
