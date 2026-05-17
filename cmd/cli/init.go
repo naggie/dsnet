@@ -44,11 +44,21 @@ func Init() error {
 		return err
 	}
 
+	network, err := getPrivateNet()
+	if err != nil {
+		return fmt.Errorf("%w - failed to generate private network", err)
+	}
+
+	network6, err := getULANet()
+	if err != nil {
+		return fmt.Errorf("%w - failed to generate ULA network", err)
+	}
+
 	conf := &DsnetConfig{
 		PrivateKey:          privateKey,
 		ListenPort:          listenPort,
-		Network:             getPrivateNet(),
-		Network6:            getULANet(),
+		Network:             network,
+		Network6:            network6,
 		Peers:               []PeerConfig{},
 		Domain:              "dsnet",
 		ExternalIP:          externalIPV4,
@@ -87,21 +97,25 @@ func Init() error {
 }
 
 // get a random IPv4  /22 subnet on 10.0.0.0 (1023 hosts) (or /24?)
-func getPrivateNet() lib.JSONIPNet {
+func getPrivateNet() (lib.JSONIPNet, error) {
 	rbs := make([]byte, 2)
-	rand.Read(rbs)
+	if _, err := rand.Read(rbs); err != nil {
+		return lib.JSONIPNet{}, fmt.Errorf("%w - failed to read random bytes", err)
+	}
 
 	return lib.JSONIPNet{
 		IPNet: net.IPNet{
 			IP:   net.IP{10, rbs[0], rbs[1] << 2, 0},
 			Mask: net.IPMask{255, 255, 252, 0},
 		},
-	}
+	}, nil
 }
 
-func getULANet() lib.JSONIPNet {
+func getULANet() (lib.JSONIPNet, error) {
 	rbs := make([]byte, 5)
-	rand.Read(rbs)
+	if _, err := rand.Read(rbs); err != nil {
+		return lib.JSONIPNet{}, fmt.Errorf("%w - failed to read random bytes", err)
+	}
 
 	// fd00 prefix with 40 bit global id and zero (16 bit) subnet ID
 	return lib.JSONIPNet{
@@ -109,7 +123,7 @@ func getULANet() lib.JSONIPNet {
 			IP:   net.IP{0xfd, 0, rbs[0], rbs[1], rbs[2], rbs[3], rbs[4], 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			Mask: net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0},
 		},
-	}
+	}, nil
 }
 
 // TODO factor getExternalIP + getExternalIP6

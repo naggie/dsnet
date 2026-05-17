@@ -229,6 +229,18 @@ func TestGetPeersWithPeer(t *testing.T) {
 	if len(p.AllowedIPs) != 2 {
 		t.Fatalf("expected 2 AllowedIPs, got %d", len(p.AllowedIPs))
 	}
+	if p.AllowedIPs[0].IP.String() != "10.0.0.2" {
+		t.Fatalf("expected 10.0.0.2, got %s", p.AllowedIPs[0].IP)
+	}
+	if ones, _ := p.AllowedIPs[0].Mask.Size(); ones != 32 {
+		t.Fatalf("expected /32, got /%d", ones)
+	}
+	if p.AllowedIPs[1].IP.String() != "fd00::2" {
+		t.Fatalf("expected fd00::2, got %s", p.AllowedIPs[1].IP)
+	}
+	if ones, _ := p.AllowedIPs[1].Mask.Size(); ones != 128 {
+		t.Fatalf("expected /128, got /%d", ones)
+	}
 }
 
 func TestGetPeersAllowedIPsIncludesNetworks(t *testing.T) {

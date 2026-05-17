@@ -18,7 +18,9 @@ func Regenerate(hostname string, confirm bool) error {
 	found := false
 
 	if !confirm {
-		ConfirmOrAbort("This will invalidate current configuration. Regenerate config for %s?", hostname)
+		if err := ConfirmOrAbort("This will invalidate current configuration. Regenerate config for %s?", hostname); err != nil {
+			return err
+		}
 	}
 
 	for _, peer := range server.Peers {
