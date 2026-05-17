@@ -1,8 +1,8 @@
 package lib
 
 import (
-	"fmt"
 	"crypto/rand"
+	"fmt"
 	"net"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"

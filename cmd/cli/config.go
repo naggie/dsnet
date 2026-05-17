@@ -178,55 +178,6 @@ func (conf *DsnetConfig) RemovePeer(hostname string) error {
 	return nil
 }
 
-func (conf DsnetConfig) GetWgPeerConfigs() []wgtypes.PeerConfig {
-	wgPeers := make([]wgtypes.PeerConfig, 0, len(conf.Peers))
-
-	for _, peer := range conf.Peers {
-		// create a new PSK in memory to avoid passing the same value by
-		// pointer to each peer (d'oh)
-		presharedKey := peer.PresharedKey.Key
-
-		// AllowedIPs = private IP + defined networks
-		allowedIPs := make([]net.IPNet, 0, len(peer.Networks)+2)
-
-		if len(peer.IP) > 0 {
-			allowedIPs = append(
-				allowedIPs,
-				net.IPNet{
-					IP:   peer.IP,
-					Mask: net.IPMask{255, 255, 255, 255},
-				},
-			)
-		}
-
-		if len(peer.IP6) > 0 {
-			allowedIPs = append(
-				allowedIPs,
-				net.IPNet{
-					IP:   peer.IP6,
-					Mask: net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-				},
-			)
-		}
-
-		for _, net := range peer.Networks {
-			allowedIPs = append(allowedIPs, net.IPNet)
-		}
-
-		wgPeers = append(wgPeers, wgtypes.PeerConfig{
-			PublicKey:         peer.PublicKey.Key,
-			Remove:            false,
-			UpdateOnly:        false,
-			PresharedKey:      &presharedKey,
-			Endpoint:          nil,
-			ReplaceAllowedIPs: true,
-			AllowedIPs:        allowedIPs,
-		})
-	}
-
-	return wgPeers
-}
-
 func (conf *DsnetConfig) Merge(patch map[string]interface{}) error {
 	// Merge the patch into the config
 

@@ -4,6 +4,7 @@ package cli
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -46,23 +47,20 @@ func PromptString(prompt string, required bool) (string, error) {
 	return text, nil
 }
 
-// FIXME is it critical for this to panic, or can we cascade the errors?
-func ConfirmOrAbort(format string, a ...any) {
+func ConfirmOrAbort(format string, a ...any) error {
 	fmt.Fprintf(os.Stderr, format+" [y/n] ", a...)
 
 	reader := bufio.NewReader(os.Stdin)
 
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("%w - failed to read confirmation", err)
 	}
 
 	if input == "y\n" {
-		return
-	} else {
-		fmt.Fprintf(os.Stderr, "\033[31mAborted.\033[0m\n")
-		os.Exit(1)
+		return nil
 	}
+	return errors.New("aborted")
 }
 
 func BytesToSI(b uint64) string {

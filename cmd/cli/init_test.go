@@ -6,7 +6,10 @@ import (
 )
 
 func TestGetPrivateNet(t *testing.T) {
-	n := getPrivateNet()
+	n, err := getPrivateNet()
+	if err != nil {
+		t.Fatalf("getPrivateNet error: %v", err)
+	}
 
 	// Should be a 10.x.x.x /22 network
 	if n.IPNet.IP[0] != 10 {
@@ -37,7 +40,10 @@ func TestGetPrivateNetRandomness(t *testing.T) {
 	// (probabilistically this should pass)
 	seen := make(map[string]bool)
 	for i := 0; i < 10; i++ {
-		n := getPrivateNet()
+		n, err := getPrivateNet()
+		if err != nil {
+			t.Fatalf("getPrivateNet error: %v", err)
+		}
 		seen[n.IPNet.String()] = true
 	}
 	if len(seen) < 2 {
@@ -46,7 +52,10 @@ func TestGetPrivateNetRandomness(t *testing.T) {
 }
 
 func TestGetULANet(t *testing.T) {
-	n := getULANet()
+	n, err := getULANet()
+	if err != nil {
+		t.Fatalf("getULANet error: %v", err)
+	}
 
 	// Should be an fd00::/8 ULA prefix
 	if n.IPNet.IP[0] != 0xfd {
@@ -82,7 +91,10 @@ func TestGetULANet(t *testing.T) {
 func TestGetULANetRandomness(t *testing.T) {
 	seen := make(map[string]bool)
 	for i := 0; i < 10; i++ {
-		n := getULANet()
+		n, err := getULANet()
+		if err != nil {
+			t.Fatalf("getULANet error: %v", err)
+		}
 		seen[n.IPNet.String()] = true
 	}
 	if len(seen) < 2 {
@@ -91,7 +103,10 @@ func TestGetULANetRandomness(t *testing.T) {
 }
 
 func TestGetULANetGlobalID(t *testing.T) {
-	n := getULANet()
+	n, err := getULANet()
+	if err != nil {
+		t.Fatalf("getULANet error: %v", err)
+	}
 
 	// Bytes 2-6 are the 40-bit global ID (should be random, at least some non-zero)
 	allZero := true
@@ -103,7 +118,10 @@ func TestGetULANetGlobalID(t *testing.T) {
 	}
 	// Run a few times to avoid flaky false positive on all-zero random
 	if allZero {
-		n2 := getULANet()
+		n2, err := getULANet()
+		if err != nil {
+			t.Fatalf("getULANet error: %v", err)
+		}
 		allZero2 := true
 		for i := 2; i < 7; i++ {
 			if n2.IPNet.IP[i] != 0 {
