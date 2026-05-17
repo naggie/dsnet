@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/naggie/dsnet/lib"
+	"github.com/naggie/dsnet/lib/render"
 	"github.com/spf13/viper"
 )
 
@@ -64,7 +65,7 @@ func Add(hostname string, privKey, pubKey bool, owner, description string, confi
 
 	peerType := viper.GetString("output")
 
-	peerConfigBytes, err := lib.AsciiPeerConfig(peer, peerType, *server)
+	peerConfigBytes, err := render.AsciiPeerConfig(peer, peerType, *server)
 	if err != nil {
 		return fmt.Errorf("%w - failed to get peer configuration", err)
 	}

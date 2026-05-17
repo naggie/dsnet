@@ -1,28 +1,30 @@
-package lib
+package render
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
 	"text/template"
+
+	"github.com/naggie/dsnet/lib"
 )
 
-func getPeerConfTplString(peerType PeerType) (string, error) {
+func getPeerConfTplString(peerType lib.PeerType) (string, error) {
 	switch peerType {
-	case WGQuick:
+	case lib.WGQuick:
 		return wgQuickPeerConf, nil
-	case Vyatta:
+	case lib.Vyatta:
 		return vyattaPeerConf, nil
-	case NixOS:
+	case lib.NixOS:
 		return nixosPeerConf, nil
-	case RouterOS:
+	case lib.RouterOS:
 		return routerosPeerConf, nil
 	default:
 		return "", fmt.Errorf("unrecognized peer type")
 	}
 }
 
-func (p *Peer) getIfName() string {
+func getIfName(p lib.Peer) string {
 	// derive deterministic interface name
 	wgifSeed := 0
 	for _, b := range p.IP {
@@ -37,7 +39,7 @@ func (p *Peer) getIfName() string {
 
 // GetWGPeerTemplate returns a template string to be used when
 // configuring a peer
-func GetWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buffer, error) {
+func GetWGPeerTemplate(peer lib.Peer, peerType lib.PeerType, server lib.Server) (*bytes.Buffer, error) {
 	peerConf, err := getPeerConfTplString(peerType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get wg template: %w", err)
@@ -69,7 +71,7 @@ func GetWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buff
 		// vyatta requires an interface in range/format wg0-wg999
 		// deterministically choosing one in this range will probably allow use
 		// of the config without a colliding interface name
-		"Wgif":     peer.getIfName(),
+		"Wgif":     getIfName(peer),
 		"Endpoint": endpoint,
 	})
 	if err != nil {
@@ -78,16 +80,16 @@ func GetWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buff
 	return &templateBuff, nil
 }
 
-func AsciiPeerConfig(peer Peer, peerType string, server Server) (*bytes.Buffer, error) {
+func AsciiPeerConfig(peer lib.Peer, peerType string, server lib.Server) (*bytes.Buffer, error) {
 	switch peerType {
 	case "wg-quick":
-		return GetWGPeerTemplate(peer, WGQuick, server)
+		return GetWGPeerTemplate(peer, lib.WGQuick, server)
 	case "vyatta":
-		return GetWGPeerTemplate(peer, Vyatta, server)
+		return GetWGPeerTemplate(peer, lib.Vyatta, server)
 	case "nixos":
-		return GetWGPeerTemplate(peer, NixOS, server)
+		return GetWGPeerTemplate(peer, lib.NixOS, server)
 	case "routeros":
-		return GetWGPeerTemplate(peer, RouterOS, server)
+		return GetWGPeerTemplate(peer, lib.RouterOS, server)
 	default:
 		return nil, errors.New("unrecognised OUTPUT type")
 	}

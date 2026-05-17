@@ -1,4 +1,4 @@
-package lib
+package render
 
 const wgQuickPeerConf = `[Interface]
 {{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
