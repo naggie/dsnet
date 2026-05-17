@@ -69,7 +69,7 @@ func GenerateJSONPrivateKey() (JSONKey, error) {
 	privateKey, err := wgtypes.GeneratePrivateKey()
 
 	if err != nil {
-		return JSONKey{}, fmt.Errorf("failed to generate private key: %s", err)
+		return JSONKey{}, fmt.Errorf("failed to generate private key: %w", err)
 	}
 
 	return JSONKey{
@@ -81,7 +81,7 @@ func GenerateJSONKey() (JSONKey, error) {
 	privateKey, err := wgtypes.GenerateKey()
 
 	if err != nil {
-		return JSONKey{}, fmt.Errorf("failed to generate key: %s", err)
+		return JSONKey{}, fmt.Errorf("failed to generate key: %w", err)
 	}
 
 	return JSONKey{

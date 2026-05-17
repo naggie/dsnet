@@ -1,10 +1,9 @@
 package lib
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
 	"net"
-	"time"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -118,7 +117,6 @@ func (s *Server) AllocateIP6() (net.IP, error) {
 	zeros := bits - ones
 
 	rbs := make([]byte, zeros)
-	rand.Seed(time.Now().UTC().UnixNano())
 
 	IP := make(net.IP, len(network.IP))
 

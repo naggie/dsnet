@@ -25,7 +25,7 @@ func (s *Server) ConfigureDevice() error {
 	dev, err := wg.Device(s.InterfaceName)
 
 	if err != nil {
-		return fmt.Errorf("could not retrieve device '%s' (%v)", s.InterfaceName, err)
+		return fmt.Errorf("could not retrieve device '%s': %w", s.InterfaceName, err)
 	}
 
 	peers := s.GetPeers()
@@ -63,7 +63,7 @@ func (s *Server) ConfigureDevice() error {
 	err = wg.ConfigureDevice(s.InterfaceName, wgConfig)
 
 	if err != nil {
-		return fmt.Errorf("could not configure device '%s' (%v)", s.InterfaceName, err)
+		return fmt.Errorf("could not configure device '%s': %w", s.InterfaceName, err)
 	}
 	return nil
 }

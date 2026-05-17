@@ -91,8 +91,7 @@ func GenerateReport() error {
 	if err != nil {
 		return err
 	}
-	report.Print()
-	return nil
+	return report.Print()
 }
 
 func GetReport(dev *wgtypes.Device, conf *DsnetConfig) (DsnetReport, error) {
@@ -179,9 +178,12 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig) (DsnetReport, error) {
 	}, nil
 }
 
-func (report *DsnetReport) Print() {
-	_json, _ := json.MarshalIndent(report, "", "    ")
+func (report *DsnetReport) Print() error {
+	_json, err := json.MarshalIndent(report, "", "    ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal report: %w", err)
+	}
 	_json = append(_json, '\n')
-
 	fmt.Print(string(_json))
+	return nil
 }

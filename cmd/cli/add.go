@@ -42,7 +42,9 @@ func Add(hostname string, privKey, pubKey bool, owner, description string, confi
 
 	// publicKey := MustPromptString("PublicKey (optional)", false)
 	if !confirm {
-		ConfirmOrAbort("\nDo you want to add the above configuration?")
+		if err := ConfirmOrAbort("\nDo you want to add the above configuration?"); err != nil {
+			return err
+		}
 	}
 
 	// newline (not on stdout) to separate config

@@ -40,7 +40,7 @@ func (p *Peer) getIfName() string {
 func GetWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buffer, error) {
 	peerConf, err := getPeerConfTplString(peerType)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get wg template: %s", err)
+		return nil, fmt.Errorf("failed to get wg template: %w", err)
 	}
 
 	// See DsnetConfig type for explanation
@@ -51,7 +51,7 @@ func GetWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buff
 	} else if len(server.ExternalIP) > 0 {
 		endpoint = server.ExternalIP.String()
 	} else if len(server.ExternalIP6) > 0 {
-		endpoint = server.ExternalIP6.String()
+		endpoint = "[" + server.ExternalIP6.String() + "]"
 	} else {
 		return nil, errors.New("server config requires at least one of ExternalIP, ExternalIP6 or ExternalHostname")
 	}
@@ -61,7 +61,7 @@ func GetWGPeerTemplate(peer Peer, peerType PeerType, server Server) (*bytes.Buff
 	cidrSize6, _ := server.Network6.IPNet.Mask.Size()
 
 	var templateBuff bytes.Buffer
-	err = t.Execute(&templateBuff, map[string]interface{}{
+	err = t.Execute(&templateBuff, map[string]any{
 		"Peer":      peer,
 		"Server":    server,
 		"CidrSize":  cidrSize,
