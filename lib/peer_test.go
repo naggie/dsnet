@@ -244,7 +244,7 @@ func TestPeerGetIfName(t *testing.T) {
 		IP:  net.IP{10, 0, 0, 5},
 		IP6: net.IP{},
 	}
-	name := p.getIfName()
+	name := p.GetIfName()
 	// 10+0+0+5 = 15, 15%999 = 15
 	if name != "wg15" {
 		t.Fatalf("expected wg15, got %s", name)
@@ -256,8 +256,8 @@ func TestPeerGetIfNameDeterministic(t *testing.T) {
 		IP:  net.IP{10, 0, 0, 5},
 		IP6: net.IP{0xfd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 	}
-	name1 := p.getIfName()
-	name2 := p.getIfName()
+	name1 := p.GetIfName()
+	name2 := p.GetIfName()
 	if name1 != name2 {
 		t.Fatalf("getIfName should be deterministic: %s != %s", name1, name2)
 	}

@@ -132,3 +132,15 @@ func NewPeer(server *Server, private, public, owner, hostname, description strin
 	}
 	return newPeer, nil
 }
+
+func (p *Peer) GetIfName() string {
+	wgifSeed := 0
+	for _, b := range p.IP {
+		wgifSeed += int(b)
+	}
+
+	for _, b := range p.IP6 {
+		wgifSeed += int(b)
+	}
+	return fmt.Sprintf("wg%d", wgifSeed%999)
+}

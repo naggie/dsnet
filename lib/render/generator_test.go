@@ -1,14 +1,15 @@
-package lib
+package render
 
 import (
 	"net"
 	"strings"
 	"testing"
 
+	"github.com/naggie/dsnet/lib"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-func testPeerAndServer(t *testing.T) (Peer, Server) {
+func testPeerAndServer(t *testing.T) (lib.Peer, lib.Server) {
 	t.Helper()
 	privKey, err := wgtypes.GeneratePrivateKey()
 	if err != nil {
@@ -23,41 +24,41 @@ func testPeerAndServer(t *testing.T) (Peer, Server) {
 		t.Fatalf("failed to generate preshared key: %v", err)
 	}
 
-	server := Server{
+	server := lib.Server{
 		ExternalHostname: "vpn.example.com",
 		ListenPort:       51820,
 		Domain:           "dsnet",
 		InterfaceName:    "dsnet",
-		Network: JSONIPNet{
+		Network: lib.JSONIPNet{
 			IPNet: net.IPNet{
 				IP:   net.IP{10, 0, 0, 0},
 				Mask: net.IPMask{255, 255, 252, 0},
 			},
 		},
-		Network6: JSONIPNet{
+		Network6: lib.JSONIPNet{
 			IPNet: net.IPNet{
 				IP:   net.IP{0xfd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 				Mask: net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0},
 			},
 		},
 		IP:                  net.IP{10, 0, 0, 1},
-		IP6:                 net.IP{0xfd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		IP6:                 net.IP{0xfd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		DNS:                 net.IP{10, 0, 0, 1},
-		PrivateKey:          JSONKey{Key: privKey},
-		Networks:            []JSONIPNet{},
+		PrivateKey:          lib.JSONKey{Key: privKey},
+		Networks:            []lib.JSONIPNet{},
 		PersistentKeepalive: 25,
 	}
 
-	peer := Peer{
+	peer := lib.Peer{
 		Hostname:            "test-peer",
 		Owner:               "alice",
 		Description:         "Test peer",
 		IP:                  net.IP{10, 0, 0, 2},
 		IP6:                 net.IP{0xfd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2},
-		PublicKey:           JSONKey{Key: peerPrivKey.PublicKey()},
-		PrivateKey:          JSONKey{Key: peerPrivKey},
-		PresharedKey:        JSONKey{Key: psk},
-		Networks:            []JSONIPNet{},
+		PublicKey:           lib.JSONKey{Key: peerPrivKey.PublicKey()},
+		PrivateKey:          lib.JSONKey{Key: peerPrivKey},
+		PresharedKey:        lib.JSONKey{Key: psk},
+		Networks:            []lib.JSONIPNet{},
 		PersistentKeepalive: 25,
 	}
 
@@ -67,7 +68,7 @@ func testPeerAndServer(t *testing.T) (Peer, Server) {
 func TestGetWGPeerTemplateWGQuick(t *testing.T) {
 	peer, server := testPeerAndServer(t)
 
-	buf, err := GetWGPeerTemplate(peer, WGQuick, server)
+	buf, err := GetWGPeerTemplate(peer, lib.WGQuick, server)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -103,7 +104,7 @@ func TestGetWGPeerTemplateWGQuick(t *testing.T) {
 func TestGetWGPeerTemplateVyatta(t *testing.T) {
 	peer, server := testPeerAndServer(t)
 
-	buf, err := GetWGPeerTemplate(peer, Vyatta, server)
+	buf, err := GetWGPeerTemplate(peer, lib.Vyatta, server)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -124,7 +125,7 @@ func TestGetWGPeerTemplateVyatta(t *testing.T) {
 func TestGetWGPeerTemplateNixOS(t *testing.T) {
 	peer, server := testPeerAndServer(t)
 
-	buf, err := GetWGPeerTemplate(peer, NixOS, server)
+	buf, err := GetWGPeerTemplate(peer, lib.NixOS, server)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -145,7 +146,7 @@ func TestGetWGPeerTemplateNixOS(t *testing.T) {
 func TestGetWGPeerTemplateRouterOS(t *testing.T) {
 	peer, server := testPeerAndServer(t)
 
-	buf, err := GetWGPeerTemplate(peer, RouterOS, server)
+	buf, err := GetWGPeerTemplate(peer, lib.RouterOS, server)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -163,7 +164,7 @@ func TestGetWGPeerTemplateRouterOS(t *testing.T) {
 func TestGetWGPeerTemplateInvalidType(t *testing.T) {
 	peer, server := testPeerAndServer(t)
 
-	_, err := GetWGPeerTemplate(peer, PeerType(99), server)
+	_, err := GetWGPeerTemplate(peer, lib.PeerType(99), server)
 	if err == nil {
 		t.Fatal("expected error for invalid peer type")
 	}
@@ -206,7 +207,7 @@ func TestAsciiPeerConfigInvalid(t *testing.T) {
 func TestGetWGPeerTemplateEndpointPrecedence(t *testing.T) {
 	t.Run("hostname", func(t *testing.T) {
 		peer, server := testPeerAndServer(t)
-		buf, err := GetWGPeerTemplate(peer, WGQuick, server)
+		buf, err := GetWGPeerTemplate(peer, lib.WGQuick, server)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -219,7 +220,7 @@ func TestGetWGPeerTemplateEndpointPrecedence(t *testing.T) {
 		peer, server := testPeerAndServer(t)
 		server.ExternalHostname = ""
 		server.ExternalIP = net.IP{1, 2, 3, 4}
-		buf, err := GetWGPeerTemplate(peer, WGQuick, server)
+		buf, err := GetWGPeerTemplate(peer, lib.WGQuick, server)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -233,7 +234,7 @@ func TestGetWGPeerTemplateEndpointPrecedence(t *testing.T) {
 		server.ExternalHostname = ""
 		server.ExternalIP = nil
 		server.ExternalIP6 = net.ParseIP("2001:db8::1")
-		buf, err := GetWGPeerTemplate(peer, WGQuick, server)
+		buf, err := GetWGPeerTemplate(peer, lib.WGQuick, server)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -249,7 +250,7 @@ func TestGetWGPeerTemplateNoEndpoint(t *testing.T) {
 	server.ExternalIP = nil
 	server.ExternalIP6 = nil
 
-	_, err := GetWGPeerTemplate(peer, WGQuick, server)
+	_, err := GetWGPeerTemplate(peer, lib.WGQuick, server)
 	if err == nil {
 		t.Fatal("expected error when no endpoint is available")
 	}
@@ -258,9 +259,9 @@ func TestGetWGPeerTemplateNoEndpoint(t *testing.T) {
 func TestGetWGPeerTemplateIPv4Only(t *testing.T) {
 	peer, server := testPeerAndServer(t)
 	peer.IP6 = nil
-	server.Network6 = JSONIPNet{}
+	server.Network6 = lib.JSONIPNet{}
 
-	buf, err := GetWGPeerTemplate(peer, WGQuick, server)
+	buf, err := GetWGPeerTemplate(peer, lib.WGQuick, server)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -274,9 +275,9 @@ func TestGetWGPeerTemplateIPv4Only(t *testing.T) {
 func TestGetWGPeerTemplateWithServerNetworks(t *testing.T) {
 	peer, server := testPeerAndServer(t)
 	_, extraNet, _ := net.ParseCIDR("192.168.1.0/24")
-	server.Networks = []JSONIPNet{{IPNet: *extraNet}}
+	server.Networks = []lib.JSONIPNet{{IPNet: *extraNet}}
 
-	buf, err := GetWGPeerTemplate(peer, WGQuick, server)
+	buf, err := GetWGPeerTemplate(peer, lib.WGQuick, server)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -291,7 +292,7 @@ func TestGetWGPeerTemplateNoDNS(t *testing.T) {
 	peer, server := testPeerAndServer(t)
 	server.DNS = nil
 
-	buf, err := GetWGPeerTemplate(peer, WGQuick, server)
+	buf, err := GetWGPeerTemplate(peer, lib.WGQuick, server)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

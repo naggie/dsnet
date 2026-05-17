@@ -24,19 +24,6 @@ func getPeerConfTplString(peerType lib.PeerType) (string, error) {
 	}
 }
 
-func getIfName(p lib.Peer) string {
-	// derive deterministic interface name
-	wgifSeed := 0
-	for _, b := range p.IP {
-		wgifSeed += int(b)
-	}
-
-	for _, b := range p.IP6 {
-		wgifSeed += int(b)
-	}
-	return fmt.Sprintf("wg%d", wgifSeed%999)
-}
-
 // GetWGPeerTemplate returns a template string to be used when
 // configuring a peer
 func GetWGPeerTemplate(peer lib.Peer, peerType lib.PeerType, server lib.Server) (*bytes.Buffer, error) {
@@ -71,7 +58,7 @@ func GetWGPeerTemplate(peer lib.Peer, peerType lib.PeerType, server lib.Server) 
 		// vyatta requires an interface in range/format wg0-wg999
 		// deterministically choosing one in this range will probably allow use
 		// of the config without a colliding interface name
-		"Wgif":     getIfName(peer),
+		"Wgif":     peer.GetIfName(),
 		"Endpoint": endpoint,
 	})
 	if err != nil {
