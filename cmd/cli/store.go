@@ -8,12 +8,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-// OpenStore opens the configured storage backend. The DSNET_STORE viper key
-// (URL form) is preferred; if unset, a legacy DSNET_CONFIG_FILE env var is
-// wrapped in a jsonfile URL and a one-line deprecation notice is emitted on
-// stderr.
+// OpenStore opens the configured storage backend. DSNET_STORE (URL form)
+// is the canonical setting; if it is unset but the legacy DSNET_CONFIG_FILE
+// env var is present, a jsonfile URL is built from it and a one-line
+// deprecation notice is emitted on stderr.
 func OpenStore() (store.Backend, error) {
-	if !viper.IsSet("store") {
+	_, storeSet := os.LookupEnv("DSNET_STORE")
+	if !storeSet {
 		if legacy, ok := os.LookupEnv("DSNET_CONFIG_FILE"); ok {
 			fmt.Fprintf(os.Stderr, "DSNET_CONFIG_FILE is deprecated; use DSNET_STORE=jsonfile://%s\n", legacy)
 			return store.Open("jsonfile://" + legacy)
