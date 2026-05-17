@@ -31,7 +31,34 @@ jobs:
       run: GOOS=linux CGO_ENABLED=0 ${{ matrix.arch }} go build -v ./cmd/root.go
 
     - name: Lint
-      run: test -z $(gofmt -l .)
+      run: |
+        unformatted=$(gofmt -l .)
+        if [ -n "$unformatted" ]; then
+          echo "The following files are not gofmt-clean:"
+          echo "$unformatted"
+          exit 1
+        fi
 
     - name: Test
       run: go test -v ./...
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: "1.18"
+
+    - name: Generate coverage
+      run: |
+        go test -coverprofile=coverage.out ./...
+        go tool cover -html=coverage.out -o coverage.html
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-html
+        path: coverage.html
