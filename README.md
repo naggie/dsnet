@@ -249,7 +249,14 @@ Example NixOS output:
           "10.9.8.2/22"
           "fd00:80f8:af4a:4700:aaaa:bbbb:cccc:88ad/64"
           ];
+        # Inline keys end up in the world-readable /nix/store. Insecure: prefer
+        # privateKeyFile and presharedKeyFile from a secrets manager such as
+        # sops-nix or agenix.
         privateKey = "2PvML6bsmTCK+cBxpV9SfF261fsH6gICixtppfG6KFc=";
+        # Re-resolve the endpoint periodically so a DNS failure at boot or a
+        # dynamic IP change heals itself. Interface level, not per peer: the
+        # per-peer option fails evaluation with the networkd backend.
+        dynamicEndpointRefreshSeconds = 300;
         peers = [
           {
             publicKey = "zCDo5yn7Muy3mPBXtarwm5S7JjNKM0IdIdGqoreWmSA=";

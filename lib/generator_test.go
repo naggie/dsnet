@@ -140,6 +140,17 @@ func TestGetWGPeerTemplateNixOS(t *testing.T) {
 	if !strings.Contains(output, "publicKey") {
 		t.Fatal("NixOS config should contain publicKey")
 	}
+
+	// refresh must be set on the interface, not the peer: the per-peer
+	// options fail evaluation when networking.wireguard.useNetworkd is on
+	peersAt := strings.Index(output, "peers = [")
+	refreshAt := strings.Index(output, "dynamicEndpointRefreshSeconds = 300;")
+	if refreshAt == -1 || refreshAt > peersAt {
+		t.Fatal("NixOS config should set dynamicEndpointRefreshSeconds at interface level")
+	}
+	if strings.Contains(output[peersAt:], "dynamicEndpointRefresh") {
+		t.Fatal("NixOS config should not set dynamicEndpointRefresh options per peer")
+	}
 }
 
 func TestGetWGPeerTemplateRouterOS(t *testing.T) {

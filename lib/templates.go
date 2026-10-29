@@ -67,7 +67,14 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
       "{{ .Peer.IP6 }}/{{ .CidrSize6 }}"
       {{ end -}}
     ];
+    # Inline keys end up in the world-readable /nix/store. Insecure: prefer
+    # privateKeyFile and presharedKeyFile from a secrets manager such as
+    # sops-nix or agenix.
     privateKey = "{{ .Peer.PrivateKey.Key }}";
+    # Re-resolve the endpoint periodically so a DNS failure at boot or a
+    # dynamic IP change heals itself. Interface level, not per peer: the
+    # per-peer option fails evaluation with the networkd backend.
+    dynamicEndpointRefreshSeconds = 300;
     peers = [
       {{ "{" }}
         publicKey = "{{ .Server.PrivateKey.PublicKey.Key }}";
@@ -79,14 +86,12 @@ const nixosPeerConf = `networking.wireguard.interfaces = {{ "{" }}
           {{ if gt (.Server.Network6.IPNet.IP | len) 0 -}}
           "{{ .Server.Network6.IPNet.IP }}/{{ .CidrSize6  }}"
           {{ end -}}
-		  {{ range .Server.Networks -}}
-			"{{ . }}"
-		  {{ end -}}
+          {{ range .Server.Networks -}}
+          "{{ . }}"
+          {{ end -}}
         ];
         endpoint = "{{ .Endpoint }}:{{ .Server.ListenPort }}";
         persistentKeepalive = {{ .Server.PersistentKeepalive }};
-		dynamicEndpointRefreshRestartSeconds = 5; # restart on failure (e.g. DNS issue)
-		dynamicEndpointRefreshSeconds = 300; # refresh DNS periodically
       {{ "}" }}
     ];
   {{ "};" }}
