@@ -57,6 +57,7 @@ func TestJsonPeerToDsnetPeer(t *testing.T) {
 			PrivateKey:   lib.JSONKey{Key: privKey},
 			PresharedKey: lib.JSONKey{Key: psk},
 			Networks:     []lib.JSONIPNet{{IPNet: *subnet}},
+			Paused:       true,
 		},
 	}
 
@@ -92,6 +93,9 @@ func TestJsonPeerToDsnetPeer(t *testing.T) {
 	}
 	if len(p.Networks) != 1 {
 		t.Fatalf("expected 1 network, got %d", len(p.Networks))
+	}
+	if !p.Paused {
+		t.Fatal("Paused should be carried over")
 	}
 }
 

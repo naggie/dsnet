@@ -139,10 +139,16 @@ The pre-shared key for this peer. The peer has the same key defined as the
 pre-shared key for the server peer. This is optional in wireguard but not for
 dsnet due to the extra (post quantum!) security it provides.
 
-            "PersistentKeepalive": 25
+            "PersistentKeepalive": 25,
 
 The PersistentKeepalive value for the server in generated client configs, and
 for each peer connected to the server.
+
+            "Paused": false
+
+Set by `dsnet pause <hostname>` and cleared by `dsnet resume <hostname>`. A
+paused peer stays in the config but is removed from the wireguard interface, so
+its traffic is blocked. Paused peers are omitted from the report.
 
 
         }

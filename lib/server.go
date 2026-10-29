@@ -35,6 +35,12 @@ func (s *Server) GetPeers() []wgtypes.PeerConfig {
 	wgPeers := make([]wgtypes.PeerConfig, 0, len(s.Peers))
 
 	for _, peer := range s.Peers {
+		// omitting a paused peer makes ConfigureDevice remove it from the
+		// interface, blocking its traffic
+		if peer.Paused {
+			continue
+		}
+
 		// create a new PSK in memory to avoid passing the same value by
 		// pointer to each peer (d'oh)
 		presharedKey := peer.PresharedKey.Key

@@ -41,6 +41,7 @@ type Peer struct {
 	PresharedKey        JSONKey
 	Networks            []JSONIPNet
 	PersistentKeepalive int
+	Paused              bool
 }
 
 // NewPeer generates a peer from the supplied arguments and generates keys if needed.

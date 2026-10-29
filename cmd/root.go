@@ -142,6 +142,34 @@ var (
 		},
 	}
 
+	pauseCmd = &cobra.Command{
+		Use:   "pause [hostname]",
+		Short: "Disable a peer by hostname, blocking its traffic, + sync",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return errors.New("Missing hostname argument")
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cli.SetPaused(args[0], true)
+		},
+	}
+
+	resumeCmd = &cobra.Command{
+		Use:   "resume [hostname]",
+		Short: "Re-enable a paused peer by hostname + sync",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return errors.New("Missing hostname argument")
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cli.SetPaused(args[0], false)
+		},
+	}
+
 	versionCmd = &cobra.Command{
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("dsnet version %s\ncommit %s\nbuilt %s", dsnet.VERSION, dsnet.GIT_COMMIT, dsnet.BUILD_DATE)
@@ -222,6 +250,8 @@ func init() {
 	rootCmd.AddCommand(syncCmd)
 	rootCmd.AddCommand(reportCmd)
 	rootCmd.AddCommand(removeCmd)
+	rootCmd.AddCommand(pauseCmd)
+	rootCmd.AddCommand(resumeCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(upCmd)
 	rootCmd.AddCommand(downCmd)

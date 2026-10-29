@@ -34,6 +34,8 @@ type PeerConfig struct {
 	PublicKey    lib.JSONKey     `validate:"required,len=44"`
 	PrivateKey   lib.JSONKey     `json:"-"` // omitted from config!
 	PresharedKey lib.JSONKey     `validate:"required,len=44"`
+	// Paused peers are kept in the config but removed from the interface
+	Paused bool
 }
 
 type DsnetConfig struct {
@@ -373,6 +375,10 @@ func (conf *DsnetConfig) Merge(patch map[string]interface{}) error {
 				peer.PresharedKey.Key = key
 			} else {
 				return fmt.Errorf("failed to parse peer preshared key: %v", peerMap)
+			}
+
+			if val, ok := peerMap["Paused"].(bool); ok {
+				peer.Paused = val
 			}
 
 			conf.Peers[i] = peer

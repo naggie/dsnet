@@ -25,6 +25,7 @@ func jsonPeerToDsnetPeer(peers []PeerConfig) []lib.Peer {
 			PrivateKey:   p.PrivateKey,
 			PresharedKey: p.PresharedKey,
 			Networks:     p.Networks,
+			Paused:       p.Paused,
 		})
 	}
 	return libPeers

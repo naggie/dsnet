@@ -291,3 +291,49 @@ func TestGetPeersPresharedKeyIsolation(t *testing.T) {
 		t.Fatal("peer2 preshared key mismatch")
 	}
 }
+
+func TestGetPeersOmitsPaused(t *testing.T) {
+	s := testServer(t)
+	activeKey, _ := wgtypes.GeneratePrivateKey()
+	pausedKey, _ := wgtypes.GeneratePrivateKey()
+
+	s.Peers = append(s.Peers,
+		Peer{
+			Hostname:  "paused",
+			IP:        net.IP{10, 0, 0, 2},
+			PublicKey: JSONKey{Key: pausedKey.PublicKey()},
+			Paused:    true,
+		},
+		Peer{
+			Hostname:  "active",
+			IP:        net.IP{10, 0, 0, 3},
+			PublicKey: JSONKey{Key: activeKey.PublicKey()},
+		},
+	)
+
+	wgPeers := s.GetPeers()
+	if len(wgPeers) != 1 {
+		t.Fatalf("expected 1 peer, got %d", len(wgPeers))
+	}
+	if wgPeers[0].PublicKey != activeKey.PublicKey() {
+		t.Fatal("expected only the active peer")
+	}
+}
+
+func TestIPAllocatedPausedPeer(t *testing.T) {
+	s := testServer(t)
+	peerIP := net.IP{10, 0, 0, 2}
+	s.Peers = append(s.Peers, Peer{IP: peerIP, Paused: true})
+
+	// a paused peer must keep its IP so resume does not cause a clash
+	if !s.IPAllocated(peerIP) {
+		t.Fatal("paused peer IP should stay allocated")
+	}
+	ip, err := s.AllocateIP()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ip.Equal(peerIP) {
+		t.Fatal("allocated IP of paused peer")
+	}
+}

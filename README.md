@@ -42,9 +42,11 @@ It works on AMD64 based linux and also ARMv5.
       down        Destroy the interface, run pre/post down
       help        Help about any command
       init        Create /etc/dsnetconfig.json containing default configuration + new keys without loading. Edit to taste.
+      pause       Disable a peer by hostname, blocking its traffic, + sync
       regenerate  Regenerate keys and config for peer
       remove      Remove a peer by hostname provided as argument + sync
       report      Generate a JSON status report to stdout
+      resume      Re-enable a paused peer by hostname + sync
       sync        Update wireguard configuration from /etc/dsnetconfig.json after validating
       up          Create the interface, run pre/post up, sync
       version     Print version
