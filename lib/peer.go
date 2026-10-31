@@ -52,7 +52,8 @@ type Peer struct {
 //   - owner is the owner name (required)
 //   - hostname is the name of the peer (required)
 //   - description is the annotation for the peer
-func NewPeer(server *Server, private, public, owner, hostname, description string) (Peer, error) {
+//   - ip and ip6 are the peer addresses; allocated automatically when nil
+func NewPeer(server *Server, private, public, owner, hostname, description string, ip, ip6 net.IP) (Peer, error) {
 	if owner == "" {
 		return Peer{}, errors.New("missing owner")
 	}
@@ -112,7 +113,15 @@ func NewPeer(server *Server, private, public, owner, hostname, description strin
 		PersistentKeepalive: server.PersistentKeepalive,
 	}
 
-	if len(server.Network.IPNet.Mask) > 0 {
+	if ip != nil {
+		if ip.To4() == nil {
+			return Peer{}, fmt.Errorf("%s is not an ipv4 address", ip)
+		}
+		if err := server.checkFreeIP(ip, server.Network.IPNet); err != nil {
+			return Peer{}, err
+		}
+		newPeer.IP = ip
+	} else if len(server.Network.IPNet.Mask) > 0 {
 		newIP, err := server.AllocateIP()
 		if err != nil {
 			return Peer{}, fmt.Errorf("failed to allocate ipv4 address: %s", err)
@@ -120,7 +129,15 @@ func NewPeer(server *Server, private, public, owner, hostname, description strin
 		newPeer.IP = newIP
 	}
 
-	if len(server.Network6.IPNet.Mask) > 0 {
+	if ip6 != nil {
+		if ip6.To4() != nil {
+			return Peer{}, fmt.Errorf("%s is not an ipv6 address", ip6)
+		}
+		if err := server.checkFreeIP(ip6, server.Network6.IPNet); err != nil {
+			return Peer{}, err
+		}
+		newPeer.IP6 = ip6
+	} else if len(server.Network6.IPNet.Mask) > 0 {
 		newIPV6, err := server.AllocateIP6()
 		if err != nil {
 			return Peer{}, fmt.Errorf("failed to allocate ipv6 address: %s", err)

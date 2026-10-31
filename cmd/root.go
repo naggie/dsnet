@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -19,6 +20,8 @@ var (
 	// Flags.
 	owner       string
 	description string
+	ipv4        string
+	ipv6        string
 	confirm     bool
 
 	// Commands.
@@ -92,7 +95,16 @@ var (
 			if err != nil {
 				return err
 			}
-			return cli.Add(args[0], privKey, pubKey, owner, description, confirm)
+			// ParseIP returns nil for "", which means allocate automatically
+			ip := net.ParseIP(ipv4)
+			if ipv4 != "" && ip == nil {
+				return fmt.Errorf("invalid --ipv4 address %s", ipv4)
+			}
+			ip6 := net.ParseIP(ipv6)
+			if ipv6 != "" && ip6 == nil {
+				return fmt.Errorf("invalid --ipv6 address %s", ipv6)
+			}
+			return cli.Add(args[0], privKey, pubKey, owner, description, ip, ip6, confirm)
 		},
 	}
 
@@ -215,6 +227,8 @@ func init() {
 	rootCmd.PersistentFlags().String("output", "wg-quick", "config file format: vyatta/wg-quick/nixos")
 	addCmd.Flags().StringVar(&owner, "owner", "", "owner of the new peer")
 	addCmd.Flags().StringVar(&description, "description", "", "description of the new peer")
+	addCmd.Flags().StringVar(&ipv4, "ipv4", "", "IPv4 address for the new peer instead of the lowest free one")
+	addCmd.Flags().StringVar(&ipv6, "ipv6", "", "IPv6 address for the new peer instead of a random free one")
 	addCmd.Flags().BoolVar(&confirm, "confirm", false, "confirm")
 	addCmd.PersistentFlags().BoolP("private-key", "r", false, "Accept user-supplied private key. If supplied, dsnet will generate a public key.")
 	addCmd.PersistentFlags().BoolP("public-key", "u", false, "Accept user-supplied public key. If supplied, the user must add the private key to the generated config (or provide it with --private-key).")

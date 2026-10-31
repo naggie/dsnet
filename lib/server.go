@@ -146,6 +146,30 @@ func (s *Server) AllocateIP6() (net.IP, error) {
 	return nil, fmt.Errorf("Could not allocate random IPv6 after 10000 tries. This was highly unlikely!")
 }
 
+// checkFreeIP returns an error unless a user-supplied IP is a usable host
+// address in network and not already in use
+func (s *Server) checkFreeIP(IP net.IP, network net.IPNet) error {
+	if len(network.Mask) == 0 || !network.Contains(IP) {
+		return fmt.Errorf("%s is not in network %s", IP, network.String())
+	}
+	if IP.Equal(network.IP.Mask(network.Mask)) {
+		return fmt.Errorf("%s is the network address of %s", IP, network.String())
+	}
+	if IP.To4() != nil {
+		broadcast := make(net.IP, net.IPv4len)
+		for i, b := range network.IP.To4() {
+			broadcast[i] = b | ^network.Mask[len(network.Mask)-net.IPv4len+i]
+		}
+		if IP.Equal(broadcast) {
+			return fmt.Errorf("%s is the broadcast address of %s", IP, network.String())
+		}
+	}
+	if s.IPAllocated(IP) {
+		return fmt.Errorf("%s is already allocated", IP)
+	}
+	return nil
+}
+
 // IPAllocated checks the existing used ips and returns bool
 // depending on if the IP is in use
 func (s *Server) IPAllocated(IP net.IP) bool {

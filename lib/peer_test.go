@@ -10,7 +10,7 @@ import (
 func TestNewPeerBasic(t *testing.T) {
 	s := testServer(t)
 
-	peer, err := NewPeer(s, "", "", "alice", "laptop", "Alice's laptop")
+	peer, err := NewPeer(s, "", "", "alice", "laptop", "Alice's laptop", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestNewPeerBasic(t *testing.T) {
 func TestNewPeerGeneratesKeys(t *testing.T) {
 	s := testServer(t)
 
-	peer, err := NewPeer(s, "", "", "alice", "laptop", "test")
+	peer, err := NewPeer(s, "", "", "alice", "laptop", "test", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestNewPeerGeneratesKeys(t *testing.T) {
 func TestNewPeerAllocatesIP(t *testing.T) {
 	s := testServer(t)
 
-	peer, err := NewPeer(s, "", "", "alice", "laptop", "test")
+	peer, err := NewPeer(s, "", "", "alice", "laptop", "test", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestNewPeerAllocatesIP(t *testing.T) {
 func TestNewPeerSequentialIPs(t *testing.T) {
 	s := testServer(t)
 
-	peer1, err := NewPeer(s, "", "", "alice", "laptop1", "test")
+	peer1, err := NewPeer(s, "", "", "alice", "laptop1", "test", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -91,7 +91,7 @@ func TestNewPeerSequentialIPs(t *testing.T) {
 	// Add peer1 to server so peer2 gets a different IP
 	s.Peers = append(s.Peers, peer1)
 
-	peer2, err := NewPeer(s, "", "", "bob", "laptop2", "test")
+	peer2, err := NewPeer(s, "", "", "bob", "laptop2", "test", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestNewPeerSequentialIPs(t *testing.T) {
 func TestNewPeerMissingOwner(t *testing.T) {
 	s := testServer(t)
 
-	_, err := NewPeer(s, "", "", "", "laptop", "test")
+	_, err := NewPeer(s, "", "", "", "laptop", "test", nil, nil)
 	if err == nil {
 		t.Fatal("expected error for missing owner")
 	}
@@ -113,7 +113,7 @@ func TestNewPeerMissingOwner(t *testing.T) {
 func TestNewPeerMissingHostname(t *testing.T) {
 	s := testServer(t)
 
-	_, err := NewPeer(s, "", "", "alice", "", "test")
+	_, err := NewPeer(s, "", "", "alice", "", "test", nil, nil)
 	if err == nil {
 		t.Fatal("expected error for missing hostname")
 	}
@@ -125,7 +125,7 @@ func TestNewPeerWithPrivateKey(t *testing.T) {
 	privKey, _ := wgtypes.GeneratePrivateKey()
 	b64 := privKey.String()
 
-	peer, err := NewPeer(s, b64, "", "alice", "laptop", "test")
+	peer, err := NewPeer(s, b64, "", "alice", "laptop", "test", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -144,7 +144,7 @@ func TestNewPeerWithPublicKeyOnly(t *testing.T) {
 	privKey, _ := wgtypes.GeneratePrivateKey()
 	pubKey := privKey.PublicKey()
 
-	peer, err := NewPeer(s, "", pubKey.String(), "alice", "laptop", "test")
+	peer, err := NewPeer(s, "", pubKey.String(), "alice", "laptop", "test", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -166,7 +166,7 @@ func TestNewPeerWithMatchingKeyPair(t *testing.T) {
 	privKey, _ := wgtypes.GeneratePrivateKey()
 	pubKey := privKey.PublicKey()
 
-	peer, err := NewPeer(s, privKey.String(), pubKey.String(), "alice", "laptop", "test")
+	peer, err := NewPeer(s, privKey.String(), pubKey.String(), "alice", "laptop", "test", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -186,7 +186,7 @@ func TestNewPeerWithMismatchedKeys(t *testing.T) {
 	privKey2, _ := wgtypes.GeneratePrivateKey()
 	pubKey2 := privKey2.PublicKey()
 
-	_, err := NewPeer(s, privKey1.String(), pubKey2.String(), "alice", "laptop", "test")
+	_, err := NewPeer(s, privKey1.String(), pubKey2.String(), "alice", "laptop", "test", nil, nil)
 	if err == nil {
 		t.Fatal("expected error for mismatched key pair")
 	}
@@ -199,7 +199,7 @@ func TestNewPeerNoNetwork(t *testing.T) {
 	s.Network = JSONIPNet{}
 	s.Network6 = JSONIPNet{}
 
-	_, err := NewPeer(s, "", "", "alice", "laptop", "test")
+	_, err := NewPeer(s, "", "", "alice", "laptop", "test", nil, nil)
 	if err == nil {
 		t.Fatal("expected error when no network is defined")
 	}
@@ -210,7 +210,7 @@ func TestNewPeerIPv4Only(t *testing.T) {
 	s.IP6 = nil
 	s.Network6 = JSONIPNet{}
 
-	peer, err := NewPeer(s, "", "", "alice", "laptop", "test")
+	peer, err := NewPeer(s, "", "", "alice", "laptop", "test", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -226,7 +226,7 @@ func TestNewPeerIPv4Only(t *testing.T) {
 func TestNewPeerEmptyNetworks(t *testing.T) {
 	s := testServer(t)
 
-	peer, err := NewPeer(s, "", "", "alice", "laptop", "test")
+	peer, err := NewPeer(s, "", "", "alice", "laptop", "test", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -260,5 +260,59 @@ func TestPeerGetIfNameDeterministic(t *testing.T) {
 	name2 := p.getIfName()
 	if name1 != name2 {
 		t.Fatalf("getIfName should be deterministic: %s != %s", name1, name2)
+	}
+}
+
+func TestNewPeerCustomIP(t *testing.T) {
+	s := testServer(t) // 10.0.0.0/22, fd00::/64, server .1 and ::1
+	s.Peers = []Peer{{IP: net.IP{10, 0, 0, 9}, IP6: net.ParseIP("fd00::9")}}
+
+	peer, err := NewPeer(s, "", "", "alice", "laptop", "test", net.ParseIP("10.0.2.100"), net.ParseIP("fd00::100"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !peer.IP.Equal(net.IP{10, 0, 2, 100}) || !peer.IP6.Equal(net.ParseIP("fd00::100")) {
+		t.Fatalf("expected custom IPs, got %s %s", peer.IP, peer.IP6)
+	}
+
+	// one custom, one allocated
+	peer, err = NewPeer(s, "", "", "alice", "laptop", "test", net.ParseIP("10.0.2.100"), nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(peer.IP6) == 0 || !s.Network6.IPNet.Contains(peer.IP6) {
+		t.Fatalf("expected allocated IPv6, got %s", peer.IP6)
+	}
+}
+
+func TestNewPeerCustomIPRejected(t *testing.T) {
+	s := testServer(t) // 10.0.0.0/22, fd00::/64, server .1 and ::1
+	s.Peers = []Peer{{IP: net.IP{10, 0, 0, 9}, IP6: net.ParseIP("fd00::9"), Networks: []JSONIPNet{}}}
+
+	for _, tc := range []struct {
+		name    string
+		ip, ip6 string
+	}{
+		{"outside network", "10.0.4.1", ""},
+		{"network address", "10.0.0.0", ""},
+		{"broadcast address", "10.0.3.255", ""},
+		{"server IP", "10.0.0.1", ""},
+		{"peer IP", "10.0.0.9", ""},
+		{"v6 as ipv4", "fd00::100", ""},
+		{"v6 outside network", "", "fd01::1"},
+		{"v6 server IP", "", "fd00::1"},
+		{"v6 peer IP", "", "fd00::9"},
+		{"v6 network address", "", "fd00::"},
+		{"v4 as ipv6", "", "10.0.2.100"},
+	} {
+		_, err := NewPeer(s, "", "", "alice", "laptop", "test", net.ParseIP(tc.ip), net.ParseIP(tc.ip6))
+		if err == nil {
+			t.Fatalf("%s: expected error", tc.name)
+		}
+	}
+
+	s.Network = JSONIPNet{}
+	if _, err := NewPeer(s, "", "", "alice", "laptop", "test", net.ParseIP("10.0.2.100"), nil); err == nil {
+		t.Fatal("expected error for ipv4 without an ipv4 network")
 	}
 }
