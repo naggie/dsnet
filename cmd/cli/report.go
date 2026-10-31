@@ -51,6 +51,8 @@ type PeerReport struct {
 	Online bool
 	// No handshake for 28 days
 	Dormant bool
+	// Disabled via dsnet pause; absent from the wg interface
+	Paused bool
 	// date peer was added to dsnet config
 	Added time.Time
 	// Internal VPN IP address. Added to AllowedIPs in server config as a /32
@@ -96,64 +98,19 @@ func GenerateReport() error {
 }
 
 func GetReport(dev *wgtypes.Device, conf *DsnetConfig) (DsnetReport, error) {
-	peerTimeout := viper.GetDuration("peer_timeout")
-	peerExpiry := viper.GetDuration("peer_expiry")
-	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
-	peerReports := make([]PeerReport, 0)
-	peersOnline := 0
-
 	linkDev, err := netlink.LinkByName(conf.InterfaceName)
 	if err != nil {
 		return DsnetReport{}, fmt.Errorf("%w - error getting link", err)
 	}
 
 	stats := linkDev.Attrs().Statistics
+	peerReports := GetPeerReports(dev, conf)
 
-	for _, peer := range dev.Peers {
-		wgPeerIndex[peer.PublicKey] = peer
-	}
-
-	for _, peer := range conf.Peers {
-		wgPeer, known := wgPeerIndex[peer.PublicKey.Key]
-
-		if !known {
-			// dangling peer, sync will remove. Dangling peers aren't such a
-			// problem now that add/remove performs a sync too.
-			continue
-		}
-
-		online := time.Since(wgPeer.LastHandshakeTime) < peerTimeout
-		dormant := !wgPeer.LastHandshakeTime.IsZero() && time.Since(wgPeer.LastHandshakeTime) > peerExpiry
-
-		if online {
+	peersOnline := 0
+	for _, peerReport := range peerReports {
+		if peerReport.Online {
 			peersOnline++
 		}
-
-		externalIP := net.IP{}
-		if wgPeer.Endpoint != nil {
-			externalIP = wgPeer.Endpoint.IP
-		}
-
-		uReceiveBytes := uint64(wgPeer.ReceiveBytes)
-		uTransmitBytes := uint64(wgPeer.TransmitBytes)
-
-		peerReports = append(peerReports, PeerReport{
-			Hostname:          peer.Hostname,
-			Online:            online,
-			Dormant:           dormant,
-			Owner:             peer.Owner,
-			Description:       peer.Description,
-			Added:             peer.Added,
-			IP:                peer.IP,
-			IP6:               peer.IP6,
-			ExternalIP:        externalIP,
-			Networks:          peer.Networks,
-			LastHandshakeTime: wgPeer.LastHandshakeTime,
-			ReceiveBytes:      uReceiveBytes,
-			TransmitBytes:     uTransmitBytes,
-			ReceiveBytesSI:    BytesToSI(uReceiveBytes),
-			TransmitBytesSI:   BytesToSI(uTransmitBytes),
-		})
 	}
 
 	return DsnetReport{
@@ -177,6 +134,63 @@ func GetReport(dev *wgtypes.Device, conf *DsnetConfig) (DsnetReport, error) {
 		TransmitBytesSI:  BytesToSI(stats.TxBytes),
 		Timestamp:        time.Now(),
 	}, nil
+}
+
+// GetPeerReports reports on every configured peer, using stats from the wg
+// interface where the peer is present.
+func GetPeerReports(dev *wgtypes.Device, conf *DsnetConfig) []PeerReport {
+	peerTimeout := viper.GetDuration("peer_timeout")
+	peerExpiry := viper.GetDuration("peer_expiry")
+	wgPeerIndex := make(map[wgtypes.Key]wgtypes.Peer)
+	peerReports := make([]PeerReport, 0)
+
+	for _, peer := range dev.Peers {
+		wgPeerIndex[peer.PublicKey] = peer
+	}
+
+	for _, peer := range conf.Peers {
+		wgPeer, known := wgPeerIndex[peer.PublicKey.Key]
+
+		// A paused peer is absent from the interface by design. Report it
+		// anyway, with zero stats, so it can be found and resumed.
+		if !known && !peer.Paused {
+			// dangling peer, sync will remove. Dangling peers aren't such a
+			// problem now that add/remove performs a sync too.
+			continue
+		}
+
+		online := time.Since(wgPeer.LastHandshakeTime) < peerTimeout
+		dormant := !wgPeer.LastHandshakeTime.IsZero() && time.Since(wgPeer.LastHandshakeTime) > peerExpiry
+
+		externalIP := net.IP{}
+		if wgPeer.Endpoint != nil {
+			externalIP = wgPeer.Endpoint.IP
+		}
+
+		uReceiveBytes := uint64(wgPeer.ReceiveBytes)
+		uTransmitBytes := uint64(wgPeer.TransmitBytes)
+
+		peerReports = append(peerReports, PeerReport{
+			Hostname:          peer.Hostname,
+			Online:            online,
+			Dormant:           dormant,
+			Paused:            peer.Paused,
+			Owner:             peer.Owner,
+			Description:       peer.Description,
+			Added:             peer.Added,
+			IP:                peer.IP,
+			IP6:               peer.IP6,
+			ExternalIP:        externalIP,
+			Networks:          peer.Networks,
+			LastHandshakeTime: wgPeer.LastHandshakeTime,
+			ReceiveBytes:      uReceiveBytes,
+			TransmitBytes:     uTransmitBytes,
+			ReceiveBytesSI:    BytesToSI(uReceiveBytes),
+			TransmitBytesSI:   BytesToSI(uTransmitBytes),
+		})
+	}
+
+	return peerReports
 }
 
 func (report *DsnetReport) Print() {

@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/naggie/dsnet/lib"
+	"github.com/spf13/viper"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 func TestDsnetReportPrint(t *testing.T) {
@@ -191,5 +193,43 @@ func TestPeerReportFields(t *testing.T) {
 	}
 	if len(decoded.Networks) != 1 {
 		t.Fatalf("expected 1 network, got %d", len(decoded.Networks))
+	}
+}
+
+func TestGetPeerReportsPaused(t *testing.T) {
+	viper.Set("peer_timeout", 3*time.Minute)
+	t.Cleanup(func() { viper.Set("peer_timeout", nil) })
+
+	activeKey, _ := wgtypes.GeneratePrivateKey()
+	pausedKey, _ := wgtypes.GeneratePrivateKey()
+	danglingKey, _ := wgtypes.GeneratePrivateKey()
+
+	conf := &DsnetConfig{
+		Peers: []PeerConfig{
+			{Hostname: "active", PublicKey: lib.JSONKey{Key: activeKey.PublicKey()}},
+			{Hostname: "paused", PublicKey: lib.JSONKey{Key: pausedKey.PublicKey()}, Paused: true},
+			{Hostname: "dangling", PublicKey: lib.JSONKey{Key: danglingKey.PublicKey()}},
+		},
+	}
+	// a paused peer is absent from the interface, as is a dangling peer
+	dev := &wgtypes.Device{
+		Peers: []wgtypes.Peer{
+			{PublicKey: activeKey.PublicKey(), LastHandshakeTime: time.Now(), ReceiveBytes: 100},
+		},
+	}
+
+	reports := GetPeerReports(dev, conf)
+
+	if len(reports) != 2 {
+		t.Fatalf("expected active and paused peers only, got %d", len(reports))
+	}
+
+	active, paused := reports[0], reports[1]
+
+	if active.Hostname != "active" || active.Paused || !active.Online || active.ReceiveBytes != 100 {
+		t.Fatalf("unexpected active peer report: %+v", active)
+	}
+	if paused.Hostname != "paused" || !paused.Paused || paused.Online || paused.Dormant || paused.ReceiveBytes != 0 {
+		t.Fatalf("unexpected paused peer report: %+v", paused)
 	}
 }
