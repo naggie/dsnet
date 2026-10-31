@@ -6,6 +6,9 @@ Address={{ .Peer.IP }}/{{ .CidrSize }}
 Address={{ .Peer.IP6 }}/{{ .CidrSize6 }}
 {{ end -}}
 PrivateKey={{ .Peer.PrivateKey.Key }}
+{{- if .Server.ClientMTU }}
+MTU={{ .Server.ClientMTU }}
+{{- end }}
 {{- if .Server.DNS }}
 DNS={{ .Server.DNS }}
 {{ end }}

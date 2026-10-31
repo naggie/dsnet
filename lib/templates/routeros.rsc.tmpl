@@ -1,5 +1,5 @@
 /interface wireguard
-add name=wg0 private-key="{{ .Peer.PrivateKey.Key }}";
+add name=wg0 {{ if .Server.ClientMTU }}mtu={{ .Server.ClientMTU }} {{ end }}private-key="{{ .Peer.PrivateKey.Key }}";
 /interface list member
 add interface=wg0 list=LAN
 /ip address

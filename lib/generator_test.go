@@ -313,3 +313,38 @@ func TestGetWGPeerTemplateNoDNS(t *testing.T) {
 		t.Fatal("should not contain DNS line when DNS is nil")
 	}
 }
+
+func TestClientMTU(t *testing.T) {
+	tests := []struct {
+		peerType string
+		line     string
+	}{
+		{"wg-quick", "\nMTU=1280\n"},
+		{"vyatta", "\nset interfaces wireguard wg0 mtu 1280\n"},
+		{"nixos", "\n    mtu = 1280;\n"},
+		{"routeros", "add name=wg0 mtu=1280 private-key="},
+	}
+	for _, tt := range tests {
+		t.Run(tt.peerType, func(t *testing.T) {
+			peer, server := testPeerAndServer(t)
+
+			// unset by default: peers keep their own MTU
+			buf, err := AsciiPeerConfig(peer, tt.peerType, server)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if strings.Contains(strings.ToLower(buf.String()), "mtu") {
+				t.Fatalf("MTU should be omitted when ClientMTU is 0:\n%s", buf.String())
+			}
+
+			server.ClientMTU = 1280
+			buf, err = AsciiPeerConfig(peer, tt.peerType, server)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if !strings.Contains(buf.String(), tt.line) {
+				t.Fatalf("expected %q in:\n%s", tt.line, buf.String())
+			}
+		})
+	}
+}

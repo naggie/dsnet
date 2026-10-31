@@ -7,6 +7,9 @@ set interfaces wireguard wg0 address {{ .Peer.IP6 }}/{{ .CidrSize6 }}
 {{ end -}}
 set interfaces wireguard wg0 route-allowed-ips true
 set interfaces wireguard wg0 private-key {{ .Peer.PrivateKey.Key }}
+{{- if .Server.ClientMTU }}
+set interfaces wireguard wg0 mtu {{ .Server.ClientMTU }}
+{{- end }}
 set interfaces wireguard wg0 description {{ .Server.InterfaceName }}
 {{- if .Server.DNS }}
 #set service dns forwarding name-server {{ .Server.DNS }}

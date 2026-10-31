@@ -16,6 +16,9 @@ networking.wireguard.interfaces = {{ "{" }}
     # dynamic IP change heals itself. Interface level, not per peer: the
     # per-peer option fails evaluation with the networkd backend.
     dynamicEndpointRefreshSeconds = 300;
+    {{- if .Server.ClientMTU }}
+    mtu = {{ .Server.ClientMTU }};
+    {{- end }}
     peers = [
       {{ "{" }}
         publicKey = "{{ .Server.PrivateKey.PublicKey.Key }}";

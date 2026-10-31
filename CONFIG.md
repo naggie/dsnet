@@ -68,6 +68,16 @@ route the whole internet through the server peer, add `0.0.0.0/0` to the list
 before adding peers. For more advanced options and theory, see
 <https://www.wireguard.com/netns/>.
 
+        "MTU": 1420,
+
+MTU of the server interface.
+
+        "ClientMTU": 0,
+
+MTU written into generated peer configs. `0` leaves it out, so each peer uses
+its own default. Set it when peers sit behind links with a smaller MTU, such as
+PPPoE or another tunnel.
+
 The report contains no sensitive information. At one site I use it together
 with [hugo](https://gohugo.io/)
 [shortcodes](https://gohugo.io/templates/shortcode-templates/) to generate a

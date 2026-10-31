@@ -27,5 +27,6 @@ func GetServer(config *DsnetConfig) *lib.Server {
 		Networks:            config.Networks,
 		PersistentKeepalive: config.PersistentKeepalive,
 		MTU:                 config.MTU,
+		ClientMTU:           config.ClientMTU,
 	}
 }

@@ -71,6 +71,8 @@ type DsnetConfig struct {
 	// used for server and client
 	PersistentKeepalive int `validate:"gte=0,lte=255"`
 	MTU                 int `validate:"gte=0,lte=65535"`
+	// MTU for generated peer configs; 0 leaves it unset so peers use their default
+	ClientMTU int `validate:"gte=0,lte=65535"`
 }
 
 // LoadConfigFile parses the json config file, validates and stuffs
