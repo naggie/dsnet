@@ -30,8 +30,8 @@ added to the server peer:
 
 More client peers can be added with `dsnet add`. They can connect immediately
 after! Addresses are allocated automatically; `--ipv4` and `--ipv6` choose them
-instead. Don't forget to [enable IP forwarding](https://askubuntu.com/questions/311053/how-to-make-ip-forwarding-permanent)
-to allow peers to talk to one another.
+instead. Don't forget to enable IP forwarding (see the quick start below) to
+allow peers to talk to one another.
 
 It works on AMD64 based linux and also ARMv5.
 
@@ -69,7 +69,8 @@ Quick start (AMD64 linux) -- install wireguard, then, after making sure `/usr/lo
 	sudo dsnet add banana > dsnet-banana.conf
 	sudo dsnet add apple > dsnet-apple.conf
     # enable IP forwarding to allow peers to talk to one another
-    sudo sysctl -w net.ipv4.ip_forward=1   # edit /etc/sysctl.conf to make this persistent across reboots
+    printf 'net.ipv4.ip_forward=1\nnet.ipv6.conf.all.forwarding=1\n' | sudo tee /etc/sysctl.d/99-dsnet.conf
+    sudo sysctl --system
 
 Copy the generated configuration file to your device and connect!
 
@@ -383,7 +384,13 @@ services.dsnet = {
     DNS = "10.171.90.1";
     Networks = [ "0.0.0.0/0" ];
   };
+};
 
+# allow peers to talk to one another
+boot.kernel.sysctl = {
+  "net.ipv4.ip_forward" = 1;
+  "net.ipv6.conf.all.forwarding" = 1;
+};
 ```
 
 Minimal usage:
