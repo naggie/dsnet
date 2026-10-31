@@ -169,31 +169,30 @@ func (s *Server) SyncRoutes() error {
 		return fmt.Errorf("failed to get interface(%s): %v", s.InterfaceName, err)
 	}
 
-	wanted := s.routedNetworks()
-
+	// every route on the interface, not just dsnet's own, so routes already
+	// added by hand or by PostUp are adopted
 	existing, err := netlink.RouteListFiltered(
 		netlink.FAMILY_ALL,
-		&netlink.Route{LinkIndex: link.Attrs().Index, Protocol: dsnetRouteProtocol},
-		netlink.RT_FILTER_OIF|netlink.RT_FILTER_PROTOCOL,
+		&netlink.Route{LinkIndex: link.Attrs().Index},
+		netlink.RT_FILTER_OIF,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to list routes for interface %s: %v", s.InterfaceName, err)
 	}
 
-	for _, route := range existing {
-		if _, ok := wanted[route.Dst.String()]; ok {
-			delete(wanted, route.Dst.String())
-			continue
-		}
+	toAdd, toDelete := planRoutes(existing, s.routedNetworks())
+
+	for _, route := range toDelete {
 		route := route
 		if err := netlink.RouteDel(&route); err != nil {
 			return fmt.Errorf("failed to delete route %s from interface %s: %v", route.Dst, s.InterfaceName, err)
 		}
 	}
 
-	// RouteAdd, not RouteReplace: a peer network clashing with an existing
-	// route (a LAN, the default route) must fail loudly, not hijack it
-	for _, dst := range wanted {
+	// RouteAdd, not RouteReplace: a peer network clashing with a route on
+	// another interface (a LAN, the default route) must fail loudly, not
+	// hijack it
+	for _, dst := range toAdd {
 		dst := dst
 		route := &netlink.Route{
 			LinkIndex: link.Attrs().Index,
@@ -206,6 +205,31 @@ func (s *Server) SyncRoutes() error {
 		}
 	}
 	return nil
+}
+
+// planRoutes compares the routes on the interface with the wanted Networks.
+// Any existing route to a wanted Network satisfies it, whoever added it. Only
+// routes dsnet added are deleted once unwanted; others are left alone.
+func planRoutes(existing []netlink.Route, wanted map[string]net.IPNet) ([]net.IPNet, []netlink.Route) {
+	present := make(map[string]bool)
+	toDelete := make([]netlink.Route, 0)
+
+	for _, route := range existing {
+		if _, ok := wanted[route.Dst.String()]; ok {
+			present[route.Dst.String()] = true
+		} else if route.Protocol == dsnetRouteProtocol {
+			toDelete = append(toDelete, route)
+		}
+	}
+
+	toAdd := make([]net.IPNet, 0)
+	for cidr, dst := range wanted {
+		if !present[cidr] {
+			toAdd = append(toAdd, dst)
+		}
+	}
+
+	return toAdd, toDelete
 }
 
 // DeleteLink removes the Netlink interface if it exists

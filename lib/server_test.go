@@ -5,6 +5,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/vishvananda/netlink"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -378,5 +379,44 @@ func TestRoutedNetworks(t *testing.T) {
 		if dst.String() != cidr {
 			t.Fatalf("route key %s holds %s", cidr, dst.String())
 		}
+	}
+}
+
+func TestPlanRoutes(t *testing.T) {
+	// RTPROT_BOOT, what `ip route add` uses by default
+	const rtprotBoot = 3
+	cidr := func(s string) net.IPNet {
+		_, n, err := net.ParseCIDR(s)
+		if err != nil {
+			t.Fatalf("failed to parse %s: %v", s, err)
+		}
+		return *n
+	}
+	manual, ours, stale, unrelated, missing := cidr("2a11:29c0:11:120::/60"), cidr("10.1.0.0/16"), cidr("10.2.0.0/16"), cidr("10.3.0.0/16"), cidr("fd00::/64")
+
+	existing := []netlink.Route{
+		// added by hand or PostUp for a peer network: adopt, do not re-add
+		{Dst: &manual, Protocol: rtprotBoot},
+		{Dst: &ours, Protocol: dsnetRouteProtocol},
+		// dsnet's own, no longer wanted
+		{Dst: &stale, Protocol: dsnetRouteProtocol},
+		// not dsnet's, never touched
+		{Dst: &unrelated, Protocol: rtprotBoot},
+		// e.g. a default route
+		{Dst: nil, Protocol: rtprotBoot},
+	}
+	wanted := map[string]net.IPNet{
+		manual.String():  manual,
+		ours.String():    ours,
+		missing.String(): missing,
+	}
+
+	toAdd, toDelete := planRoutes(existing, wanted)
+
+	if len(toAdd) != 1 || toAdd[0].String() != missing.String() {
+		t.Fatalf("expected to add only %s, got %v", missing.String(), toAdd)
+	}
+	if len(toDelete) != 1 || toDelete[0].Dst.String() != stale.String() {
+		t.Fatalf("expected to delete only %s, got %v", stale.String(), toDelete)
 	}
 }

@@ -140,8 +140,9 @@ Any other CIDR networks that can be routed through this peer. dsnet adds a
 route for each via the interface on sync (`up`, `sync`, `add`, `remove`,
 `pause`) and removes it once no peer lists it. These routes are tagged with
 protocol 213 (`ip route show proto 213`); other routes on the interface are left
-alone. A network that clashes with an existing route fails the sync with `file
-exists`: delete the old route (for example one added by hand) and sync again.
+alone. A route to the same network already on the interface, for example one
+added by hand or by `PostUp`, is used as is. A network that clashes with a route
+on another interface fails the sync with `file exists`.
 
             "PublicKey": "altJeQ/V52JZQrGcA9RiKcpZusYU6zMUJhl7Wbd9rX0=",
 
