@@ -72,11 +72,11 @@ func (s *Server) CreateLink() error {
 		if err != nil {
 			return fmt.Errorf("failed to list addresses for interface: %v", err)
 		}
-		for _, addr := range addrs {
-			if addr.IPNet.String() != addr.IPNet.String() {
-				err := netlink.AddrDel(link, &addr)
+		for _, existing := range addrs {
+			if existing.IPNet.String() != addr.IPNet.String() {
+				err := netlink.AddrDel(link, &existing)
 				if err != nil {
-					return fmt.Errorf("failed to delete address %s from interface %s: %v", addr.IP, s.InterfaceName, err)
+					return fmt.Errorf("failed to delete address %s from interface %s: %v", existing.IP, s.InterfaceName, err)
 				}
 			}
 		}
