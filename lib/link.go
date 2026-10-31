@@ -133,6 +133,81 @@ func (s *Server) CreateLink() error {
 	return nil
 }
 
+// dsnetRouteProtocol tags the routes dsnet adds for peer Networks, so a sync
+// only removes its own stale routes, never ones added by the kernel, PostUp or
+// an admin. 213 is unassigned in rtnetlink.h and iproute2's rt_protos.
+const dsnetRouteProtocol = 213
+
+// routedNetworks returns the Networks behind peers, keyed by CIDR. Peer IPs
+// need no route: the interface address already has a connected route.
+// Paused peers keep their routes so their traffic is dropped by WireGuard
+// instead of leaking out via another route.
+func (s *Server) routedNetworks() map[string]net.IPNet {
+	networks := make(map[string]net.IPNet)
+	for _, peer := range s.Peers {
+		for _, network := range peer.Networks {
+			if len(network.IPNet.IP) == 0 {
+				continue
+			}
+			// the kernel rejects a route with host bits set, and config
+			// parsing keeps them (10.1.2.3/16)
+			dst := net.IPNet{
+				IP:   network.IPNet.IP.Mask(network.IPNet.Mask),
+				Mask: network.IPNet.Mask,
+			}
+			networks[dst.String()] = dst
+		}
+	}
+	return networks
+}
+
+// SyncRoutes routes peer Networks via the interface and removes routes for
+// Networks no longer configured
+func (s *Server) SyncRoutes() error {
+	link, err := netlink.LinkByName(s.InterfaceName)
+	if err != nil {
+		return fmt.Errorf("failed to get interface(%s): %v", s.InterfaceName, err)
+	}
+
+	wanted := s.routedNetworks()
+
+	existing, err := netlink.RouteListFiltered(
+		netlink.FAMILY_ALL,
+		&netlink.Route{LinkIndex: link.Attrs().Index, Protocol: dsnetRouteProtocol},
+		netlink.RT_FILTER_OIF|netlink.RT_FILTER_PROTOCOL,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to list routes for interface %s: %v", s.InterfaceName, err)
+	}
+
+	for _, route := range existing {
+		if _, ok := wanted[route.Dst.String()]; ok {
+			delete(wanted, route.Dst.String())
+			continue
+		}
+		route := route
+		if err := netlink.RouteDel(&route); err != nil {
+			return fmt.Errorf("failed to delete route %s from interface %s: %v", route.Dst, s.InterfaceName, err)
+		}
+	}
+
+	// RouteAdd, not RouteReplace: a peer network clashing with an existing
+	// route (a LAN, the default route) must fail loudly, not hijack it
+	for _, dst := range wanted {
+		dst := dst
+		route := &netlink.Route{
+			LinkIndex: link.Attrs().Index,
+			Dst:       &dst,
+			Scope:     netlink.SCOPE_LINK,
+			Protocol:  dsnetRouteProtocol,
+		}
+		if err := netlink.RouteAdd(route); err != nil {
+			return fmt.Errorf("could not add route %s to interface %s: %v", dst.String(), s.InterfaceName, err)
+		}
+	}
+	return nil
+}
+
 // DeleteLink removes the Netlink interface if it exists
 func (s *Server) DeleteLink() error {
 	link, err := netlink.LinkByName(s.InterfaceName)

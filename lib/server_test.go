@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"encoding/json"
 	"net"
 	"testing"
 
@@ -335,5 +336,47 @@ func TestIPAllocatedPausedPeer(t *testing.T) {
 	}
 	if ip.Equal(peerIP) {
 		t.Fatal("allocated IP of paused peer")
+	}
+}
+
+func TestRoutedNetworks(t *testing.T) {
+	s := testServer(t)
+
+	// parse via JSON as the config file does: it keeps host bits, which the
+	// kernel rejects in a route
+	var hostBits, v6, blank, dup JSONIPNet
+	for raw, n := range map[string]*JSONIPNet{
+		`"10.182.1.5/16"`:    &hostBits,
+		`"fd00:1:2:3::9/64"`: &v6,
+		`""`:                 &blank,
+		`"192.168.7.200/24"`: &dup,
+	} {
+		if err := json.Unmarshal([]byte(raw), n); err != nil {
+			t.Fatalf("failed to parse %s: %v", raw, err)
+		}
+	}
+	_, other, _ := net.ParseCIDR("192.168.7.0/24")
+
+	s.Peers = []Peer{
+		{Hostname: "a", IP: net.IP{10, 0, 0, 2}, Networks: []JSONIPNet{hostBits, blank, dup}},
+		// paused peers keep their routes so traffic is dropped, not leaked
+		{Hostname: "b", IP: net.IP{10, 0, 0, 3}, Paused: true, Networks: []JSONIPNet{v6, {IPNet: *other}}},
+		{Hostname: "c", IP: net.IP{10, 0, 0, 4}, Networks: []JSONIPNet{}},
+	}
+
+	got := s.routedNetworks()
+
+	want := []string{"10.182.0.0/16", "fd00:1:2:3::/64", "192.168.7.0/24"}
+	if len(got) != len(want) {
+		t.Fatalf("expected %v, got %v", want, got)
+	}
+	for _, cidr := range want {
+		dst, ok := got[cidr]
+		if !ok {
+			t.Fatalf("expected route for %s, got %v", cidr, got)
+		}
+		if dst.String() != cidr {
+			t.Fatalf("route key %s holds %s", cidr, dst.String())
+		}
 	}
 }

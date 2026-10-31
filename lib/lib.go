@@ -14,7 +14,7 @@ func (s *Server) Up() error {
 	return s.ConfigureDevice()
 }
 
-// ConfigureDevice sets up the WG interface
+// ConfigureDevice sets up the WG interface and the routes to peer Networks
 func (s *Server) ConfigureDevice() error {
 	wg, err := wgctrl.New()
 	if err != nil {
@@ -65,5 +65,5 @@ func (s *Server) ConfigureDevice() error {
 	if err != nil {
 		return fmt.Errorf("could not configure device '%s' (%v)", s.InterfaceName, err)
 	}
-	return nil
+	return s.SyncRoutes()
 }
