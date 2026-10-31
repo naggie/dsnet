@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -123,9 +124,20 @@ func (conf *DsnetConfig) Save() error {
 	return nil
 }
 
+// dot-separated labels of 1-63 letters, digits and inner hyphens. Not the
+// validator's hostname_rfc1123: in v9 it has no label length limit and
+// rejects names shorter than 3 characters.
+var hostnameRFC1123 = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
+
 // AddPeer adds a provided peer to the Peers list in the conf
 func (conf *DsnetConfig) AddPeer(peer lib.Peer) error {
 	// TODO validate all PeerConfig (keys etc)
+
+	// checked here rather than as a struct tag so existing configs with
+	// non-conforming hostnames still load
+	if len(peer.Hostname) > 253 || !hostnameRFC1123.MatchString(peer.Hostname) {
+		return fmt.Errorf("%s is not a valid RFC 1123 hostname (letters, digits, '-' and '.', labels up to 63 characters)", peer.Hostname)
+	}
 
 	for _, p := range conf.Peers {
 		if peer.Hostname == p.Hostname {

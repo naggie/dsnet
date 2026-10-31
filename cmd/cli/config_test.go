@@ -2,6 +2,7 @@ package cli
 
 import (
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -356,5 +357,39 @@ func TestGetWgPeerConfigsPresharedKeyIsolation(t *testing.T) {
 	// Each peer's preshared key pointer should point to different values
 	if *wgPeers[0].PresharedKey == *wgPeers[1].PresharedKey {
 		t.Fatal("preshared keys should be different between peers")
+	}
+}
+
+func TestAddPeerHostnameRFC1123(t *testing.T) {
+	for _, tc := range []struct {
+		hostname string
+		valid    bool
+	}{
+		{"laptop", true},
+		{"a", true},
+		{"web-01", true},
+		{"web.lab", true},
+		{strings.Repeat("a", 63), true},
+		{strings.Repeat("a", 64), false},
+		{"bob's laptop", false},
+		{"-leading", false},
+		{"trailing-", false},
+		{"under_score", false},
+		{"double..dot", false},
+		{strings.Repeat("a.", 127) + "a", false},
+		{"laptop!", false},
+		{"", false},
+	} {
+		conf := testDsnetConfig(t)
+		err := conf.AddPeer(testLibPeer(t, tc.hostname, "alice", net.IP{10, 0, 0, 2}))
+		if tc.valid && err != nil {
+			t.Fatalf("%q: unexpected error: %v", tc.hostname, err)
+		}
+		if !tc.valid && err == nil {
+			t.Fatalf("%q: expected error", tc.hostname)
+		}
+		if !tc.valid && len(conf.Peers) != 0 {
+			t.Fatalf("%q: invalid peer was added", tc.hostname)
+		}
 	}
 }
