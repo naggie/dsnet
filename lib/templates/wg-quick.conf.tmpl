@@ -1,0 +1,26 @@
+[Interface]
+{{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
+Address={{ .Peer.IP }}/{{ .CidrSize }}
+{{ end -}}
+{{ if gt (.Server.Network6.IPNet.IP | len) 0 -}}
+Address={{ .Peer.IP6 }}/{{ .CidrSize6 }}
+{{ end -}}
+PrivateKey={{ .Peer.PrivateKey.Key }}
+{{- if .Server.DNS }}
+DNS={{ .Server.DNS }}
+{{ end }}
+
+[Peer]
+PublicKey={{ .Server.PrivateKey.PublicKey.Key }}
+PresharedKey={{ .Peer.PresharedKey.Key }}
+Endpoint={{ .Endpoint }}:{{ .Server.ListenPort }}
+PersistentKeepalive={{ .Server.PersistentKeepalive }}
+{{ if gt (.Server.Network.IPNet.IP | len) 0 -}}
+AllowedIPs={{ .Server.Network.IPNet.IP }}/{{ .CidrSize }}
+{{ end -}}
+{{ if gt (.Server.Network6.IPNet.IP | len) 0 -}}
+AllowedIPs={{ .Server.Network6.IPNet.IP }}/{{ .CidrSize6  }}
+{{ end -}}
+{{ range .Server.Networks -}}
+AllowedIPs={{ . }}
+{{ end -}}
